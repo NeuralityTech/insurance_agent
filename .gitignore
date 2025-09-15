@@ -1,0 +1,15 @@
+# Environment variables
+.env
+
+# Instance folder with databases
+/instance/
+
+# Temporary/deleted files folder
+/delme/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# VSCode settings
+.vscode/

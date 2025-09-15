@@ -1,0 +1,146 @@
+/* ----- Create User Form Specific Styles ----- */
+body {
+    background-color: #f4f7f6;
+}
+
+.container {
+    max-width: 500px; /* Reduced width to make the form more compact */
+    margin: 40px auto;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.page-header h1 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.page-header p {
+    font-size: 14px;
+    color: #ffffff;
+    margin-bottom: 24px;
+}
+
+.form-group {
+    margin-bottom: 15px; /* Reduced spacing */
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #555;
+}
+
+.form-group input,
+.form-group select {
+    box-sizing: border-box; /* Ensures padding and border are included in the width */
+    width: 100%;
+    max-width: 100%; /* Ensure all fields have the same width */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.form-actions {
+    text-align: right;
+    margin-top: 15px; /* Reduced top margin */
+}
+
+.btn {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+#message-container {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 600;
+}
+
+#message-container.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+#message-container.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.is-hidden {
+    display: none;
+}
+
+/* ----- Inline Error Messages ----- */
+.error-message {
+    color: #dc3545;
+    font-size: 0.875em;
+    margin-top: 6px;
+    display: none; /* Hide by default */
+}
+
+.error-message.is-visible {
+    display: block; /* Show only when this class is present */
+}
+
+.form-group input.is-invalid,
+.form-group select.is-invalid {
+    border-color: #dc3545;
+}
+
+/* ----- Password Field Enhancements ----- */
+/* ----- Password Field Enhancements ----- */
+.password-wrapper {
+    position: relative;
+    display: flex;
+}
+
+.password-wrapper input {
+    flex-grow: 1;
+}
+
+.toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #6c757d;
+    padding: 5px;
+    font-size: 14px;
+}
+
+.toggle-password:hover {
+    color: #343a40;
+}
+
+/* ----- Form Row for Side-by-Side Fields ----- */
+.form-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px; /* Adds space between the fields */
+}
+
+.form-row .form-group {
+    flex: 1; /* Each group takes up equal space */
+    min-width: 0; /* Prevents overflow issues with flex items */
+}

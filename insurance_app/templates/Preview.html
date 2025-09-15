@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Insurance Requirement Summary Preview</title>
+    <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+    <div class="container">
+        <header class="page-header">
+            <h1>Health Insurance Requirement Summary Preview</h1>
+        </header>
+        <main>
+            <div id="summary-container" class="form-container">
+                <!-- Summary content will be injected here -->
+            </div>
+            <div class="form-actions">
+                <button type="button" id="btn-back" class="btn btn-secondary">Back</button>
+            </div>
+        </main>
+    </div>
+    <script src="../js/summary.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const backBtn = document.getElementById('btn-back');
+            if (backBtn) {
+                backBtn.style.display = 'inline-block';
+                backBtn.addEventListener('click', () => window.close());
+            }
+        });
+    </script>
+</body>
+</html>

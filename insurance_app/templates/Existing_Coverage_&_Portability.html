@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Existing Coverage & Portability</title>
+    <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+
+    <fieldset>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="existing-policies">Existing Policies (insurer, SI, since when)</label>
+                <textarea id="existing-policies" name="existing-policies" rows="2" pattern="^[a-zA-Z0-9\s,.-/()]*$" title="Please enter only letters, numbers, and basic punctuation (, . - / ( ))."></textarea>
+                <span class="error-message" id="existing-policies-error"></span>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="port-policy">Want to Port Current Policy?</label>
+                <select id="port-policy" name="port-policy">
+                    <option>Select</option>
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                    <option value="unsure">Unsure</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="critical-illness">Need Critical Illness / Personal Accident?</label>
+                <select id="critical-illness" name="critical-illness">
+                    <option>Select</option>
+                    <option value="none">None</option>
+                    <option value="critical-illness">Critical Illness only</option>
+                    <option value="personal-accident">Personal Accident Only</option>
+                    <option value="both">Both</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="worldwide-cover">Worldwide Cover Needed?</label>
+                <select id="worldwide-cover" name="worldwide-cover">
+                    <option>Select</option>
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                    <option value="maybe">Maybe</option>
+                </select>
+            </div>
+        </div>
+    </fieldset>
+    </details>
+</body>
+</html>

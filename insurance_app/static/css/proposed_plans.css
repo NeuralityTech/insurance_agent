@@ -1,0 +1,28 @@
+/* Styles for the Proposed Plans page */
+body {
+    font-family: Arial, sans-serif;
+}
+
+.page-header {
+    background-color: #007bff;
+    color: #ffffff;
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    margin-bottom: 1rem;
+}
+
+.page-header h1 {
+    color: #ffffff;
+    margin: 0;
+    font-size: 1.75rem;
+}
+
+.form-actions .btn {
+    background-color: #007bff;
+    color: #ffffff;
+    border-color: #007bff;
+}
+
+.form-actions .btn:hover {
+    opacity: 0.9;
+}

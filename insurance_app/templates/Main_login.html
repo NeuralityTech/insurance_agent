@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neaurality - Health Insurance Login</title>
+        <link rel="stylesheet" href="/static/css/style_1.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="watermark top-left">Neurality Technologies</div>
+
+
+    <main class="login-container">
+        <header>
+            <h1>Health Insurance</h1>
+        </header>
+        <form id="login-form" action="#" method="post">
+            <div class="form-group">
+                <label for="userid">User ID</label>
+                <input type="text" id="userid" name="userid" required>
+            </div>
+            <div class="form-group" style="position:relative;">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required style="padding-right:30px;">
+                                <i class="fas fa-eye password-toggle" style="position:absolute; top:65%; right:10px; transform:translateY(-50%); cursor:pointer; user-select:none;"></i>
+                
+            </div>
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select id="role" name="role">
+                    <option value="agent">Agent</option>
+                    <option value="supervisor">Supervisor</option>
+                    <option value="admin">Admin</option>
+                    <option value="superadmin">Super Admin</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-login">Login</button>
+                <div id="login-error" style="color:red; margin-top:8px; display:none;"></div>
+        </form>
+    </main>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent the default form submission
+                document.getElementById('login-error').style.display = 'none';
+            const role = document.getElementById('role').value;
+            const userId = document.getElementById('userid').value;
+            const password = document.getElementById('password').value;
+
+            if (!userId.trim() || !password.trim()) {
+                const errorDiv = document.getElementById('login-error');
+                errorDiv.textContent = 'User ID and password are required.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, password, role })
+                });
+                if (response.ok) {
+                    localStorage.setItem('loggedInUserId', userId);
+                    if (role === 'agent') {
+                        window.location.href = '/html/Health_Insurance_Requirement_Form.html';
+                    } else if (role === 'supervisor') {
+                        window.location.href = '/html/Supervisor_Form.html';
+                    } else if (role === 'admin') {
+                        window.location.href = '/admin/dashboard'; // Redirect admin here
+                    } else if (role === 'superadmin') {
+                        window.location.href = '/superadmin/dashboard'; // Redirect superadmin here
+                    }
+                } else {
+                    const errorData = await response.json();
+                    const errorDiv = document.getElementById('login-error');
+                        errorDiv.textContent = errorData.error || 'User ID or password are incorrect.';
+                        errorDiv.style.display = 'block';
+                }
+            } catch (err) {
+                console.error('Login error:', err);
+                alert('Login failed. Please try again.');
+            }
+        });
+        document.querySelector('.password-toggle').addEventListener('click', function() {
+        const pwd = document.getElementById('password');
+        if (pwd.type === 'password') {
+            pwd.type = 'text';
+            this.classList.remove('fa-eye');
+            this.classList.add('fa-eye-slash');
+        } else {
+            pwd.type = 'password';
+            this.classList.remove('fa-eye-slash');
+            this.classList.add('fa-eye');
+        }
+    });
+    </script>
+</body>
+</html>

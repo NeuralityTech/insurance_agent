@@ -1,0 +1,114 @@
+/* This CSS file defines the general body styles for the application, 
+including fonts, colors, and basic layout. 
+   It is used by: Main_login.html, Supervisor_Form.html */
+
+/* General Body Styles */
+body {
+    font-family: 'Open Sans', sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden; /* Hide scrollbars from watermarks */
+}
+
+/* Watermark Styles */
+.watermark {
+    position: absolute;
+    font-size: 6rem;
+    font-weight: bold;
+    color: rgba(20, 30, 40, 0.04);
+    z-index: -1;
+    user-select: none;
+    font-family: 'Lora', serif;
+    transform-origin: center;
+}
+
+.top-left { top: 50%; left: 20%; transform: none; }
+.top-right { top: 50%; left: 80%; transform: none; }
+.bottom-left { top: 50%; left: 40%; transform: none; }
+.bottom-right { top: 50%; left: 60%; transform: none; }
+
+
+/* Login Container */
+.login-container {
+    background-color: #ffffff;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    z-index: 1;
+}
+
+header h1 {
+    font-family: 'Lora', serif;
+    color: #1c3a5e; /* Dark Slate Blue */
+    font-size: 2.5rem;
+    margin-top: 0;
+    margin-bottom: 2rem;
+}
+
+/* Form Styling */
+#login-form {
+    text-align: left;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.875rem;
+    color: #555;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box; /* Important for padding and width */
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #3b82f6; /* Blue focus color */
+}
+
+/* Specific styling for password error state from screenshot */
+.form-group input#password {
+    border-color: #e53e3e; /* Red for error */
+}
+.form-group input#password:focus {
+    border-color: #c53030; /* Darker red on focus */
+}
+
+
+/* Login Button */
+.btn-login {
+    width: 100%;
+    padding: 0.875rem;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #ffffff;
+    background-color: #3b82f6; /* Vibrant Blue */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-login:hover {
+    background-color: #2563eb; /* Darker Blue on hover */
+}

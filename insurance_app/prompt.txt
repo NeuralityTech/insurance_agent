@@ -1,0 +1,276 @@
+Below are list of features and their possible values. And on what criteria the value is selected.
+reference :
+<feature> 
+<value1> : <criteria>
+<value2> : <criteria>
+...
+<valueN> : <criteria>
+
+features:
+In-Patient
+1 : if in-patient is set to "Yes"
+0 : if in-patient is set to "No"
+
+Day-Care
+1 : if day-care is set to "Yes"
+0 : if day-care is set to "No"
+
+AYUSH
+0 : if AYUSH is set to "No"
+1 : if AYUSH is set to "Yes"
+
+Modern Tx
+0 : if modern tx is set to "No"
+1 : if modern tx is set to "Yes"
+
+Maternity
+0 : if maternity is set to "No"
+1 : if maternity is set to "Yes"
+
+Lump-Sum Benefit
+0 : if lump-sum benefit is set to "No"
+1 : if lump-sum benefit is set to "Yes"
+
+Accident Cover
+0 : if accident cover is set to "No"
+1 : if accident cover is set to "Yes"
+
+Travel Cover
+0 : if travel cover is set to "No"
+1 : if travel cover is set to "Yes"
+
+Hosp-Cash
+0 : if hosp-cash is set to "No"
+1 : if hosp-cash is set to "Yes"
+
+policy_code
+IND_1_0   : Single adult only
+FLO_2_0   : Two adults only
+FLO_2_3   : Two adults and up to three children
+FLO_6_3   : Up to six adults and three children
+FLO_2_gt0 : Two adults and at least one child (no limit)
+MIX_1_1   : One adult or one child option
+MIX_2_4   : Up to two adults and four children
+MIX_2_3   : Up to two adults and three children
+MIX_2_2   : Up to two adults and two children
+MIX_1_gt0 : One adult and at least one child
+MIX_2_gt0 : Up to two adults and at least one child
+ADN_NA_0  : Rider add-on using base plan counts
+FLO_Sr_2_0: Two senior adults only
+
+Disease Code
+DIAB : if a member has diabetes
+CARD : if a member has cardiac
+CANC : if a member has cancer
+MULTI : if a member has multiple diseases
+GENERAL : if a member has general health issues
+
+Gender
+All : if a gender is male/other
+Female : if a gender is female
+
+Newborn
+0 : if newborn is set to "No"
+1 : if newborn is set to "Yes"
+
+Ambulance Coverage
+1 : if ambulance coverage is set to "Yes"
+0 : if ambulance coverage is set to "No"
+
+Air Ambulance
+1 : if air ambulance is set to "Yes"
+0 : if air ambulance is set to "No"
+
+Road Ambulance
+1 : if road ambulance is set to "Yes"
+0 : if road ambulance is set to "No"
+
+Organ Donor / Transplant
+0 : if organ donor / transplant is set to "No"
+1 : if organ donor / transplant is set to "Yes"
+
+Rehabilitation
+0 : if rehabilitation is set to "No"
+1 : if rehabilitation is set to "Yes"
+
+Pain Management / Hospice
+0 : if pain management / hospice is set to "No"
+1 : if pain management / hospice is set to "Yes"
+
+Surrogacy
+0 : if surrogacy is set to "No"
+1 : if surrogacy is set to "Yes"
+
+Bariatric
+0 : if bariatric is set to "No"
+1 : if bariatric is set to "Yes"
+
+Modern Treatment Limits
+1 : if modern treatment limits is set to "Yes"
+0 : if modern treatment limits is set to "No"
+
+Mental Health OPD
+0 : if mental health opd is set to "No"
+1 : if mental health opd is set to "Yes"
+
+top_up
+0 : if top up is set to "No"
+1 : if top up is set to "Yes"
+
+desired_opd
+0 : if desired opd is set to "No"
+1 : if desired opd is set to "Yes"
+
+
+now from the json provided fetch me the output like below
+
+<derived feature> : <value from json>
+
+example:
+
+input : 
+{
+  "unique_id": "Sunita_9077788990",
+  "applicant_name": "Sunita",
+  "primaryContact": {
+    "user_type": "existing",
+    "unique_id": "Sunita_9077788990",
+    "applicant_name": "Sunita",
+    "gender": "female",
+    "occupation": "Professor",
+    "email": "sunita@example.com",
+    "phone": "9077788990",
+    "address": "Jaipur, RJ",
+    "hubs": "Jaipur"
+  },
+  "healthHistory": {
+    "self-dob": "1979-12-29",
+    "self-age": "45",
+    "self-height": "162",
+    "self-weight": "70",
+    "self-bmi": "26.68",
+    "disease": [
+      "cancer"
+    ],
+    "cardiac_details": "",
+    "diabetes_details": "",
+    "cancer_details": "Breast cancer – remission since 2022",
+    "critical_illness_details": "",
+    "other_details": "",
+    "planned-surgeries": "",
+    "smoker": "no",
+    "alcohol": "no",
+    "risky-hobbies": "no"
+  },
+  "members": [
+    {
+      "age": 47,
+      "alcohol": "no",
+      "bmi": 25.61,
+      "dob": "1977-10-05",
+      "gender": "male",
+      "healthHistory_diabetes": "Type 2",
+      "height": 170,
+      "id": "MOHAN1977_1754550007001",
+      "name": "Arjun",
+      "occupation": "Civil Engineer",
+      "plannedSurgeries": "",
+      "relationship": "spouse",
+      "risky-hobbies": "no",
+      "smoker": "no",
+      "weight": 74
+    },
+    {
+      "age": 17,
+      "alcohol": "no",
+      "bmi": 20.03,
+      "dob": "2008-01-21",
+      "gender": "female",
+      "healthHistory_cardiac": "",
+      "height": 158,
+      "id": "TARA2008_1754550007002",
+      "name": "Nisha",
+      "occupation": "Student",
+      "plannedSurgeries": "",
+      "relationship": "daughter",
+      "risky-hobbies": "yes",
+      "smoker": "no",
+      "weight": 50
+    }
+  ],
+  "coverAndCost": {
+    "policy-type": "family-floater",
+    "policy-term": "3-years",
+    "sum-insured": "3000000",
+    "annual-budget": "150000",
+    "payment-mode": "annual",
+    "room-preference": "any",
+    "co-pay": "no",
+    "ncb-importance": "high",
+    "maternity-cover": "no",
+    "opd-cover": "opd-dental",
+    "top-up": "yes"
+  },
+  "existingCoverage": {
+    "existing-policies": "Existing DEF plan since 2018",
+    "port-policy": "yes",
+    "critical-illness": "both",
+    "worldwide-cover": "yes"
+  },
+  "claimsAndService": {
+    "past-claims": "Chemo (cashless) 2021",
+    "claim-issues": "None",
+    "service-expectations": "Seamless port with NCB",
+    "network-hospitals": "Medanta, HCG"
+  },
+  "financeAndDocumentation": {
+    "tax-benefit": "yes",
+    "id-proof": [
+      "aadhaar"
+    ],
+    "address_proof_details": "Aadhaar + electricity bill"
+  },
+  "otherNotes": {
+    "other_preferences": "Dedicated case manager",
+    "formFilledBy": "Agent: Agent1 | Timestamp: 10/08/2025, 12:33:28 pm"
+  }
+}
+
+output:
+{
+  "member1": {
+    "name": "Sunita",
+    "age": "45",
+    "gender": "Female",
+    "disease_code": "CANC"
+    "status": "active"
+  },
+  "member2": {
+    "name": "Arjun",
+    "age": "47",
+    "gender": "All",
+    "disease_code": "DIAB"
+    "status": "active"
+  },
+  "member3": {
+    "name": "Nisha",
+    "child_age": "17",
+    "gender": "Female",
+    "disease_code": "GENERAL"
+    "status": "active"
+  },
+  "comprehensive_cover": {
+    "disease_code": "GENERAL",
+    "age": "47",
+    "status": "active",
+    "gender": "Female"
+  }
+}
+
+
+Note: 
+1. The comprehensive cover is the default cover. 
+2. The disease_code is always the "GENERAL" 
+3. The age in Comprehensive cover is the max age of the members. 
+4. The gender in Comprehensive cover is from member1.
+5. The status is always "active"

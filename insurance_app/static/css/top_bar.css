@@ -1,0 +1,40 @@
+/* This CSS file is dedicated to styling the top navigation bar of the application. 
+   It is used by: Health_Insurance_Requirement_Form.html */
+
+/* --- Top Bar --- */
+.top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 0.75rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    z-index: 1000;
+    box-sizing: border-box;
+}
+
+.user-info {
+    font-size: 1rem;
+    color: #b30f0f;
+}
+
+.user-id {
+    font-weight: 1000;
+    color: #1c3a5e;
+}
+
+.btn-logout {
+    background-color: #e53e3e;
+    color: white;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.btn-logout:hover {
+    background-color: #c53030;
+}

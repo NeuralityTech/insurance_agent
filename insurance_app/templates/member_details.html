@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Details</title>
+    <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Member Details</h1>
+        </header>
+        <main>
+            <form id="member-details-form" class="form-container">
+                <fieldset>
+                    <legend>Personal & Professional</legend>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="member-name">Full Name *</label>
+                            <input type="text" id="member-name" name="member_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="relationship">Relationship *</label>
+                            <select id="relationship" name="relationship">
+                                <option value="">Select Relationship</option>
+                                <option value="spouse">Spouse</option>
+                                <option value="son">Son</option>
+                                <option value="daughter">Daughter</option>
+                                <option value="father">Father</option>
+                                <option value="mother">Mother</option>
+                                <option value="father-in-law">Father-in-law</option>
+                                <option value="mother-in-law">Mother-in-law</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="occupation">Occupation</label>
+                            <input type="text" id="occupation" name="occupation" pattern="[A-Za-z\s]+" title="Please enter only letters and spaces.">
+                        </div>
+                        <div class="form-group">
+                            <label for="gender">Gender *</label>
+                            <select id="gender" name="gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <div id="Health-History-placeholder" class="section"></div>             
+
+                <div class="form-actions">
+                        <div id="member-error" class="error-message" style="display:none;color:red;margin-bottom:8px;"></div>
+                    <button type="submit" class="btn btn-primary">Save Member</button>
+                <button type="button" id="cancel-btn" class="btn btn-secondary">Cancel</button>
+                    <button type="reset" class="btn btn-secondary">Clear Form</button>
+                </div>
+            </form>
+        </main>
+    </div>
+    <script src="../js/disease_details.js"></script>
+    <script src="../js/member_details.js"></script>
+</body>
+</html>

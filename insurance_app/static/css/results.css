@@ -1,0 +1,59 @@
+:root{
+  --card-bg:#fff; --card-br:16px; --card-pad:1rem;
+  --muted:#6b7280; --ring:#e5e7eb; --shadow:0 8px 20px rgba(0,0,0,.06);
+}
+.personal-info{background:#fff;border-radius:var(--card-br);box-shadow:var(--shadow);padding:1rem 1.25rem;margin-bottom:1rem;}
+
+/* Carousel shell */
+#plans-carousel{position:relative;margin-block:1rem;}
+.carousel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;}
+.controls{display:flex;align-items:center;gap:.5rem}
+.nav-btn{border:1px solid var(--ring);background:#fff;border-radius:999px;padding:.25rem .6rem;cursor:pointer}
+.index{font-size:.9rem;color:var(--muted)}
+.helper{font-size:.85rem;color:var(--muted);margin-top:.25rem}
+
+/* Horizontal card rail with snap */
+.cards{
+  display:grid;
+  grid-auto-flow:column;
+  grid-auto-columns:minmax(280px, 32%);   /* visible ~3 on desktop */
+  gap:1rem;
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;
+  padding-bottom:.5rem;
+}
+.cards:focus{outline:2px solid var(--ring);outline-offset:2px}
+.cards::-webkit-scrollbar{height:10px}
+.cards::-webkit-scrollbar-track{background:#f3f4f6;border-radius:6px}
+.cards::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:6px}
+
+.plan-card{
+  scroll-snap-align:start;
+  background:var(--card-bg);
+  border-radius:var(--card-br);
+  box-shadow:var(--shadow);
+  padding:var(--card-pad);
+  display:flex; flex-direction:column; justify-content:space-between;
+  min-height:220px;
+}
+.plan-card h3{margin:0 0 .5rem 0;font-size:1.05rem}
+.rank-pill{font-size:.8rem;background:#eef2ff;border:1px solid #e5e7eb;border-radius:999px;padding:.1rem .5rem;margin-right:.5rem}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:.25rem .75rem;margin-top:.5rem}
+.kv .k{color:var(--muted)}
+.kv .v{font-weight:600}
+
+/* Responsive number of visible cards */
+@media (max-width:1023px){ .cards{ grid-auto-columns:minmax(280px, 48%);} }  /* ~2 visible */
+@media (max-width:639px){  .cards{ grid-auto-columns:minmax(260px, 90%);} }   /* ~1 visible */
+
+/* Hide/show table */
+.is-hidden{display:none}
+
+/* Print-friendly */
+@media print{
+  .cards{grid-auto-columns:48%; gap:.5rem; overflow:visible}
+  .plan-card{box-shadow:none; border:1px solid #ddd}
+  .controls,.helper,.table-toggle{display:none}
+}
+.people { list-style-type: none; padding: 0; margin: 0; }

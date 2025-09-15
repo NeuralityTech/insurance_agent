@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan Analysis Dashboard - {{ unique_id }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/top_bar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/analysis_dashboard.css') }}">
+</head>
+<body>
+    <header class="top-bar">
+        <div class="user-info">
+            Logged in as: <span id="logged-in-user" class="user-id"></span>
+        </div>
+        <button id="logout-btn" class="btn btn-logout">Logout</button>
+    </header>
+    <div class="container">
+        <div class="page-header">
+            <h1>Plan Analysis Dashboard</h1>
+            <p><strong>Client ID:</strong> {{ unique_id }}</p>
+            {% if supervisor_status is defined %}
+            {% set sup = (supervisor_status or '') | string | lower %}
+            <p>
+                <strong>Supervisor Approval:</strong>
+                {% if sup == 'approved' %}
+                    <span class="badge success">{{ sup|upper }}</span>
+                {% elif sup == 'rejected' %}
+                    <span class="badge danger">{{ sup|upper }}</span>
+                {% elif sup == 'pending' %}
+                    <span class="badge warning">{{ sup|upper }}</span>
+                {% else %}
+                    <span class="badge na">{{ (sup if sup else 'NA')|upper }}</span>
+                {% endif %}
+            </p>
+            {% endif %}
+        </div>
+
+        <section class="personal-info" id="personalInfo"></section>
+
+        <section class="plan-options-section">
+            <div class="tabs">
+                <button class="tab-link active" data-tab="tab-best-floater">Best Floater</button>
+                <button class="tab-link" data-tab="tab-combinations">Combination Packages</button>
+                <button class="tab-link" data-tab="tab-browse-all">Browse All</button>
+            </div>
+
+            <div id="tab-best-floater" class="tab-content active">
+                <div class="cards-container vertical" id="floater-plans-container">
+                    <!-- Option 1: Best Family Floater plans will be rendered here by JS -->
+                </div>
+            </div>
+
+            <div id="tab-combinations" class="tab-content">
+                <div id="combo-packages-container">
+                    <!-- Option 2 & 3: Combination packages will be rendered here by JS -->
+                </div>
+            </div>
+
+            <div id="tab-browse-all" class="tab-content">
+                <div id="plans-table">
+                    <h2>All Ranked Plans</h2>
+                    <p>The following plans have been scored based on how well they fit the entire family's needs, including specific ailments.</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Plan Name</th>
+                                <th>Category</th>
+                                <th>Ailment Score</th>
+                                {% if analysis.member_score_columns %}
+                                    {% for col_name in analysis.member_score_columns %}
+                                        <th>{{ col_name.replace('Score_', '') }} Score</th>
+                                    {% endfor %}
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for plan in analysis.all_ranked_plans %}
+                                <tr>
+                                    <td><span class="badge">{{ loop.index }}</span></td>
+                                    <td>{{ plan['Plan Name'] }}</td>
+                                    <td>{{ plan.Category }}</td>
+                                    <td>{{ '%.2f'|format(plan.AilmentScore|float) }}</td>
+                                    {% if analysis.member_score_columns %}
+                                        {% for col_name in analysis.member_score_columns %}
+                                            <td>{{ '%.2f'|format(plan[col_name]|float) }}</td>
+                                        {% endfor %}
+                                    {% endif %}
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="{{ 4 + (analysis.member_score_columns|length if analysis.member_score_columns else 0) }}">No ranked plans available.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <div class="form-actions" style="text-align: left; padding-top: 20px;">
+            <button type="button" id="btn-home" class="btn">Home</button>
+            <button type="button" onclick="window.history.back()" class="btn btn-secondary">Back</button>
+            {% set sup = (supervisor_status or '') | string | lower %}
+            <button type="button"
+                    id="proceedBtn"
+                    class="btn btn-secondary{% if sup in ['approved','pending'] %} is-disabled{% endif %}"
+                    {% if sup in ['approved','pending'] %}disabled aria-disabled="true" title="Disabled due to supervisor status"{% endif %}>
+                Proceed
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const clientData = JSON.parse('{{ client_data|tojson|safe }}');
+        const analysisData = JSON.parse('{{ analysis|tojson|safe }}');
+        const supervisorStatus = JSON.parse('{{ supervisor_status|tojson|safe }}');
+    </script>
+    <script src="{{ url_for('static', filename='js/analysis_dashboard.js') }}" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loggedInUserEl = document.getElementById('logged-in-user');
+            const logoutBtn = document.getElementById('logout-btn');
+            const homeBtn = document.getElementById('btn-home');
+            const userId = localStorage.getItem('loggedInUserId');
+            if (userId) {
+                loggedInUserEl.textContent = userId;
+            } else {
+                window.location.href = 'Main_login.html';
+            }
+            logoutBtn.addEventListener('click', function() {
+                localStorage.removeItem('loggedInUserId');
+                window.location.href = 'Main_login.html';
+            });
+            if (homeBtn) {
+                homeBtn.addEventListener('click', () => window.location.href = '/html/Health_Insurance_Requirement_Form.html');
+            }
+        });
+    </script>
+
+<div id="confirmationModal" class="modal-overlay is-hidden">
+        <div class="modal-content">
+            <button class="modal-close" id="closeModalBtn" aria-label="Close">&times;</button>
+            <h2>Selected Plans</h2>
+            <ul id="selectedPlansList"></ul>
+            <p class="approval-message">Waiting for supervisor approval.</p>
+        </div>
+    </div>
+</body>
+</html>

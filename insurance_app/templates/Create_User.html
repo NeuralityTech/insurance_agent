@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New User</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+                    <link rel="stylesheet" href="{{ url_for('static', filename='css/create_user.css') }}?v=1.6">
+</head>
+<body>
+    <header class="top-bar">
+        <div class="user-info">
+            Logged in as: <span class="user-id">superadmin</span>
+        </div>
+        <div class="header-buttons">
+            <a href="/superadmin/dashboard" class="btn btn-home">Home</a>
+            <a href="/logout" class="btn btn-logout">Logout</a>
+        </div>
+    </header>
+    <div class="container">
+        <header class="page-header">
+            <h1>Create New User</h1>
+            <p>For Super Admin use only.</p>
+        </header>
+
+        <form id="create-user-form" novalidate>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name">Full Name *</label>
+                    <input type="text" id="name" name="name" required pattern="[a-zA-Z' ]+" title="Only letters, spaces, and apostrophes are allowed.">
+                    <div class="error-message"></div>
+                </div>
+                <div class="form-group">
+                    <label for="user_id">User ID *</label>
+                    <input type="text" id="user_id" name="user_id" required pattern="[a-zA-Z0-9]+" title="Only letters and numbers are allowed.">
+                    <div class="error-message"></div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="password">Password *</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" required title="Password can include alphanumeric and special characters.">
+                        <button type="button" class="toggle-password">Show</button>
+                    </div>
+                    <div class="error-message"></div>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password *</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                    <div class="error-message"></div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="gender">Gender *</label>
+                    <select id="gender" name="gender" required>
+                        <option value="" disabled selected>Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="phone_number">Phone Number *</label>
+                    <input type="tel" id="phone_number" name="phone_number" required pattern="[6789][0-9]{9}" maxlength="10" title="Must be a 10-digit number starting with 6, 7, 8, or 9.">
+                    <div class="error-message"></div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="role">Role *</label>
+                    <select id="role" name="role" required>
+                        <option value="" disabled selected>Select Role</option>
+                        <option value="admin">Admin</option>
+                        <option value="agent">Agent</option>
+                        <option value="supervisor">Supervisor</option>
+                    </select>
+                </div>
+                <div class="form-group is-hidden" id="supervisor-group">
+                    <label for="supervisor_id">Assign Supervisor *</label>
+                    <select id="supervisor_id" name="supervisor_id">
+                        <!-- Supervisor options will be loaded here -->
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn">Create User</button>
+            </div>
+        </form>
+        <div id="message-container"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/create_user.js') }}?v=1.2"></script>
+</body>
+</html>

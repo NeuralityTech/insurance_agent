@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposed Plans</title>
+    <link rel="stylesheet" href="../static/css/common.css">
+    <link rel="stylesheet" href="../static/css/top_bar.css">
+    <link rel="stylesheet" href="/static/css/proposed_plans.css">
+</head>
+<body>
+    <header class="top-bar">
+        <div class="user-info">
+            Logged in as: <span id="logged-in-user" class="user-id"></span>
+        </div>
+        <button id="logout-btn" class="btn btn-logout">Logout</button>
+    </header>
+    <div class="container">
+        <header class="page-header">
+            <h1>Proposed Plans</h1>
+        </header>
+        <main>
+            <div id="proposed-container" class="form-container">
+                <!-- Proposed plans will be injected here by proposed_plans.js -->
+            </div>
+            <div class="form-actions">
+                <button type="button" id="btn-home" class="btn">Home</button>
+                <button type="button" onclick="window.history.back()" class="btn btn-secondary">Back</button>
+                <button type="button" id="analysis-btn" class="btn btn-info">Select Plan</button>
+                </div>
+        </main>
+    </div>
+    <script src="../static/js/proposed_plans_v2.js" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loggedInUserEl = document.getElementById('logged-in-user');
+            const logoutBtn = document.getElementById('logout-btn');
+
+            const userId = localStorage.getItem('loggedInUserId');
+            if (userId) {
+                loggedInUserEl.textContent = userId;
+            } else {
+                window.location.href = 'Main_login.html';
+            }
+
+            logoutBtn.addEventListener('click', function() {
+                localStorage.removeItem('loggedInUserId');
+                window.location.href = 'Main_login.html';
+            });
+        });
+    </script>
+    <script>
+        document.getElementById('analysis-btn').addEventListener('click', function() {
+            // Extract unique_id from the current URL, assuming it's a query parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const uniqueId = urlParams.get('unique_id');
+            if (uniqueId) {
+                window.location.href = `/proposed_plans/${uniqueId}`;
+            } else {
+                alert('Could not find a unique ID to analyze.');
+            }
+        });
+        // Home button
+        (function(){
+            const homeBtn = document.getElementById('btn-home');
+            if (homeBtn) {
+                homeBtn.addEventListener('click', () => window.location.href = '/html/Health_Insurance_Requirement_Form.html');
+            }
+        })();
+    </script>
+</body>
+</html>

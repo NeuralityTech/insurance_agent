@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self Details</title>
+    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/health_history.css">
+</head>
+<body>
+
+    <fieldset>
+       <legend>Health & Vitals</legend>
+            <div class="form-row compact-row">
+                <div class="form-group">
+                    <label for="self-dob">Date of Birth *</label>
+                    <input type="date" id="self-dob" name="self-dob" required>
+                </div>
+                <div class="form-group fixed-width-group">
+                    <label for="self-age">Age</label>
+                    <input type="text" id="self-age" name="self-age" readonly class="readonly-field">
+                    <div id="self-age-error" class="error-message" style="display:none;color:red;font-size:0.9em;margin-top:4px;"></div>
+                </div>
+                <div class="form-group fixed-width-group">
+                    <label for="self-height">Height (cm) *</label>
+                    <input type="text" id="self-height" name="self-height" placeholder="e.g., 175" pattern="[0-9.]*" title="Please enter only numbers." min="0" required>
+                </div>
+                <div class="form-group fixed-width-group">
+                    <label for="self-weight">Weight (kg) *</label>
+                    <input type="text" id="self-weight" name="self-weight" placeholder="e.g., 70" pattern="[0-9.]*" title="Please enter only numbers." min="0" required>
+                </div>
+                <div class="form-group fixed-width-group">
+                    <label for="self-bmi">BMI</label>
+                    <input type="text" id="self-bmi" name="self-bmi" readonly class="readonly-field">
+                </div>
+            </div>
+        <fieldset>
+            <legend>Medical History & Lifestyle</legend>
+            <fieldset class="sub-fieldset">
+                <legend>Disease Details</legend>
+                <div id="disease-list">
+                    <!-- Cardiac Problems -->
+                    <div class="disease-entry">
+                        <div class="disease-header">
+                            <label class="checkbox-container">
+                                <input type="checkbox" name="disease" value="cardiac">
+                                Cardiac Problems
+                            </label>
+                        </div>
+                        <div class="disease-details-container">
+                            <textarea name="cardiac_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Diabetes -->
+                    <div class="disease-entry">
+                        <div class="disease-header">
+                            <label class="checkbox-container">
+                                <input type="checkbox" name="disease" value="diabetes">
+                                Diabetes
+                            </label>
+                        </div>
+                        <div class="disease-details-container">
+                            <textarea name="diabetes_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Cancer -->
+                    <div class="disease-entry">
+                        <div class="disease-header">
+                            <label class="checkbox-container">
+                                <input type="checkbox" name="disease" value="cancer">
+                                Cancer
+                            </label>
+                        </div>
+                        <div class="disease-details-container">
+                            <textarea name="cancer_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Critical Illnesses -->
+                    <div class="disease-entry">
+                        <div class="disease-header">
+                            <label class="checkbox-container">
+                                <input type="checkbox" name="disease" value="critical_illness">
+                                Critical Illnesses
+                            </label>
+                        </div>
+                        <div class="disease-details-container">
+                            <textarea name="critical_illness_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Other -->
+                    <div class="disease-entry">
+                        <div class="disease-header">
+                            <label class="checkbox-container">
+                                <input type="checkbox" name="disease" value="other">
+                                Other
+                            </label>
+                        </div>
+                        <div class="disease-details-container">
+                            <textarea name="other_details" placeholder="Please specify and provide details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <div class="form-row">
+                <div class="form-group span-2">
+                    <label for="planned-surgeries">Any Planned Surgeries/Hospitalization in the next 6-12 months?</label>
+                    <textarea id="planned-surgeries" name="planned-surgeries" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Smoker:</label>
+                    <div class="radio-group">
+                        <label class="radio-label"><input type="radio" name="smoker" value="yes"> Yes</label>
+                        <label class="radio-label"><input type="radio" name="smoker" value="no" checked> No</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Alcohol Consumption:</label>
+                    <div class="radio-group">
+                        <label class="radio-label"><input type="radio" name="alcohol" value="yes"> Yes</label>
+                        <label class="radio-label"><input type="radio" name="alcohol" value="no" checked> No</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Risky Hobbies (adventure sports, etc.)</label>
+                    <div class="radio-group">
+                        <label class="radio-label"><input type="radio" name="risky-hobbies" value="yes"> Yes</label>
+                        <label class="radio-label"><input type="radio" name="risky-hobbies" value="no" checked> No</label>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+    </fieldset>
+
+    <script src="/static/js/disease_details.js"></script>
+
+</body>
+</html>

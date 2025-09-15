@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/superadmin_dashboard.css') }}">
+</head>
+<body>
+    <header class="top-bar">
+        <div class="user-info">
+            Logged in as: <span class="user-id">superadmin</span>
+        </div>
+        <button id="logout-btn" class="btn btn-logout">Logout</button>
+    </header>
+    <div class="container">
+        <header class="page-header">
+            <h1>Super Admin Dashboard</h1>
+            <p>User Management & System Control</p>
+        </header>
+
+        <nav class="dashboard-nav">
+            <a href="/superadmin/create_user" class="nav-card">
+                <h2>Create New User</h2>
+                <p>Add new admins, supervisors, or agents to the system.</p>
+            </a>
+            <a href="/superadmin/update_user" class="nav-card">
+                <h2>Update Existing User</h2>
+                <p>Modify roles, supervisors, or other user details.</p>
+            </a>
+            <!-- Add more links to other admin functions here as needed -->
+        </nav>
+    </div>
+
+    <script>
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            // Basic logout, redirects to login page
+            window.location.href = '/';
+        });
+    </script>
+</body>
+</html>

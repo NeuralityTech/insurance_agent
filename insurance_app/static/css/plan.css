@@ -1,0 +1,160 @@
+/* plan.css - styles for Plan selection page */
+
+body {
+    margin: 0;
+    font-family: 'Open Sans', sans-serif;
+    background-color: #f7f9fc;
+    color: #333;
+}
+
+.plan-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 1rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.plan-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.plan-header h1 {
+    margin: 0;
+    font-size: 2rem;
+    color: #1c3a5e;
+}
+
+.plan-header p {
+    margin: 0.5rem 0 0;
+    color: #555;
+}
+
+.plan-list {
+    display: block;
+}
+
+.plan-card {
+    position: relative;
+    display: block;
+    background: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.plan-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.plan-card:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 6px 16px rgba(59,130,246,0.1);
+}
+
+.plan-card input[type="radio"]:checked + .plan-content {
+    border-color: #3b82f6;
+    box-shadow: 0 6px 16px rgba(59,130,246,0.15);
+}
+
+.plan-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.plan-title {
+    margin-top: 0;
+    font-size: 1.25rem;
+    color: #1c3a5e;
+}
+
+.plan-description {
+    margin: 0.5rem 0 1rem;
+    font-size: 0.95rem;
+    color: #555;
+}
+
+.plan-details {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.plan-details li {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.btn-submit-plan {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    color: #fff;
+    background: #3b82f6;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-submit-plan:hover {
+    background: #2563eb;
+}
+
+/* Member grouped section */
+.member-group {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.75rem 1rem 1rem;
+    margin-bottom: 1.25rem;
+    background: #fafbff;
+}
+
+.member-group > legend {
+    font-weight: 600;
+    color: #1c3a5e;
+    padding: 0 0.5rem;
+}
+
+/* Member details shown as label chips */
+.member-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.5rem 0 0.75rem;
+}
+
+.detail-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: #eef2ff;
+    border: 1px solid #e0e7ff;
+    color: #1e3a8a;
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+}
+
+.chip-key { font-weight: 600; }
+.chip-val { font-weight: 500; }
+
+/* Scrollable plans list per member */
+.member-plan-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0.75rem;
+    max-height: 260px; /* adjust as needed */
+    overflow-y: auto;
+    padding-right: 0.25rem; /* room for scrollbar */
+}

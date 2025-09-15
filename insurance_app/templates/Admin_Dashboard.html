@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Plan Management</title>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 2rem; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { color: #0056b3; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+        th, td { padding: 12px 15px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #0056b3; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; width: 100px; }
+        .message { padding: 1rem; margin-top: 1rem; border-radius: 4px; display: none; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <!-- Top bar header with login details and logout button -->
+    <header class="top-bar">
+        <div class="user-info">
+            Logged in as: <span id="logged-in-user" class="user-id"></span>
+        </div>
+        <button id="logout-btn" class="btn btn-logout">Logout</button>
+    </header>
+
+    <div class="container">
+        <h1>Plan Management Dashboard</h1>
+        {% if error %}
+            <div class="message error" style="display: block;">{{ error }}</div>
+        {% endif %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Plan Name</th>
+                    <th>Status</th>
+                    <th>Created On</th>
+                    <th>Last Modified Date</th>
+                    <th>Last Modified By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for plan in plans %}
+                <tr>
+                    <td>{{ plan['Plan Name'] }}</td>
+                    <td>
+                        <select class="status-select" data-plan-name="{{ plan['Plan Name'] }}">
+                            <option value="Active" {% if plan.Status == 'Active' %}selected{% endif %}>Active</option>
+                            <option value="Inactive" {% if plan.Status == 'Inactive' %}selected{% endif %}>Inactive</option>
+                        </select>
+                    </td>
+                    <!-- Created/Modified info with requested defaults -->
+                    <td>{{ plan.get('Created On', '16-08-2025') }}</td>
+                    <td>{{ plan.get('Last Modified Date', '16-08-2025') }}</td>
+                    <td>{{ plan.get('Last Modified By', 'admin') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5">No plans found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button id="save-changes-btn" class="btn" disabled>Save Changes</button>
+        <div id="notification" class="notification"></div>
+    </div>
+
+    <script>
+        // Header: show logged-in user and wire logout
+        document.addEventListener('DOMContentLoaded', () => {
+            const uid = localStorage.getItem('loggedInUserId') || '';
+            const userSpan = document.getElementById('logged-in-user');
+            if (userSpan) userSpan.textContent = uid || 'Unknown';
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    localStorage.removeItem('loggedInUserId');
+                    window.location.href = '/';
+                });
+            }
+        });
+
+        // Simple notification helper used below
+        function showNotification(message, type) {
+            const n = document.getElementById('notification');
+            if (!n) return;
+            n.textContent = message;
+            n.className = `notification ${type || ''}`;
+            n.style.display = 'block';
+            setTimeout(() => {
+                n.style.display = 'none';
+            }, 3000);
+        }
+
+        const statusDropdowns = document.querySelectorAll('.status-select');
+        let changes = {};
+        let meta = {}; // { planName: { lastModifiedOn, lastModifiedBy } }
+
+        statusDropdowns.forEach(dropdown => {
+            dropdown.addEventListener('change', function() {
+                const planName = this.dataset.planName;
+                const newStatus = this.value;
+                changes[planName] = newStatus;
+
+                // Prepare meta but DO NOT update UI yet; only on successful save
+                const uid = localStorage.getItem('loggedInUserId') || '';
+                const d = new Date();
+                const dd = String(d.getDate()).padStart(2, '0');
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const yyyy = d.getFullYear();
+                const today = `${dd}-${mm}-${yyyy}`; // DD-MM-YYYY
+                meta[planName] = { lastModifiedOn: today, lastModifiedBy: uid };
+
+                const saveBtn = document.getElementById('save-changes-btn');
+                saveBtn.disabled = false;
+                saveBtn.classList.add('enabled');
+            });
+        });
+
+        document.getElementById('save-changes-btn').addEventListener('click', function() {
+            if (Object.keys(changes).length === 0) {
+                showNotification('No changes to save.', 'info');
+                return;
+            }
+
+            fetch('/admin/update_plan_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ updates: changes, meta }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('All changes saved successfully!', 'success');
+                    alert('All changes saved successfully!');
+                    // Now update the UI for the rows that were saved
+                    Object.keys(changes).forEach((planName) => {
+                        const sel = document.querySelector(`select.status-select[data-plan-name="${CSS.escape(planName)}"]`);
+                        if (!sel) return;
+                        const row = sel.closest('tr');
+                        const info = meta[planName] || {};
+                        const lastModDateCell = row && row.querySelector('td:nth-child(4)');
+                        const lastModByCell = row && row.querySelector('td:nth-child(5)');
+                        if (lastModDateCell && info.lastModifiedOn) lastModDateCell.textContent = info.lastModifiedOn;
+                        if (lastModByCell && info.lastModifiedBy) lastModByCell.textContent = info.lastModifiedBy;
+                    });
+                    changes = {}; // Reset changes
+                    meta = {};
+                    document.getElementById('save-changes-btn').disabled = true;
+                    document.getElementById('save-changes-btn').classList.remove('enabled');
+                } else {
+                    const msg = 'Error saving changes: ' + (data.error || 'Unknown error');
+                    showNotification(msg, 'error');
+                    alert(msg);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An unexpected error occurred while saving.', 'error');
+                alert('An unexpected error occurred while saving.');
+            });
+        });
+    </script>
+</body>
+</html>

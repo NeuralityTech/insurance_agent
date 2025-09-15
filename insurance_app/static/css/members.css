@@ -1,0 +1,76 @@
+/* ==================================
+   MEMBERS TABLE STYLES
+   (Members_to_be_Covered.html)
+   ================================== */
+
+/* --- Table Container & Scrollbar --- */
+.table-container {
+    overflow-x: auto;
+    margin-bottom: 1.5em;
+    /* For Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #888 #f1f1f1;
+}
+
+/* For Webkit browsers (Chrome, Safari) */
+.table-container::-webkit-scrollbar {
+    height: 12px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* --- Table Structure --- */
+.table-container table {
+    min-width: 1000px; /* Force table to be wide, triggering scroll */
+    width: 100%;
+    border-collapse: separate;
+    table-layout: fixed;
+    border-spacing: 0.25em 0;
+}
+
+/* --- Column Widths --- */
+.table-container .col-xlarge { width: 18%; } /* Chronic Illness */
+.table-container .col-large { width: 12%; } /* Name, Relationship, Occupation */
+.table-container .col-medium { width: 8%; } /* DOB, Gender */
+.table-container .col-small { width: 8%; }  /* Age, Height, Weight, BMI */
+.table-container .col-action { width: 4%; }  /* Delete button */
+
+/* --- Cell & Header Styling --- */
+th {
+    padding: 0.75em;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid #ddd;
+}
+
+td {
+    padding: 0;
+    vertical-align: middle;
+    border-bottom: 1px solid #ddd;
+}
+
+.cell-wrapper {
+    padding: 0.25em;
+}
+
+/* --- Input Styling within Table --- */
+.table-container .cell-wrapper input,
+.table-container .cell-wrapper select,
+.table-container .cell-wrapper textarea {
+    width: 100%;
+    padding: 0.75em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}

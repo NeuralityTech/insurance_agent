@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Primary Contact Information</title>
+    <link rel="stylesheet" href="../css/common.css">
+
+</head>
+<body>
+
+    <fieldset>
+        <form>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>User Type</label>
+                    <div class="radio-group">
+                        <input type="radio" id="new-user" name="user_type" value="new" checked>
+                        <label for="new-user">New User</label>
+                        <input type="radio" id="existing-user" name="user_type" value="existing">
+                        <label for="existing-user">Existing User</label>
+                    </div>
+                </div>
+                <div class="form-group" style="display:flex; align-items:center; gap:16px;">
+                    <label for="unique-id">UniqueID</label>
+                    <input type="text" id="unique-id" name="unique_id" pattern="^[a-zA-Z0-9']+_[6-9][0-9]{9}$" title="UniqueID must be in the format FullName_PhoneNumber (e.g., JohnDoe_9876543210)" readonly class="readonly-field">
+                    <span class="error-message" id="unique-id-error"></span>
+                    <span class="status-message" id="unique-id-status"></span>
+                    
+                </div>
+                <div class="form-group counter-group" style="display:inline-flex; align-items:center; margin-left:16px; border:1px solid #ccc; padding:8px; border-radius:4px;">
+                    <label>Count</label>
+                    <div id="people-counter" style="display:flex; gap:16px;">
+                        <span>Adults: <strong id="adult-count">0</strong></span>
+                        <span>Children: <strong id="child-count">0</strong></span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="full-name">Full Name *</label>
+                    <input type="text" id="full-name" name="applicant_name" required pattern="[A-Za-z][A-Za-z.'\s]*" title="Name must start with a letter and can only contain letters, spaces, and apostrophes.">
+                    <span class="error-message" id="full-name-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="gender">Gender *</label>
+                    <select id="gender" name="gender" required>
+                        <option value="">Select</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="occupation">Occupation</label>
+                    <input type="text" id="occupation" name="occupation" pattern="[A-Za-z\s]+" title="Please enter only letters and spaces.">
+                    <span class="error-message" id="occupation-error"></span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required  title="Please enter a valid email address.">
+                    <span class="error-message" id="email-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone *</label>
+                    <input type="tel" id="phone" name="phone" required pattern="[6-9][0-9]{9}" maxlength="10" title="Please enter a valid 10-digit Indian phone number.">
+                    <span class="error-message" id="phone-error"></span>
+                </div>
+            </div>
+
+
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="address">Address *</label>
+                    <input type="text" id="address" name="address" required>
+                    <span class="error-message" id="address-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="hubs">Preferred Treatment Cities/Hubs</label>
+                    <input type="text" id="hubs" name="hubs" placeholder="Hyderabad, Mumbai," pattern="[A-Za-z0-9,\s]+" title="Please enter only letters, numbers, commas, and spaces.">
+                    <span class="error-message" id="hubs-error"></span>
+                </div>
+            </div>
+        </form>
+    </fieldset>
+
+    <script src="../js/validation.js"></script>
+</body>
+</html>

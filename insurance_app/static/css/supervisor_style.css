@@ -1,0 +1,178 @@
+/* This CSS file contains styles specifically for the supervisor dashboard page. 
+   It is used by: Supervisor_Form.html */
+
+/* Base font */
+body {
+    font-family: Arial, sans-serif;
+}
+
+/* Supervisor Dashboard Container */
+.supervisor-dashboard {
+    max-width: 900px; /* Wider than login for more content */
+    padding: 2rem;
+    text-align: left;
+}
+
+/* Header within the card */
+.supervisor-dashboard .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #007bff; /* Blue background */
+    color: #ffffff; /* White text */
+    border-radius: 16px;
+    padding: 1rem 1.25rem; /* 1rem top/bottom, 1.25rem left/right */
+    margin-bottom: 1.5rem;
+}
+
+.supervisor-dashboard .page-header h1 {
+    font-size: 1.75rem;
+    margin: 0;
+}
+
+.supervisor-dashboard .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.supervisor-dashboard .header-actions span {
+    font-size: 0.9rem;
+    color: #ffffff;
+}
+
+/* Main content layout */
+.dashboard-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.card {
+    background-color: #f9fafb;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    flex-grow: 1;
+}
+
+.agent-selection {
+    flex-basis: 40%;
+}
+
+.client-details {
+    flex-basis: 60%;
+}
+
+.card h2 {
+    font-family: 'Lora', serif;
+    font-size: 1.25rem;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #1c3a5e;
+}
+
+/* Form elements styling */
+.form-group select {
+    width: 100%;
+}
+
+.form-list {
+    margin-top: 1rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.form-list p {
+    color: #777;
+}
+
+/* Client Search Form */
+.client-search-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 1.5rem;
+}
+
+.client-search-form .form-group {
+    flex-grow: 1;
+    margin-bottom: 0;
+}
+
+.client-search-form input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.btn-search {
+    background-color: #1c3a5e;
+    color: white;
+    white-space: nowrap;
+}
+
+.btn-search:hover {
+    background-color: #2c4a6e;
+}
+
+
+/* Buttons */
+.btn {
+    padding: 0.5rem 1rem; /* Provided size */
+    font-size: 1rem; /* Provided font size */
+    border-radius: 8px; /* Provided radius */
+    cursor: pointer;
+    border: 1px solid #007bff; /* Provided border color */
+    background-color: #007bff; /* Provided button color */
+    color: #ffffff; /* Provided font color */
+    font-weight: 600;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none; /* ensure not accessible when disabled */
+}
+
+/* Improve contrast for header logout button on blue header */
+.btn-logout {
+    background-color: transparent;
+    border-color: #ffffff;
+    color: #ffffff;
+}
+
+.btn-logout:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.btn-approve {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: #ffffff;
+}
+
+.btn-approve:hover {
+    background-color: #0069d9; /* slightly darker */
+    border-color: #0069d9;
+}
+
+.btn-reject {
+    background-color: #ef4444; /* Red-500 */
+    color: white;
+}
+
+.btn-reject:hover {
+    background-color: #dc2626; /* Red-600 */
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}

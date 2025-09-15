@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cover & Cost Preferences</title>
+    <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+
+    <fieldset>
+
+        <!-- Policy Type and Term -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="policy-type">Policy Type</label>
+                <select id="policy-type" name="policy-type">
+                    <option>Select</option>
+                    <option value="family-floater">Family Floater</option>
+                    <option value="individual">Individual for each member</option>
+                    <option value="mix">Mix (Some Individual + Some Floater)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="policy-term">Preferred Policy Term</label>
+                <select id="policy-term" name="policy-term">
+                    <option>Select</option>
+                    <option value="1-year">1 Year</option>
+                    <option value="2-years">2 Years (Multi-Year)</option>
+                    <option value="3-years">3 Years (Multi-Year)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Sum Insured, Budget, and Payment Mode -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="sum-insured">Desired Sum Insured (₹)</label>
+                <input type="text" id="sum-insured" name="sum-insured" pattern="[0-9]+" title="Please enter only numbers.">
+            </div>
+            <div class="form-group">
+                <label for="annual-budget">Annual Budget (₹) PA</label>
+                <input type="text" id="annual-budget" name="annual-budget" pattern="[0-9]+" title="Please enter only numbers.">
+            </div>
+            <div class="form-group">
+                <label for="payment-mode">Payment Mode Preference</label>
+                <select id="payment-mode" name="payment-mode">
+                    <option>Select</option>
+                    <option value="annual">Annual</option>
+                    <option value="half-yearly">Half-Yearly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="monthly">Monthly (if available)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Room, Co-pay, and NCB -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="room-preference">Room Preference</label>
+                <select id="room-preference" name="room-preference">
+                    <option>Select</option>
+                    <option value="any">Any available</option>
+                    <option value="shared">Shared room</option>
+                    <option value="private">Single private room</option>
+                    <option value="no-cap-icu">No cap on ICU</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="co-pay">Willing to take Co-pay/Deductible?</label>
+                <select id="co-pay" name="co-pay">
+                    <option>Select</option>
+                    <option value="no">No</option>
+                    <option value="small">Yes - Small (5-10%)</option>
+                    <option value="higher">Yes - Higher to reduce premium</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="ncb-importance">No-Claim Bonus Importance</label>
+                <select id="ncb-importance" name="ncb-importance">
+                    <option>Select</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Maternity, OPD, and Top-up -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="maternity-cover">Maternity Cover Needed?</label>
+                <select id="maternity-cover" name="maternity-cover">
+                    <option>Select</option>
+                    <option value="no">No</option>
+                    <option value="yes-immediate">Yes (Immediate)</option>
+                    <option value="yes-future">May be in future (2-3 years)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="opd-cover">OPD / Dental / Preventive Check-up</label>
+                <select id="opd-cover" name="opd-cover">
+                    <option>Select</option>
+                    <option value="no">No</option>
+                    <option value="preventive">Preventive only</option>
+                    <option value="opd-dental">OPD & Dental too</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="top-up">Top-up/Super Top-up Openness</label>
+                <select id="top-up" name="top-up">
+                    <option>Select</option>
+                    <option value="no">No</option>
+                    <option value="yes">Yes, open to it</option>
+                    <option value="only-base">Prefer only base plan</option>
+                </select>
+            </div>
+        </div>
+
+    </fieldset>
+    </details>
+</body>
+</html>

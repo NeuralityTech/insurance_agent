@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervisor Dashboard</title>
+    <link rel="stylesheet" href="../css/style_1.css">
+    <link rel="stylesheet" href="../css/supervisor_style.css">
+    <style>
+        /* Ensure page can scroll */
+        body { overflow-y: auto; }
+        /* Constrain main content height */
+        main.supervisor-dashboard { max-height: 100vh; overflow-y: auto; }
+        /* Make client-details panel scrollable */
+        .client-details { max-height: 80vh; overflow-y: auto; }
+        /* Hide old Agent Search */
+        .agent-selection { display: none; }
+        /* Scrollable summary container */
+        #client-details-content { max-height: 70vh; overflow-y: auto; padding-right: 1rem; }
+        .accordion { border: 1px solid #ccc; border-radius: 4px; }
+        .accordion-item { border-bottom: 1px solid #ccc; }
+        .accordion-item:last-child { border-bottom: none; }
+        .accordion-header { background-color: #f1f1f1; color: #444; cursor: pointer; padding: 18px; width: 100%; text-align: left; border: none; outline: none; transition: 0.4s; font-size: 1rem; font-weight: bold; }
+        .accordion-header.active, .accordion-header:hover { background-color: #ddd; }
+        .accordion-content { padding: 0 18px; background-color: white; max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; }
+        .styled-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .styled-table th, .styled-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .styled-table th { background-color: #f2f2f2; }
+
+        /* Supervisor status badge */
+        .status-row { margin: 0 0 1rem 0; }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: 1px solid transparent;
+        }
+        .status-approved { background: #dcfce7; color: #166534; border-color: #22c55e; }
+        .status-rejected { background: #fee2e2; color: #991b1b; border-color: #ef4444; }
+        .status-pending, .status-na { background: #e0f2fe; color: #075985; border-color: #38bdf8; }
+
+        /* Simple modal for decision comments */
+        .modal-backdrop {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 20;
+        }
+        .modal {
+            background: #fff; border-radius: 12px; padding: 1rem; width: min(600px, 92vw); box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .modal h3 { margin-top: 0; margin-bottom: 0.75rem; }
+        .modal textarea { width: 100%; min-height: 120px; border: 1px solid #ccc; border-radius: 8px; padding: 0.75rem; font-size: 1rem; box-sizing: border-box; }
+        .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.75rem; }
+
+        /* Toast Notification */
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            margin-left: -125px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 16px;
+            position: fixed;
+            z-index: 10;
+            left: 50%;
+            bottom: 30px;
+            font-size: 1rem;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+        @keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
+    </style>
+</head>
+<body>
+    <div class="watermark top-left">Neurality Technologies</div>
+
+    <main class="login-container supervisor-dashboard">
+        <header class="page-header">
+            <h1>Supervisor Dashboard</h1>
+            <div class="header-actions">
+                <span>Supervisor ID: SUPERVISOR01</span>
+                <button class="btn btn-logout">Logout</button>
+            </div>
+        </header>
+
+        <div class="dashboard-main">
+            <section class="card dashboard-stats">
+                <h2>Dashboard</h2>
+                <div class="stats-container" style="display: flex; gap: 1rem;">
+                    <button class="stat-card" data-type="agents" style="flex:1; padding:1rem; border:1px solid #ccc; text-align:center; background:#fff; cursor:pointer;"><div class="stat-value" id="stat-agents" style="font-size:2rem">0</div><div class="stat-label">Agents</div></button>
+                    <button class="stat-card" data-type="clients" style="flex:1; padding:1rem; border:1px solid #ccc; text-align:center; background:#fff; cursor:pointer;"><div class="stat-value" id="stat-clients" style="font-size:2rem">0</div><div class="stat-label">Clients</div></button>
+                    <button class="stat-card" data-type="supervisors" style="flex:1; padding:1rem; border:1px solid #ccc; text-align:center; background:#fff; cursor:pointer;"><div class="stat-value" id="stat-supervisors" style="font-size:2rem">0</div><div class="stat-label">Supervisors</div></button>
+                </div>
+            </section>
+            <section class="card" id="directory-section" style="margin-top:1rem; display:none;">
+                <h2 id="directory-title" style="margin-bottom:0.5rem;">Directory</h2>
+                <div id="directory-content"></div>
+            </section>
+            <section class="card agent-selection">
+                <h2>Agent Search</h2>
+                <div class="form-group">
+                    <label for="agent-select">Select Agent:</label>
+                    <select id="agent-select" name="agent-select">
+                        <option value="" disabled selected>Select an agent</option>
+                        <option value="agent1">Agent 1</option>
+                        <option value="agent2">Agent 2</option>
+                        <option value="agent3">Agent 3</option>
+                    </select>
+                </div>
+                <div class="form-list">
+                    <p>Forms submitted by the selected agent will appear here.</p>
+                    <!-- Example of a form item -->
+                    <!-- <div class="form-item">Form #12345 - John Doe</div> -->
+                </div>
+            </section>
+
+            <section class="card client-details">
+                <h2>Client Search</h2>
+                <div class="client-search-form">
+                    <label for="client-uniqueid-search">Unique ID</label>
+                    <input type="text" id="client-uniqueid-search" placeholder="Search by Unique ID..." style="flex-grow: 1;">
+                    <button class="btn btn-search">Search</button>
+                </div>
+                <div id="client-details-content">
+                    <p>Search for a client to see their details.</p>
+                </div>
+                <div id="comprehensive-details-container" style="margin-top: 1.5rem;"></div>
+                <div class="form-actions">
+                    <button class="btn btn-approve">Approve</button>
+                    <button class="btn btn-reject">Reject</button>
+                </div>
+                <!-- Decision comments modal -->
+                <div id="decision-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+                    <div class="modal">
+                        <h3 id="decision-modal-title">Supervisor Comments</h3>
+                        <p style="margin-top:0; color:#555">Please provide comments for this decision. This field is mandatory.</p>
+                        <textarea id="decision-comments" placeholder="Enter your comments..."></textarea>
+                        <div class="modal-actions">
+                            <button id="decision-cancel" class="btn" style="background:#6b7280; border-color:#6b7280;">Cancel</button>
+                            <button id="decision-confirm" class="btn">Confirm</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+    <div id="toast-notification" class="toast"></div>
+<script>
+    // --- Helper Functions ---
+    function showToast(message) {
+        const toast = document.getElementById('toast-notification');
+        toast.textContent = message;
+        toast.className = 'toast show';
+        setTimeout(() => {
+            toast.className = toast.className.replace('show', '');
+        }, 3000);
+    }
+
+    function buildSection(title, data) {
+        let sectionHtml = `<fieldset><legend>${title}</legend><div class="summary-grid">`;
+        for (const [key, value] of Object.entries(data)) {
+            if (value) {
+                const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${value}</div>`;
+            }
+        }
+        sectionHtml += `</div></fieldset>`;
+        return sectionHtml;
+    }
+
+    function buildSummaryHTML(summaryData) {
+        let html = '';
+        if (summaryData.primaryContact) {
+            html += buildSection('Primary Contact', summaryData.primaryContact);
+        }
+        if (summaryData.healthHistory) {
+            html += buildSection('Proposer\'s Health Details', summaryData.healthHistory);
+        }
+        if (summaryData.members && summaryData.members.length) {
+            html += '<fieldset><legend>Members to be Covered</legend>';
+            summaryData.members.forEach(member => {
+                html += '<div class="summary-member-card">';
+                const memberFieldsOrder = ['name', 'relationship', 'occupation', 'gender', 'dob', 'age', 'height', 'weight', 'bmi', 'plannedSurgeries', 'smoker', 'alcohol', 'riskyHobbies'];
+                memberFieldsOrder.forEach(field => {
+                    const fieldValue = member[field];
+                    if (fieldValue) {
+                        const formattedKey = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        html += `<div class="summary-item"><strong>${formattedKey}:</strong> ${fieldValue}</div>`;
+                    }
+                });
+                if (member.healthHistory && typeof member.healthHistory === 'object') {
+                    Object.entries(member.healthHistory).forEach(([disease, detail]) => {
+                        if (!disease || !detail) return;
+                        const formattedKey = disease.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ' Details';
+                        html += `<div class="summary-item"><strong>${formattedKey}:</strong> ${detail}</div>`;
+                    });
+                }
+                html += '</div>';
+            });
+            html += '</fieldset>';
+        }
+        if (summaryData.coverAndCost) {
+            html += buildSection('Cover & Cost Preferences', summaryData.coverAndCost);
+        }
+        if (summaryData.existingCoverage) {
+            html += buildSection('Existing Coverage & Portability', summaryData.existingCoverage);
+        }
+        if (summaryData.claimsAndService) {
+            html += buildSection('Claims & Service History', summaryData.claimsAndService);
+        }
+        if (summaryData.financeAndDocumentation) {
+            html += buildSection('Finance & Documentation', summaryData.financeAndDocumentation);
+        }
+        if (summaryData.otherNotes) {
+            html += buildSection('Other Notes', summaryData.otherNotes);
+        }
+        return html;
+    }
+
+    function renderRankedPlans(plans) {
+        if (!plans || plans.length === 0) return '<p>No analyzed plans available.</p>';
+        let tableHtml = '<table class="styled-table"><thead><tr><th>Rank</th><th>Plan Name</th><th>Final Score</th></tr></thead><tbody>';
+        plans.forEach(plan => {
+            tableHtml += `<tr><td>${plan.Rank}</td><td>${plan['Plan Name']}</td><td>${plan.Score_MemberAware.toFixed(2)}</td></tr>`;
+        });
+        tableHtml += '</tbody></table>';
+        return tableHtml;
+    }
+
+    function renderChosenPlans(plans) {
+        if (!plans || plans.length === 0) return '<p>No plans chosen yet.</p>';
+        let listHtml = '<ul>';
+        plans.forEach(plan => {
+            listHtml += `<li>${plan}</li>`;
+        });
+        listHtml += '</ul>';
+        return listHtml;
+    }
+
+    function renderComprehensiveDetails(data) {
+        const container = document.getElementById('comprehensive-details-container');
+        const rawStatus = (data.supervisor_status || 'PENDING');
+        const statusUpper = rawStatus.toUpperCase();
+        const statusClass = `status-${statusUpper.toLowerCase()}`;
+        container.innerHTML = `
+            <div class="status-row"><strong>Supervisor Status:</strong> <span id="supervisor-status" class="status-badge ${statusClass}">${statusUpper}</span></div>
+            <div class="accordion">
+                <div class="accordion-item">
+                    <button class="accordion-header">Form Summary</button>
+                    <div class="accordion-content">
+                        ${buildSummaryHTML(data.summary)}
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <button class="accordion-header">Proposed & Analyzed Plans</button>
+                    <div class="accordion-content">
+                        ${renderRankedPlans(data.ranked_plans)}
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <button class="accordion-header">Final Chosen Plans</button>
+                    <div class="accordion-content">
+                        ${renderChosenPlans(data.chosen_plans)}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const accordionHeaders = document.querySelectorAll('.accordion-header');
+        accordionHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                header.classList.toggle('active');
+                const content = header.nextElementSibling;
+                if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                } else {
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                }
+            });
+        });
+    }
+
+    async function updateApprovalStatus(uniqueId, status, comments) {
+        if (!uniqueId) {
+            showToast('Please search for a client first.');
+            return;
+        }
+        if (!comments || !comments.trim()) {
+            showToast('Comments are required.');
+            return;
+        }
+        try {
+            const response = await fetch(`/update_approval_status/${uniqueId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: status, comments: comments.trim() })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                showToast(`Client form has been ${status}.`);
+                // Update status badge if present
+                const badge = document.getElementById('supervisor-status');
+                if (badge) {
+                    const newUpper = status.toUpperCase();
+                    badge.textContent = newUpper;
+                    badge.className = `status-badge status-${newUpper.toLowerCase()}`;
+                }
+            } else {
+                showToast(`Error: ${result.error}`);
+            }
+        } catch (err) {
+            console.error('Error updating status:', err);
+            showToast('An error occurred while updating the status.');
+        }
+    }
+
+    // --- Main Execution ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const logoutBtn = document.querySelector('.btn-logout');
+        const searchBtn = document.querySelector('.btn-search');
+        const approveBtn = document.querySelector('.btn-approve');
+        const rejectBtn = document.querySelector('.btn-reject');
+        const detailsContainer = document.getElementById('client-details-content');
+        const searchInput = document.getElementById('client-uniqueid-search');
+        let lastFetchedStatus = '';
+        let lastSearchedId = '';
+
+        function normalizeStatus(s) {
+            return (s || '').toString().trim().toUpperCase();
+        }
+
+        function setDecisionButtonsEnabled(enabled) {
+            approveBtn.disabled = !enabled;
+            rejectBtn.disabled = !enabled;
+        }
+
+        function setButtonsByStatus(status, hasId) {
+            const s = normalizeStatus(status);
+            const enable = !!hasId && s === 'PENDING';
+            setDecisionButtonsEnabled(enable);
+        }
+
+        // Initial state: disabled (no unique ID searched)
+        setDecisionButtonsEnabled(false);
+
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                localStorage.removeItem('loggedInUserId');
+                window.location.href = 'Main_login.html';
+            });
+        }
+
+        // Disable buttons if input is empty or changed after a search
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                const val = searchInput.value.trim();
+                if (!val || val !== lastSearchedId) {
+                    setDecisionButtonsEnabled(false);
+                }
+            });
+        }
+
+        if (searchBtn) {
+            searchBtn.addEventListener('click', async () => {
+                const uniqueId = searchInput.value.trim();
+                if (!uniqueId) return;
+                detailsContainer.innerHTML = '<p>Fetching data...</p>';
+                document.getElementById('comprehensive-details-container').innerHTML = '';
+                try {
+                    const response = await fetch('/client_details/' + uniqueId);
+                    if (response.ok) {
+                        const data = await response.json();
+                        detailsContainer.innerHTML = '';
+                        renderComprehensiveDetails(data);
+                        lastFetchedStatus = normalizeStatus(data.supervisor_status);
+                        lastSearchedId = uniqueId;
+                        setButtonsByStatus(lastFetchedStatus, true);
+                    } else {
+                        detailsContainer.innerHTML = `<p>No record found for ID: ${uniqueId}</p>`;
+                        lastFetchedStatus = '';
+                        lastSearchedId = '';
+                        setDecisionButtonsEnabled(false);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    detailsContainer.innerHTML = '<p>Error fetching data.</p>';
+                    setDecisionButtonsEnabled(false);
+                }
+            });
+        }
+
+        // Decision modal logic
+        const modal = document.getElementById('decision-modal');
+        const modalTitle = document.getElementById('decision-modal-title');
+        const commentsEl = document.getElementById('decision-comments');
+        const confirmBtn = document.getElementById('decision-confirm');
+        const cancelBtn = document.getElementById('decision-cancel');
+        let pendingDecision = null; // 'approved' | 'rejected'
+
+        function openDecisionModal(type) {
+            pendingDecision = type;
+            commentsEl.value = '';
+            modalTitle.textContent = `Supervisor Comments for ${type.toUpperCase()}`;
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden', 'false');
+            commentsEl.focus();
+        }
+        function closeDecisionModal() {
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+            pendingDecision = null;
+        }
+
+        if (approveBtn) {
+            approveBtn.addEventListener('click', () => openDecisionModal('approved'));
+        }
+        if (rejectBtn) {
+            rejectBtn.addEventListener('click', () => openDecisionModal('rejected'));
+        }
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => closeDecisionModal());
+        }
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', async () => {
+                const uniqueId = searchInput.value.trim();
+                const comments = commentsEl.value;
+                if (!pendingDecision) return;
+                if (!comments || !comments.trim()) { showToast('Comments are required.'); return; }
+                await updateApprovalStatus(uniqueId, pendingDecision, comments);
+                // Immediately lock buttons after decision
+                setDecisionButtonsEnabled(false);
+                closeDecisionModal();
+            });
+        }
+
+        fetch('/stats')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('stat-agents').textContent = data.agents;
+                document.getElementById('stat-clients').textContent = data.clients;
+                document.getElementById('stat-supervisors').textContent = data.supervisors;
+            })
+            .catch(err => console.error('Error fetching stats:', err));
+
+        // Click handlers for dashboard cards
+        const directorySection = document.getElementById('directory-section');
+        const directoryTitle = document.getElementById('directory-title');
+        const directoryContent = document.getElementById('directory-content');
+
+        function renderTable(headers, rows) {
+            if (!rows || rows.length === 0) {
+                directoryContent.innerHTML = '<p>No data available.</p>';
+                return;
+            }
+            let thead = '<thead><tr>' + headers.map(h=>`<th>${h}</th>`).join('') + '</tr></thead>';
+            let tbody = '<tbody>' + rows.map(r=>'<tr>' + r.map(c=>`<td>${c}</td>`).join('') + '</tr>').join('') + '</tbody>';
+            directoryContent.innerHTML = `<table class="styled-table">${thead}${tbody}</table>`;
+        }
+
+        async function showAgents() {
+            directoryTitle.textContent = 'Agents';
+            directorySection.style.display = 'block';
+            directoryContent.innerHTML = '<p>Loading agents...</p>';
+            try {
+                const res = await fetch('/agents');
+                const data = await res.json();
+                const rows = data.map(a => [a.name || '-', a.user_id || '-', a.phone_number || '-']);
+                renderTable(['Name', 'User ID', 'Phone Number'], rows);
+            } catch (e) { directoryContent.innerHTML = '<p>Error loading agents.</p>'; }
+        }
+
+        async function showSupervisors() {
+            directoryTitle.textContent = 'Supervisors';
+            directorySection.style.display = 'block';
+            directoryContent.innerHTML = '<p>Loading supervisors...</p>';
+            try {
+                const res = await fetch('/supervisors');
+                const data = await res.json();
+                const rows = data.map(s => [
+                    s.name || '-', s.user_id || '-', s.phone_number || '-',
+                    (s.agents && s.agents.length ? s.agents.map(a=>`${a.name} (${a.user_id})`).join(', ') : '-')
+                ]);
+                renderTable(['Name', 'User ID', 'Phone Number', 'Agents Assigned'], rows);
+            } catch (e) { directoryContent.innerHTML = '<p>Error loading supervisors.</p>'; }
+        }
+
+        async function showClients() {
+            directoryTitle.textContent = 'Clients';
+            directorySection.style.display = 'block';
+            directoryContent.innerHTML = '<p>Loading clients...</p>';
+            try {
+                const res = await fetch('/clients');
+                const data = await res.json();
+                const rows = data.map(c => [c.name || '-', c.unique_id || '-', c.agent || '-', (c.supervisor_status || '').toUpperCase() || '-']);
+                renderTable(['Name', 'Unique ID', 'Agent', 'Supervisor Status'], rows);
+            } catch (e) { directoryContent.innerHTML = '<p>Error loading clients.</p>'; }
+        }
+
+        let currentType = null;
+        document.querySelectorAll('.stat-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const type = card.getAttribute('data-type');
+                const isVisible = directorySection.style.display !== 'none';
+                if (isVisible && currentType === type) {
+                    // Toggle off (collapse)
+                    directorySection.style.display = 'none';
+                    directoryContent.innerHTML = '';
+                    currentType = null;
+                    return;
+                }
+                // Show and load the selected directory
+                currentType = type;
+                if (type === 'agents') return showAgents();
+                if (type === 'clients') return showClients();
+                if (type === 'supervisors') return showSupervisors();
+            });
+        });
+    });
+</script>
+</body>
+</html>
