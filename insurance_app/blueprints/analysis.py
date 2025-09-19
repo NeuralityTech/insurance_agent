@@ -137,7 +137,7 @@ def get_proposed_plans(unique_id):
 
     union_of_plans = set(chain.from_iterable(p['plans'] for p in initial_plans.values() if p.get('plans')))
     if not union_of_plans:
-        return render_template('Analysis_Dashboard.html', unique_id=unique_id, analysis={'option_1_full_family_plans': {}, 'option_2_combination_plans': {'individual_plans': {}, 'combo_plans': {}}}, ranked_plans=[], supervisor_status=supervisor_status)
+        return render_template('Analysis_Dashboard.html', unique_id=unique_id, client_data=client_data, analysis={'option_1_full_family_plans': {}, 'option_2_combination_plans': {'individual_plans': {}, 'combo_plans': {}}}, ranked_plans=[], supervisor_status=supervisor_status)
     current_app.logger.info(f"Step 4: Found {len(union_of_plans)} unique plans for scoring: {union_of_plans}")
 
     try:
@@ -153,7 +153,7 @@ def get_proposed_plans(unique_id):
         return jsonify({'error': 'Could not load plan features from the database.'}), 500
 
     if plans_to_score_df.empty:
-        return render_template('Analysis_Dashboard.html', unique_id=unique_id, analysis={'option_1_full_family_plans': {}, 'option_2_combination_plans': {'individual_plans': {}, 'combo_plans': {}}}, ranked_plans=[], supervisor_status=supervisor_status)
+        return render_template('Analysis_Dashboard.html', unique_id=unique_id, client_data=client_data, analysis={'option_1_full_family_plans': {}, 'option_2_combination_plans': {'individual_plans': {}, 'combo_plans': {}}}, ranked_plans=[], supervisor_status=supervisor_status)
 
     primary_applicant_key = next(iter(derived_features))
     primary_applicant_gender = derived_features.get(primary_applicant_key, {}).get('gender', '').lower()

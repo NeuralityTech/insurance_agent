@@ -167,12 +167,6 @@ document.addEventListener('DOMContentLoaded', function() {
             errors.push({ el: budgetEl, msg: 'Annual Budget must be numeric.' });
         }
 
-        // 3) Primary contact age must be at least 26
-        const ageEl = document.querySelector('#Health-History-placeholder input[name="self-age"]');
-        const ageVal = parseInt(ageEl.value, 10);
-        if (isNaN(ageVal) || ageVal < 26) {
-            errors.push({ el: ageEl, msg: 'Primary contact must be at least 26 years old.' });
-        }
         
         if (errors.length) {
             const firstError = errors[0];

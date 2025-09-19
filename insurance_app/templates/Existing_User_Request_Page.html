@@ -5,11 +5,15 @@
     <script defer src="/static/js/logo.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Health Insurance Requirement Form</title>
+    <title>Existing User request Page</title>
     <link rel="stylesheet" href="../css/common.css">
     <link rel="stylesheet" href="../css/health_history.css">
     <link rel="stylesheet" href="../css/members.css">
     <link rel="stylesheet" href="../css/top_bar.css">
+    <style>
+        .loader-bar { display:flex; gap:.5rem; align-items:center; }
+        .loader-bar input { max-width: 240px; }
+    </style>
 </head>
 <body>
     <header class="top-bar">
@@ -24,11 +28,19 @@
         <header class="page-header">
     <link rel="stylesheet" href="/static/css/logo.css">
     <script defer src="/static/js/logo.js"></script>
-            <h1>Health Insurance Proposal Request</h1>
+            <h1>Existing User request Page</h1>
         </header>
         <form id="insurance-form" novalidate>
 
-        <p>Fill this to help your advisor match you with the right policy. All fields marked * are recommended.</p>
+        <div class="loader-bar">
+            <label for="load-unique-id"><strong>Unique ID</strong></label>
+            <input id="load-unique-id" type="text" placeholder="Enter Unique ID" />
+            <button id="btn-load" class="btn btn-secondary">Load</button>
+        </div>
+
+        <p id="load-status" class="muted"></p>
+
+        <!-- <p>Edit existing proposal details. After loading by Unique ID, you can modify and resubmit.</p> -->
 
         <div id="primary-contact-placeholder" class="section"></div>
         <div id="Health-History-placeholder" class="section"></div>
@@ -53,7 +65,8 @@
     <script src="../js/disease_details.js"></script>
     <script src="../js/other_notes.js"></script>
 
-    <!-- Main script to load sections -->
+    <!-- Prefill helper must load before script.js to register functions -->
+    <script src="../js/existing_prefill.js"></script>
     <script src="../js/script.js" defer></script>
     <script src="../js/data_fetch.js" defer></script>
 
@@ -61,21 +74,55 @@
         document.addEventListener('DOMContentLoaded', function() {
             const loggedInUserEl = document.getElementById('logged-in-user');
             const logoutBtn = document.getElementById('logout-btn');
+            const statusEl = document.getElementById('load-status');
+            const loadBtn = document.getElementById('btn-load');
+            const idInput = document.getElementById('load-unique-id');
 
-            // Display the logged-in user's ID
             const userId = localStorage.getItem('loggedInUserId');
             if (userId) {
                 loggedInUserEl.textContent = userId;
             } else {
-                // If no user ID is found, redirect to login
                 window.location.href = 'Main_login.html';
             }
 
-            // Handle logout
             logoutBtn.addEventListener('click', function() {
                 localStorage.removeItem('loggedInUserId');
                 window.location.href = 'Main_login.html';
             });
+
+            async function loadById(uniqueId) {
+                const uid = (uniqueId || '').trim();
+                statusEl.textContent = '';
+                if (!uid) { statusEl.textContent = 'Please enter Unique ID.'; return; }
+                try {
+                    const resp = await fetch(`/submission/${encodeURIComponent(uid)}`);
+                    if (!resp.ok) { statusEl.textContent = 'Submission not found.'; return; }
+                    const data = await resp.json();
+                    if (window.prefillExistingForm) {
+                        await window.prefillExistingForm(data);
+                        statusEl.textContent = 'Data loaded. You can edit and save.';
+                    } else {
+                        statusEl.textContent = 'Prefill function not available.';
+                    }
+                } catch (e) {
+                    console.error(e);
+                    statusEl.textContent = 'Failed to load data.';
+                }
+            }
+
+            loadBtn.addEventListener('click', async function(){
+                await loadById(idInput.value);
+            });
+
+            // Auto-load if navigated from Client Directory or via query param
+            const urlUid = new URLSearchParams(window.location.search).get('uid');
+            const storedUid = localStorage.getItem('selectedUniqueId');
+            const incomingUid = urlUid || storedUid;
+            if (incomingUid) {
+                idInput.value = incomingUid;
+                try { localStorage.removeItem('selectedUniqueId'); } catch {}
+                loadById(incomingUid);
+            }
         });
     </script>
 </body>

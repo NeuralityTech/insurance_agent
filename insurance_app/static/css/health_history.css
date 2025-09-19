@@ -62,6 +62,38 @@
     margin: 0;
 }
 
+/* --- Grouped section boxes (visual boundaries) --- */
+.group-box {
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    background: #fbfbfb;
+    padding: 0.75rem 0.9rem;
+    margin: 0.75rem 0 1.25rem; /* add bottom space so next group doesn't feel attached */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+/* Extra spacing specifically under the disease tiles group */
+#disease-list-group {
+    margin-bottom: 1.5rem;
+}
+
+/* Ensure inner rows don’t touch the group edges */
+.group-box > .form-row:first-child { margin-top: 0.1rem; }
+.group-box > .form-row:last-child { margin-bottom: 0.1rem; }
+
+/* Group headings and separator */
+.group-title {
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 .5rem 0;
+}
+
+.group-sep {
+    border: none;
+    border-top: 1px solid #e5e5e5;
+    margin: .6rem 0 .8rem;
+}
+
 .disease-header {
     margin-bottom: 0; /* Ensure no space below header */
     display: flex;

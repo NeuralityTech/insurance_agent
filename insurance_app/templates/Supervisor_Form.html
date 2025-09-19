@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="/static/css/logo.css">
+    <script defer src="/static/js/logo.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supervisor Dashboard</title>
@@ -81,13 +83,47 @@
             from {bottom: 30px; opacity: 1;}
             to {bottom: 0; opacity: 0;}
         }
+
+        /* Agent details popup */
+        .agent-popup {
+            position: absolute;
+            display: none;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            padding: 0.75rem;
+            z-index: 1000;
+            width: min(540px, 92vw);
+            max-height: 60vh;
+            overflow: auto;
+        }
+        .agent-popup h4 { margin: 0 0 .5rem 0; font-size: 1rem; }
+        .agent-popup .muted { color: #666; font-size: .9rem; margin: 0 0 .5rem 0; }
+        .agent-link { color: #0d6efd; cursor: pointer; text-decoration: underline; }
+
+        /* Mini dashboard summary */
+        #directory-summary { margin: .5rem 0 0.5rem 0; }
+        .mini-summary { display: flex; gap: .75rem; flex-wrap: nowrap; overflow-x: auto; }
+        .mini-card {
+            flex: 0 0 200px;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: .75rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+        .mini-card .label { color:#6b7280; font-size:.9rem; }
+        .mini-card .value { font-size:1.4rem; font-weight:600; }
     </style>
 </head>
 <body>
-    <div class="watermark top-left">Neurality Technologies</div>
+    <!-- watermark removed -->
 
     <main class="login-container supervisor-dashboard">
         <header class="page-header">
+    <link rel="stylesheet" href="/static/css/logo.css">
+    <script defer src="/static/js/logo.js"></script>
             <h1>Supervisor Dashboard</h1>
             <div class="header-actions">
                 <span>Supervisor ID: SUPERVISOR01</span>
@@ -106,8 +142,11 @@
             </section>
             <section class="card" id="directory-section" style="margin-top:1rem; display:none;">
                 <h2 id="directory-title" style="margin-bottom:0.5rem;">Directory</h2>
+                <div id="directory-summary"></div>
                 <div id="directory-content"></div>
             </section>
+            <!-- Popup for agent details -->
+            <div id="agent-popup" class="agent-popup" role="dialog" aria-hidden="true"></div>
             <section class="card agent-selection">
                 <h2>Agent Search</h2>
                 <div class="form-group">
@@ -379,7 +418,8 @@
                 detailsContainer.innerHTML = '<p>Fetching data...</p>';
                 document.getElementById('comprehensive-details-container').innerHTML = '';
                 try {
-                    const response = await fetch('/client_details/' + uniqueId);
+                    // Use lightweight endpoint for faster fetch without analysis
+                    const response = await fetch('/client_basic/' + uniqueId);
                     if (response.ok) {
                         const data = await response.json();
                         detailsContainer.innerHTML = '';
@@ -465,25 +505,125 @@
                 return;
             }
             let thead = '<thead><tr>' + headers.map(h=>`<th>${h}</th>`).join('') + '</tr></thead>';
-            let tbody = '<tbody>' + rows.map(r=>'<tr>' + r.map(c=>`<td>${c}</td>`).join('') + '</tr>').join('') + '</tbody>';
+            // Allow HTML content for cells (e.g., agent links)
+            let tbody = '<tbody>' + rows.map(r=>'<tr>' + r.map(c=>`<td>${c ?? ''}</td>`).join('') + '</tr>').join('') + '</tbody>';
             directoryContent.innerHTML = `<table class="styled-table">${thead}${tbody}</table>`;
+        }
+
+        function buildAgentPopupContent(agentName, clients) {
+            const total = clients.length;
+            if (!total) {
+                return `<h4>${agentName}</h4><p class="muted">No clients found for this agent.</p>`;
+            }
+            const counts = { PENDING: 0, APPROVED: 0, REJECTED: 0, NA: 0 };
+            clients.forEach(c => {
+                const raw = (c.supervisor_status ?? '').toString().trim().toUpperCase();
+                const s = raw || 'NA';
+                if (s === 'PENDING' || s === 'APPROVED' || s === 'REJECTED' || s === 'NA') {
+                    counts[s] += 1;
+                } else {
+                    counts.NA += 1; // any unknowns bucketed into NA
+                }
+            });
+            return `
+                <h4>${agentName}</h4>
+                <div class="muted">Summary</div>
+                <ul style="margin:.25rem 0 .5rem 1rem;">
+                    <li><strong>Total number of clients:</strong> ${total}</li>
+                    <li><strong>Number of clients in PENDING:</strong> ${counts.PENDING}</li>
+                    <li><strong>Number of clients in APPROVED:</strong> ${counts.APPROVED}</li>
+                    <li><strong>Number of clients in REJECTED:</strong> ${counts.REJECTED}</li>
+                    <li><strong>Number of clients in NA:</strong> ${counts.NA}</li>
+                </ul>
+            `;
+        }
+
+        function positionAndShowPopup(evt, html) {
+            const popup = document.getElementById('agent-popup');
+            popup.innerHTML = html;
+            const viewportPadding = 12;
+            let x = evt.clientX + 12 + window.scrollX;
+            let y = evt.clientY + 12 + window.scrollY;
+            popup.style.display = 'block';
+            // Adjust if overflowing viewport
+            const rect = popup.getBoundingClientRect();
+            const maxX = window.scrollX + document.documentElement.clientWidth - rect.width - viewportPadding;
+            const maxY = window.scrollY + document.documentElement.clientHeight - rect.height - viewportPadding;
+            x = Math.min(x, maxX);
+            y = Math.min(y, maxY);
+            popup.style.left = x + 'px';
+            popup.style.top = y + 'px';
+            popup.setAttribute('aria-hidden', 'false');
+        }
+
+        function hideAgentPopup() {
+            const popup = document.getElementById('agent-popup');
+            popup.style.display = 'none';
+            popup.setAttribute('aria-hidden', 'true');
+            popup.innerHTML = '';
         }
 
         async function showAgents() {
             directoryTitle.textContent = 'Agents';
             directorySection.style.display = 'block';
+            const summaryEl = document.getElementById('directory-summary');
+            if (summaryEl) summaryEl.innerHTML = '';
             directoryContent.innerHTML = '<p>Loading agents...</p>';
             try {
-                const res = await fetch('/agents');
-                const data = await res.json();
-                const rows = data.map(a => [a.name || '-', a.user_id || '-', a.phone_number || '-']);
+                const [resAgents, resClients] = await Promise.all([
+                    fetch('/agents'),
+                    fetch('/clients')
+                ]);
+                const agents = await resAgents.json();
+                const clients = await resClients.json();
+                // Group clients by agent (normalize to lowercase). Backend 'clients' returns field 'agent' which may be name OR user_id.
+                const map = clients.reduce((acc, c) => {
+                    const key = (c.agent || c.agent_id || c.owner || '').toString().trim().toLowerCase();
+                    if (!key) return acc;
+                    if (!acc[key]) acc[key] = [];
+                    acc[key].push(c);
+                    return acc;
+                }, {});
+
+                const rows = agents.map(a => {
+                    const uid = a.user_id || '';
+                    const name = a.name || '-';
+                    const link = `<a href="#" class="agent-link" data-agent-id="${uid}" data-agent-name="${name}">${name}</a>`;
+                    return [link, uid || '-', a.phone_number || '-'];
+                });
                 renderTable(['Name', 'User ID', 'Phone Number'], rows);
-            } catch (e) { directoryContent.innerHTML = '<p>Error loading agents.</p>'; }
+
+                // Wire up popups
+                directoryContent.querySelectorAll('.agent-link').forEach(el => {
+                    el.addEventListener('click', (evt) => {
+                        evt.preventDefault();
+                        const agentId = el.getAttribute('data-agent-id') || '';
+                        const agentName = el.getAttribute('data-agent-name') || '';
+                        const list = map[agentId.toLowerCase()] || map[agentName.toLowerCase()] || [];
+                        const html = buildAgentPopupContent(agentName, list);
+                        positionAndShowPopup(evt, html);
+                    });
+                });
+
+                // Hide on outside click or Escape
+                document.addEventListener('click', (e) => {
+                    const popup = document.getElementById('agent-popup');
+                    if (!popup.contains(e.target) && !e.target.classList.contains('agent-link')) {
+                        hideAgentPopup();
+                    }
+                }, { capture: true });
+                document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideAgentPopup(); });
+            } catch (e) {
+                console.error(e);
+                directoryContent.innerHTML = '<p>Error loading agents.</p>';
+            }
         }
 
         async function showSupervisors() {
             directoryTitle.textContent = 'Supervisors';
             directorySection.style.display = 'block';
+            const summaryEl = document.getElementById('directory-summary');
+            if (summaryEl) summaryEl.innerHTML = '';
             directoryContent.innerHTML = '<p>Loading supervisors...</p>';
             try {
                 const res = await fetch('/supervisors');
@@ -496,16 +636,64 @@
             } catch (e) { directoryContent.innerHTML = '<p>Error loading supervisors.</p>'; }
         }
 
+        function computeStatusSummary(clients){
+            const sum = { total: clients.length, PENDING: 0, APPROVED: 0, REJECTED: 0, NA: 0 };
+            clients.forEach(c => {
+                const s = (c.supervisor_status || '').toString().trim().toUpperCase() || 'NA';
+                if (sum.hasOwnProperty(s)) sum[s] += 1; else sum.NA += 1;
+            });
+            return sum;
+        }
+
+        function renderMiniSummary(sum){
+            return `
+                <div class="mini-summary">
+                    <div class="mini-card"><div class="label">Total Clients</div><div class="value">${sum.total}</div></div>
+                    <div class="mini-card"><div class="label">PENDING</div><div class="value">${sum.PENDING}</div></div>
+                    <div class="mini-card"><div class="label">APPROVED</div><div class="value">${sum.APPROVED}</div></div>
+                    <div class="mini-card"><div class="label">REJECTED</div><div class="value">${sum.REJECTED}</div></div>
+                    <div class="mini-card"><div class="label">NA</div><div class="value">${sum.NA}</div></div>
+                </div>
+            `;
+        }
+
         async function showClients() {
             directoryTitle.textContent = 'Clients';
             directorySection.style.display = 'block';
-            directoryContent.innerHTML = '<p>Loading clients...</p>';
+            const summaryEl = document.getElementById('directory-summary');
+            const contentEl = directoryContent;
+            summaryEl.innerHTML = '';
+            contentEl.innerHTML = '<p>Loading clients...</p>';
             try {
-                const res = await fetch('/clients');
-                const data = await res.json();
-                const rows = data.map(c => [c.name || '-', c.unique_id || '-', c.agent || '-', (c.supervisor_status || '').toUpperCase() || '-']);
+                // Fetch raw submissions to ensure we include all clients
+                const res = await fetch('/submissions');
+                const raw = await res.json();
+                const data = raw.map(r => {
+                    let name = r.full_name;
+                    if (!name && r.form_summary) {
+                        try {
+                            const fs = JSON.parse(r.form_summary);
+                            name = fs?.primaryContact?.applicant_name || '';
+                        } catch {}
+                    }
+                    return {
+                        name: name || '-',
+                        unique_id: r.unique_id,
+                        agent: r.agent || '-',
+                        supervisor_status: (r.supervisor_approval_status || '').toString().toUpperCase() || 'NA'
+                    };
+                });
+                const sum = computeStatusSummary(data);
+                summaryEl.innerHTML = renderMiniSummary(sum);
+                const rows = data.map(c => [
+                    c.name || '-',
+                    c.unique_id ? `<a href="/html/Existing_User_Request_Page.html?uid=${encodeURIComponent(c.unique_id)}">${c.unique_id}</a>` : '-',
+                    c.agent || '-',
+                    c.supervisor_status || '-'
+                ]);
                 renderTable(['Name', 'Unique ID', 'Agent', 'Supervisor Status'], rows);
-            } catch (e) { directoryContent.innerHTML = '<p>Error loading clients.</p>'; }
+                console.log('Clients loaded:', data.length);
+            } catch (e) { console.error(e); directoryContent.innerHTML = '<p>Error loading clients.</p>'; }
         }
 
         let currentType = null;
@@ -531,3 +719,4 @@
 </script>
 </body>
 </html>
+

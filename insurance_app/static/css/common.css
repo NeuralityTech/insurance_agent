@@ -362,3 +362,16 @@ select.input-error {
 .btn-home:hover {
     background-color: #5a6268;
 }
+
+/* --- Summary member card separators --- */
+/* Adds a clear visual separator between members in the summary/preview */
+.summary-member-card {
+    padding: 10px 0;            /* space inside each card */
+    margin: 6px 0;              /* space outside each card */
+    border-top: 1px dashed #bbb;/* dashed separator line */
+}
+
+/* Do not show the top border for the first member card */
+.summary-member-card:first-of-type {
+    border-top: none;
+}

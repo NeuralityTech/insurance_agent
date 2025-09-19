@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="/static/css/logo.css">
+    <script defer src="/static/js/logo.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neaurality - Health Insurance Login</title>
@@ -11,11 +13,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="watermark top-left">Neurality Technologies</div>
+    <!-- watermark removed -->
 
 
     <main class="login-container">
         <header>
+    <link rel="stylesheet" href="/static/css/logo.css">
+    <script defer src="/static/js/logo.js"></script>
             <h1>Health Insurance</h1>
         </header>
         <form id="login-form" action="#" method="post">
@@ -67,7 +71,7 @@
                 if (response.ok) {
                     localStorage.setItem('loggedInUserId', userId);
                     if (role === 'agent') {
-                        window.location.href = '/html/Health_Insurance_Requirement_Form.html';
+                        window.location.href = '/html/Health_Insurance_Proposal_Request.html';
                     } else if (role === 'supervisor') {
                         window.location.href = '/html/Supervisor_Form.html';
                     } else if (role === 'admin') {
@@ -101,3 +105,4 @@
     </script>
 </body>
 </html>
+

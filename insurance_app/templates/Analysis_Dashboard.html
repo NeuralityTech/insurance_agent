@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Disabled page logo: removing CSS/JS that injects the brand image -->
+    <!-- <link rel="stylesheet" href="/static/css/logo.css"> -->
+    <!-- <script defer src="/static/js/logo.js"></script> -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plan Analysis Dashboard - {{ unique_id }}</title>
@@ -10,6 +13,9 @@
 </head>
 <body>
     <header class="top-bar">
+    <!-- Disabled duplicate logo includes in header -->
+    <!-- <link rel="stylesheet" href="/static/css/logo.css"> -->
+    <!-- <script defer src="/static/js/logo.js"></script> -->
         <div class="user-info">
             Logged in as: <span id="logged-in-user" class="user-id"></span>
         </div>
@@ -24,16 +30,21 @@
             <p>
                 <strong>Supervisor Approval:</strong>
                 {% if sup == 'approved' %}
-                    <span class="badge success">{{ sup|upper }}</span>
+                    <span id="supervisor-status-badge" class="badge success">{{ sup|upper }}</span>
                 {% elif sup == 'rejected' %}
-                    <span class="badge danger">{{ sup|upper }}</span>
+                    <span id="supervisor-status-badge" class="badge danger">{{ sup|upper }}</span>
                 {% elif sup == 'pending' %}
-                    <span class="badge warning">{{ sup|upper }}</span>
+                    <span id="supervisor-status-badge" class="badge warning">{{ sup|upper }}</span>
                 {% else %}
-                    <span class="badge na">{{ (sup if sup else 'NA')|upper }}</span>
+                    <span id="supervisor-status-badge" class="badge na">{{ (sup if sup else 'NA')|upper }}</span>
                 {% endif %}
             </p>
             {% endif %}
+        </div>
+
+        <div id="supervisor-comments-block" class="supervisor-comments is-hidden">
+            <h3>Supervisor Comments</h3>
+            <p id="supervisor-comments-text"></p>
         </div>
 
         <section class="personal-info" id="personalInfo"></section>
@@ -66,6 +77,7 @@
                             <tr>
                                 <th>Rank</th>
                                 <th>Plan Name</th>
+                                <th>Policy Cover</th>
                                 <th>Category</th>
                                 <th>Ailment Score</th>
                                 {% if analysis.member_score_columns %}
@@ -80,6 +92,7 @@
                                 <tr>
                                     <td><span class="badge">{{ loop.index }}</span></td>
                                     <td>{{ plan['Plan Name'] }}</td>
+                                    <td>{{ plan.get('Policy_Code', '') }}</td>
                                     <td>{{ plan.Category }}</td>
                                     <td>{{ '%.2f'|format(plan.AilmentScore|float) }}</td>
                                     {% if analysis.member_score_columns %}
@@ -90,7 +103,7 @@
                                 </tr>
                             {% else %}
                                 <tr>
-                                    <td colspan="{{ 4 + (analysis.member_score_columns|length if analysis.member_score_columns else 0) }}">No ranked plans available.</td>
+                                    <td colspan="{{ 5 + (analysis.member_score_columns|length if analysis.member_score_columns else 0) }}">No ranked plans available.</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -116,6 +129,7 @@
         const clientData = JSON.parse('{{ client_data|tojson|safe }}');
         const analysisData = JSON.parse('{{ analysis|tojson|safe }}');
         const supervisorStatus = JSON.parse('{{ supervisor_status|tojson|safe }}');
+        const supervisorComments = JSON.parse('{{ (supervisor_comments or "")|tojson|safe }}');
     </script>
     <script src="{{ url_for('static', filename='js/analysis_dashboard.js') }}" defer></script>
     <script>
@@ -127,14 +141,16 @@
             if (userId) {
                 loggedInUserEl.textContent = userId;
             } else {
-                window.location.href = 'Main_login.html';
+                // Use absolute path to avoid 404s from relative redirects
+                window.location.href = '/';
             }
             logoutBtn.addEventListener('click', function() {
                 localStorage.removeItem('loggedInUserId');
-                window.location.href = 'Main_login.html';
+                // Hit the Flask logout endpoint which redirects to '/'
+                window.location.href = '/logout';
             });
             if (homeBtn) {
-                homeBtn.addEventListener('click', () => window.location.href = '/html/Health_Insurance_Requirement_Form.html');
+                homeBtn.addEventListener('click', () => window.location.href = '/html/Health_Insurance_Proposal_Request.html');
             }
         });
     </script>
@@ -149,3 +165,4 @@
     </div>
 </body>
 </html>
+

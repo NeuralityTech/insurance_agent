@@ -32,11 +32,17 @@ function populateForm(data) {
             } else if (type === 'checkbox') {
                 if (Array.isArray(value)) {
                     elements.forEach(el => {
-                        el.checked = value.includes(el.value);
+                        const shouldCheck = value.includes(el.value);
+                        el.checked = shouldCheck;
+                        // Ensure any UI that depends on checkbox state updates
+                        el.dispatchEvent(new Event('change', { bubbles: true }));
                     });
                 } else {
                     elements.forEach(el => {
-                        el.checked = (el.value === value);
+                        const shouldCheck = (el.value === value) || value === true;
+                        el.checked = shouldCheck;
+                        // Ensure any UI that depends on checkbox state updates
+                        el.dispatchEvent(new Event('change', { bubbles: true }));
                     });
                 }
             } else {
@@ -80,6 +86,11 @@ function initializeDataFetch() {
                     // First populate the form fields so primary contact age (#self-age) is available
                     populateForm(data);
 
+                    // Reinitialize disease visibility so checked states reflect in UI
+                    if (window.initializeDiseaseDetails) {
+                        window.initializeDiseaseDetails();
+                    }
+
                     // Populate members list AFTER form fields so counters can include primary contact
                     if (data.members) {
                         localStorage.setItem('members', JSON.stringify(data.members));
@@ -88,21 +99,34 @@ function initializeDataFetch() {
 
                     // Ensure people counter reflects both primary contact and members
                     if (window.updatePeopleCounter) window.updatePeopleCounter();
-                    // Populate disease checkboxes and details
+                    // Populate disease checkboxes and trigger UI updates via change event
                     if (data.healthHistory && Array.isArray(data.healthHistory.disease)) {
                         data.healthHistory.disease.forEach(val => {
                             const cb = document.querySelector(`input[name="disease"][value="${val}"]`);
-                            if (cb) {
-                                cb.checked = true;
-                                // Show details container
-                                const container = cb.closest('.disease-entry')?.querySelector('.disease-details-container');
-                                if (container) container.style.display = 'flex';
-                                // Set textarea value
-                                const txt = document.querySelector(`textarea[name="${val}_details"]`);
-                                if (txt) txt.value = data.healthHistory[`${val}_details`];
+                            if (!cb) return;
+                            cb.checked = true;
+                            // Fire change so initializeDiseaseDetails toggles visibility and enables textarea
+                            cb.dispatchEvent(new Event('change', { bubbles: true }));
+                            // Set textarea value if present
+                            const txt = document.querySelector(`textarea[name="${val}_details"]`);
+                            if (txt && typeof data.healthHistory[`${val}_details`] !== 'undefined') {
+                                txt.value = data.healthHistory[`${val}_details`];
                             }
                         });
                     }
+                    // Final safety sync: ensure all checked diseases show their details containers
+                    (function syncDiseaseUI(){
+                        document.querySelectorAll('.disease-entry').forEach(entry => {
+                            const cb = entry.querySelector('input[type="checkbox"][name="disease"]');
+                            const details = entry.querySelector('.disease-details-container');
+                            const ta = details ? details.querySelector('textarea') : null;
+                            if (!cb || !details || !ta) return;
+                            if (cb.checked) {
+                                details.style.display = 'flex';
+                                ta.disabled = false;
+                            }
+                        });
+                    })();
                     statusElement.textContent = 'Data loaded successfully!';
                     statusElement.style.color = 'green';
                 } else if (response.status === 404) {

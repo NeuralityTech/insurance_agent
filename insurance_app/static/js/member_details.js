@@ -85,7 +85,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // Populate other textareas and select fields
             document.getElementById('planned-surgeries').value = memberToEdit.plannedSurgeries || '';
             if (memberToEdit.riskyHobbies) {
-                document.querySelector('input[name=\"risky-hobbies\"][value=\"' + memberToEdit.riskyHobbies + '\"]').checked = true;
+                document.querySelector('input[name="risky-hobbies"][value="' + memberToEdit.riskyHobbies + '"]').checked = true;
+            }
+
+            // Populate Occupational Risk
+            if (memberToEdit.occupationalRisk) {
+                const occ = document.querySelector(`input[name="occupational-risk"][value="${memberToEdit.occupationalRisk}"]`);
+                if (occ) occ.checked = true;
+            }
+            if (memberToEdit.occupationalRiskDetails) {
+                const occDetails = document.getElementById('occupational-risk-details');
+                if (occDetails) occDetails.value = memberToEdit.occupationalRiskDetails;
             }
 
             // Populate radio buttons
@@ -138,7 +148,9 @@ document.addEventListener('DOMContentLoaded', () => {
             plannedSurgeries: document.getElementById('planned-surgeries').value,
             smoker: document.querySelector('input[name="smoker"]:checked')?.value || '',
             alcohol: document.querySelector('input[name="alcohol"]:checked')?.value || '',
-            riskyHobbies: document.querySelector('input[name=\"risky-hobbies\"]:checked')?.value || ''
+            riskyHobbies: document.querySelector('input[name="risky-hobbies"]:checked')?.value || '',
+            occupationalRisk: document.querySelector('input[name="occupational-risk"]:checked')?.value || '',
+            occupationalRiskDetails: document.getElementById('occupational-risk-details')?.value || ''
         };
 
         // Prevent duplicate members
@@ -193,6 +205,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!container) return;
         if (window.initializeDiseaseDetails) {
             window.initializeDiseaseDetails(container);
+        }
+        if (window.initializeOccupationalRisk) {
+            window.initializeOccupationalRisk(container);
         }
     }
 

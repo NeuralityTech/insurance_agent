@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="/static/css/logo.css">
+    <script defer src="/static/js/logo.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Self Details</title>
@@ -38,6 +40,7 @@
             <legend>Medical History & Lifestyle</legend>
             <fieldset class="sub-fieldset">
                 <legend>Disease Details</legend>
+                <div class="group-box" id="disease-list-group">
                 <div id="disease-list">
                     <!-- Cardiac Problems -->
                     <div class="disease-entry">
@@ -104,14 +107,20 @@
                         </div>
                     </div>
                 </div>
+                </div>
             </fieldset>
 
+            <div class="group-box">
             <div class="form-row">
                 <div class="form-group span-2">
                     <label for="planned-surgeries">Any Planned Surgeries/Hospitalization in the next 6-12 months?</label>
                     <textarea id="planned-surgeries" name="planned-surgeries" rows="2"></textarea>
                 </div>
             </div>
+            </div>
+
+            <div class="group-box">
+            <div class="group-title">Lifestyle Risk</div>
             <div class="form-row">
                 <div class="form-group">
                     <label>Smoker:</label>
@@ -135,6 +144,24 @@
                     </div>
                 </div>
             </div>
+
+            <hr class="group-sep"/>
+
+            <div class="group-title">Occupational Risk</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Exposed to hazardous occupation?</label>
+                    <div class="radio-group">
+                        <label class="radio-label"><input type="radio" name="occupational-risk" value="yes"> Yes</label>
+                        <label class="radio-label"><input type="radio" name="occupational-risk" value="no" checked> No</label>
+                    </div>
+                </div>
+                <div class="form-group span-2" id="occupational-risk-details-group" style="display:none;">
+                    <label for="occupational-risk-details">If yes, describe (e.g., mining, high-altitude, chemicals, heavy machinery)</label>
+                    <textarea id="occupational-risk-details" name="occupational-risk-details" rows="2"></textarea>
+                </div>
+            </div>
+            </div>
         </fieldset>
     </fieldset>
 
@@ -142,3 +169,4 @@
 
 </body>
 </html>
+

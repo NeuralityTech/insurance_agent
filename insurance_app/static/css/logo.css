@@ -1,0 +1,18 @@
+:root{--brand-logo-size:160px; --top-bar-offset:64px}
+.brand-logo{
+  position:fixed;
+  top:calc(var(--top-bar-offset) + 16px);
+  left:12px;
+  width:var(--brand-logo-size);
+  height:var(--brand-logo-size);
+  object-fit:contain;
+  z-index:900; /* Keep below header (header uses z-index:1000) */
+  border-radius:6px;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+  background:#0a0a0a;
+  padding:4px;
+}
+@media (max-width:480px){
+  :root{--brand-logo-size:40px; --top-bar-offset:56px}
+  .brand-logo{top:calc(var(--top-bar-offset) + 8px);left:8px}
+}

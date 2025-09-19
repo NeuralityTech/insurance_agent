@@ -39,8 +39,13 @@
         card.querySelector('.member-bmi').textContent = memberData.bmi || 'N/A';
         card.querySelector('.member-smoker').textContent = memberData.smoker || 'No';
         card.querySelector('.member-alcohol').textContent = memberData.alcohol || 'No';
-        card.querySelector('.member-risky-hobbies').textContent = memberData.risky_hobbies || 'None';
-        card.querySelector('.member-planned-surgeries').textContent = memberData.planned_surgeries || 'None';
+        card.querySelector('.member-risky-hobbies').textContent = memberData.riskyHobbies || 'None';
+        card.querySelector('.member-planned-surgeries').textContent = memberData.plannedSurgeries || 'None';
+        // Occupational Risk
+        const occRisk = (memberData.occupationalRisk || '').toString().trim();
+        card.querySelector('.member-occupational-risk').textContent = occRisk || 'No';
+        const occDetails = (memberData.occupationalRiskDetails || '').toString().trim();
+        card.querySelector('.member-occupational-risk-details').textContent = occDetails || 'None';
         let medicalHistoryStr;
 if (memberData.healthHistory && Object.keys(memberData.healthHistory).length) {
     medicalHistoryStr = Object.entries(memberData.healthHistory)

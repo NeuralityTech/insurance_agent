@@ -33,6 +33,21 @@ function renderPersonalInfo(client) {
     el.innerHTML = `<h2>Personal Information</h2><ul class="people">${lines.join("")}</ul>`;
 }
 
+// ----- Supervisor comments rendering -----
+function renderSupervisorComments(text) {
+    const block = document.getElementById('supervisor-comments-block');
+    const para = document.getElementById('supervisor-comments-text');
+    if (!block || !para) return;
+    const t = (text || '').toString().trim();
+    if (t) {
+        para.textContent = t;
+        block.classList.remove('is-hidden');
+    } else {
+        para.textContent = '';
+        block.classList.add('is-hidden');
+    }
+}
+
 // ----- Plan Rendering Logic -----
 function createPlanCard(p, index) {
     const memberScores = Object.keys(p)
@@ -208,15 +223,33 @@ document.addEventListener('DOMContentLoaded', () => {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ status: 'pending' })
-                    }).then(() => {
+                    }).then(res => res.json())
+                      .then(res => {
                         currentSupervisorStatus = 'pending';
                         plansChanged = false;
                         updateProceedState();
-                    }).catch(() => {
+                        // Update badge in header to reflect Pending status
+                        const badge = document.getElementById('supervisor-status-badge');
+                        if (badge) {
+                            badge.textContent = 'PENDING';
+                            badge.classList.remove('success', 'danger', 'na');
+                            badge.classList.add('warning');
+                        }
+                        // Show supervisor comments (backend supplies a default for pending if none provided)
+                        renderSupervisorComments(res && res.supervisor_comments);
+                      })
+                      .catch(() => {
                         currentSupervisorStatus = 'pending';
                         plansChanged = false;
                         updateProceedState();
-                    });
+                        const badge = document.getElementById('supervisor-status-badge');
+                        if (badge) {
+                            badge.textContent = 'PENDING';
+                            badge.classList.remove('success', 'danger', 'na');
+                            badge.classList.add('warning');
+                        }
+                        renderSupervisorComments('Resubmitted by agent; awaiting supervisor review.');
+                      });
                 } else {
                     alert('Failed to save selected plans. Please try again.');
                 }
@@ -246,4 +279,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initTabs();
     trackPlanChanges();
     updateProceedState();
+    // Initial render for supervisor comments if present
+    if (typeof supervisorComments !== 'undefined') {
+        renderSupervisorComments(supervisorComments);
+    }
 });

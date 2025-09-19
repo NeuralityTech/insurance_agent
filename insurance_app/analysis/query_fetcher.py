@@ -67,7 +67,7 @@ def clean_and_parse(raw_output):
     try:
         return json.loads(text)
     except json.JSONDecodeError as e:
-        print("Raw generated output:", repr(raw_output))
-        print("Failed to parse generated output as JSON:", e)
-        sys.exit(1)
+        current_app.logger.error("Raw generated output: %r", raw_output)
+        current_app.logger.error("Failed to parse generated output as JSON: %s", e)
+        raise ValueError("Failed to parse generated output as JSON.") from e
 

@@ -1,48 +1,6 @@
 // plan.js - dynamically display primary contact and member-specific plans using dummy JSON
 
-document.addEventListener('DOMContentLoaded', () => {
-    const data = {
-        primaryContact: {
-            fullName: "John Doe",
-            age: 35,
-            uniqueId: "JohnDoe_9876543210"
-        },
-        memberPlans: {
-            "member1": {
-                "name": "John Doe",
-                "details": { "age": 35, "relationship": "Self", "bmi": 24.2 },
-                "plans": [
-                    {
-                        planName: "Basic Plan",
-                        description: "Affordable coverage for individuals.",
-                        price: "$150/month",
-                        sumInsured: "$100,000",
-                        features: ["Hospitalization", "Doctor Consult"]
-                    },
-                    {
-                        planName: "Standard Plan",
-                        description: "Balanced coverage for small families.",
-                        price: "$250/month",
-                        sumInsured: "$250,000",
-                        features: ["OPD", "Pharmacy Cover"]
-                    }
-                ]
-            },
-            "member2": {
-                "name": "Jane Doe",
-                "details": { "age": 32, "relationship": "Spouse", "bmi": 22.8 },
-                "plans": [
-                    {
-                        planName: "Premium Plan",
-                        description: "Comprehensive coverage for families.",
-                        price: "$400/month",
-                        sumInsured: "$500,000",
-                        features: ["Maternity", "Dental", "Wellness"]
-                    }
-                ]
-            }
-        }
-    };
+
 
     // Display primary contact info
     const pcDiv = document.getElementById('primary-contact-info');

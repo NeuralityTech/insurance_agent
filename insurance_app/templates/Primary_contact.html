@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="/static/css/logo.css">
+    <script defer src="/static/js/logo.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Primary Contact Information</title>
@@ -8,29 +10,18 @@
 
 </head>
 <body>
-
     <fieldset>
         <form>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>User Type</label>
-                    <div class="radio-group">
-                        <input type="radio" id="new-user" name="user_type" value="new" checked>
-                        <label for="new-user">New User</label>
-                        <input type="radio" id="existing-user" name="user_type" value="existing">
-                        <label for="existing-user">Existing User</label>
-                    </div>
-                </div>
-                <div class="form-group" style="display:flex; align-items:center; gap:16px;">
-                    <label for="unique-id">UniqueID</label>
-                    <input type="text" id="unique-id" name="unique_id" pattern="^[a-zA-Z0-9']+_[6-9][0-9]{9}$" title="UniqueID must be in the format FullName_PhoneNumber (e.g., JohnDoe_9876543210)" readonly class="readonly-field">
+            <div class="form-row" style="display:flex; gap:8px; align-items:center; font-size:0.9rem;">
+                <div class="form-group" style="display:flex; align-items:center; gap:8px; flex:2;">
+                    <label for="unique-id" style="white-space:nowrap; min-width:80px;">UniqueID</label>
+                    <input type="text" id="unique-id" name="unique_id" pattern="^[a-zA-Z0-9']+_[6-9][0-9]{9}$" title="UniqueID must be in the format FullName_PhoneNumber (e.g., JohnDoe_9876543210)" readonly class="readonly-field" style="padding:4px 8px; height:32px; flex:1; min-width:0;">
                     <span class="error-message" id="unique-id-error"></span>
                     <span class="status-message" id="unique-id-status"></span>
-                    
                 </div>
-                <div class="form-group counter-group" style="display:inline-flex; align-items:center; margin-left:16px; border:1px solid #ccc; padding:8px; border-radius:4px;">
+                <div class="form-group counter-group" style="display:flex; align-items:center; gap:8px; flex:1; border:1px solid #ccc; padding:6px; border-radius:4px; font-size:0.9rem;">
                     <label>Count</label>
-                    <div id="people-counter" style="display:flex; gap:16px;">
+                    <div id="people-counter" style="display:flex; gap:8px;">
                         <span>Adults: <strong id="adult-count">0</strong></span>
                         <span>Children: <strong id="child-count">0</strong></span>
                     </div>
@@ -87,7 +78,7 @@
             </div>
         </form>
     </fieldset>
-
     <script src="../js/validation.js"></script>
 </body>
 </html>
+

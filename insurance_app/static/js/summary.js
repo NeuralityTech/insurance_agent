@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let html = '';
 
     // Function to create a summary section
-        /**
+    /**
      * Creates an HTML fieldset section for a given part of the summary data.
      * @param {string} title - The title of the section.
      * @param {object} data - The data object for the section.
@@ -25,7 +25,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let sectionHtml = `<fieldset><legend>${title}</legend><div class="summary-grid">`;
         for (const [key, value] of Object.entries(data)) {
             if (value) { // Only display if there is a value
-                const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                // Replace underscores and hyphens for nicer labels
+                const formattedKey = key.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${value}</div>`;
             }
         }
@@ -49,11 +50,16 @@ document.addEventListener('DOMContentLoaded', function() {
         summaryData.members.forEach(member => {
             html += '<div class="summary-member-card">';
             // Ordered display of member fields
-            const memberFieldsOrder = ['name','relationship','occupation','gender','dob','age','height','weight','bmi','plannedSurgeries','smoker','alcohol','riskyHobbies'];
+            const memberFieldsOrder = ['name','relationship','occupation','gender','dob','age','height','weight','bmi','plannedSurgeries','smoker','alcohol','riskyHobbies','occupationalRisk','occupationalRiskDetails'];
             memberFieldsOrder.forEach(field => {
                 const fieldValue = member[field];
-                if (fieldValue) {
-                    const formattedKey = field.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase());
+                const isNone = typeof fieldValue === 'string' && fieldValue.trim().toLowerCase() === 'none';
+                if (fieldValue && !isNone) {
+                    // Format labels: convert snake_case and camelCase to Title Case with spaces
+                    const formattedKey = field
+                        .replace(/_/g, ' ')
+                        .replace(/([a-z])([A-Z])/g, '$1 $2')
+                        .replace(/\b\w/g, l => l.toUpperCase());
                     html += `<div class=\"summary-item\"><strong>${formattedKey}:</strong> ${fieldValue}</div>`;
                 }
             });
@@ -65,8 +71,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += `<div class=\"summary-item\"><strong>${formattedKey}:</strong> ${detail}</div>`;
                 });
             }
+            // Fallback: if member has no plannedSurgeries, show proposer-level planned-surgeries if provided
+            if ((!member.plannedSurgeries || member.plannedSurgeries.toString().trim() === '' || (typeof member.plannedSurgeries === 'string' && member.plannedSurgeries.trim().toLowerCase() === 'none'))
+                && summaryData.healthHistory && summaryData.healthHistory['planned-surgeries']) {
+                html += `<div class=\"summary-item\"><strong>Planned Surgeries:</strong> ${summaryData.healthHistory['planned-surgeries']}</div>`;
+            }
             html += '</div>';
         });
+
         html += '</fieldset>';
     }
 

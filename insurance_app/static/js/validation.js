@@ -148,21 +148,6 @@ function initializeSelfDetailsValidation() {
                 if (window.updatePeopleCounter) window.updatePeopleCounter();
                 const errorDiv = container.querySelector('#self-age-error');
                 const sec = ageInput.closest('details');
-                if (age < 26) {
-                    if (sec && !sec.open) sec.open = true;
-                    ageInput.classList.add('input-error');
-                    if (errorDiv) {
-                        errorDiv.textContent = 'Primary contact must be at least 26 years old';
-                        errorDiv.style.display = 'block';
-                    }
-                    alert('Primary contact must be at least 26 years old');
-                } else {
-                    ageInput.classList.remove('input-error');
-                    if (errorDiv) {
-                        errorDiv.textContent = '';
-                        errorDiv.style.display = 'none';
-                    }
-                }
             }
         });
     }

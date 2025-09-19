@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="/static/css/logo.css">
+    <script defer src="/static/js/logo.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client Directory</title>
+  <link rel="stylesheet" href="../css/common.css" />
+  <link rel="stylesheet" href="../css/top_bar.css" />
+  <style>
+    .filters { display: grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap: 12px; margin: 16px 0; }
+    .filters .form-group { display:flex; flex-direction:column; gap:6px; }
+    .results { margin-top: 8px; }
+    .results table { width: 100%; border-collapse: collapse; background:#fff; }
+    .results th, .results td { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: left; }
+    .results tr:hover { background: #fafafa; }
+    .toolbar { display:flex; justify-content: space-between; align-items:center; margin-top: 8px; }
+    .count { font-size: 0.9rem; color:#555; }
+  </style>
+</head>
+<body>
+  <header class="top-bar">
+    <link rel="stylesheet" href="/static/css/logo.css">
+    <script defer src="/static/js/logo.js"></script>
+    <div class="user-info">Logged in as: <span id="logged-in-user" class="user-id"></span></div>
+    <button id="logout-btn" class="btn btn-logout">Logout</button>
+  </header>
+  <div class="container">
+    <h1>Client Directory</h1>
+    <p>Filter clients by Supervisor, Status, or Unique ID.</p>
+
+    <div class="filters">
+      <div class="form-group">
+        <label for="filter-supervisor">Supervisor</label>
+        <select id="filter-supervisor">
+          <option value="">All Supervisors</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="filter-status">Status</label>
+        <select id="filter-status">
+          <option value="">All Statuses</option>
+          <option value="approved">Approved</option>
+          <option value="pending">Pending</option>
+          <option value="rejected">Rejected</option>
+          <option value="na">NA</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="filter-uid">Unique ID</label>
+        <input id="filter-uid" type="text" placeholder="Search Unique ID" />
+      </div>
+      <div class="form-group" style="align-self:end;">
+        <button id="btn-apply" class="btn">Apply</button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="count" id="result-count">0 results</div>
+      <div>
+        <button id="btn-clear" class="btn btn-secondary">Clear</button>
+        <button id="btn-back" class="btn btn-secondary">Back</button>
+      </div>
+    </div>
+
+    <div class="results">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Unique ID</th>
+            <th>Agent</th>
+            <th>Supervisor Status</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="../js/client_directory.js"></script>
+</body>
+</html>
+

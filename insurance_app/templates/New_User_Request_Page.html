@@ -5,7 +5,7 @@
     <script defer src="/static/js/logo.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Health Insurance Requirement Form</title>
+    <title>New User request Page</title>
     <link rel="stylesheet" href="../css/common.css">
     <link rel="stylesheet" href="../css/health_history.css">
     <link rel="stylesheet" href="../css/members.css">
@@ -24,7 +24,7 @@
         <header class="page-header">
     <link rel="stylesheet" href="/static/css/logo.css">
     <script defer src="/static/js/logo.js"></script>
-            <h1>Health Insurance Proposal Request</h1>
+            <h1>New User request Page</h1>
         </header>
         <form id="insurance-form" novalidate>
 
@@ -62,16 +62,13 @@
             const loggedInUserEl = document.getElementById('logged-in-user');
             const logoutBtn = document.getElementById('logout-btn');
 
-            // Display the logged-in user's ID
             const userId = localStorage.getItem('loggedInUserId');
             if (userId) {
                 loggedInUserEl.textContent = userId;
             } else {
-                // If no user ID is found, redirect to login
                 window.location.href = 'Main_login.html';
             }
 
-            // Handle logout
             logoutBtn.addEventListener('click', function() {
                 localStorage.removeItem('loggedInUserId');
                 window.location.href = 'Main_login.html';

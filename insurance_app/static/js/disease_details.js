@@ -21,6 +21,15 @@ function initializeDiseaseDetails(root) {
         const textarea = details && details.querySelector('textarea');
         if (!details || !textarea) return;
 
+        // If textarea already has data (e.g., loaded from DB), ensure checkbox is checked
+        if (!checked && textarea.value && textarea.value.toString().trim() !== '') {
+            const cb = entry.querySelector('input[type="checkbox"][name="disease"]') || entry.querySelector('input[type="checkbox"]');
+            if (cb) {
+                cb.checked = true;
+                checked = true;
+            }
+        }
+
         if (checked) {
             details.style.display = 'flex';
             textarea.disabled = false;
@@ -38,7 +47,7 @@ function initializeDiseaseDetails(root) {
         const checkbox = entry.querySelector('input[type="checkbox"][name="disease"]')
             || entry.querySelector('input[type="checkbox"]');
         if (!checkbox) return;
-        // initialize
+        // initialize (also accounts for prefilled textarea values)
         setEntryState(entry, checkbox.checked);
         // listen for changes
         checkbox.addEventListener('change', () => setEntryState(entry, checkbox.checked));
@@ -48,7 +57,35 @@ function initializeDiseaseDetails(root) {
 // Auto-init when DOM is ready on pages that include this script directly
 document.addEventListener('DOMContentLoaded', () => {
     initializeDiseaseDetails();
+    if (typeof initializeOccupationalRisk === 'function') initializeOccupationalRisk();
 });
 
 // Expose for manual re-init (e.g., dynamic content)
 window.initializeDiseaseDetails = initializeDiseaseDetails;
+
+/**
+ * Initializes the Occupational Risk toggle behavior.
+ * Shows the details textarea only when "occupational-risk" is Yes.
+ */
+function initializeOccupationalRisk(root) {
+    const container = root || document;
+    const yes = container.querySelector('input[type="radio"][name="occupational-risk"][value="yes"]');
+    const no = container.querySelector('input[type="radio"][name="occupational-risk"][value="no"]');
+    const detailsGroup = container.getElementById ? container.getElementById('occupational-risk-details-group') : document.getElementById('occupational-risk-details-group');
+    if (!detailsGroup || (!yes && !no)) return;
+
+    function render() {
+        const show = yes && yes.checked;
+        detailsGroup.style.display = show ? 'block' : 'none';
+        const ta = detailsGroup.querySelector('textarea');
+        if (ta) ta.disabled = !show;
+        if (!show && ta) ta.value = ta.value; // keep value but disabled
+    }
+
+    if (yes) yes.addEventListener('change', render);
+    if (no) no.addEventListener('change', render);
+    // Initial state
+    render();
+}
+
+window.initializeOccupationalRisk = initializeOccupationalRisk;

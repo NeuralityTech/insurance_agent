@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="/static/css/logo.css">
+    <script defer src="/static/js/logo.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Plan Management</title>
@@ -22,6 +24,8 @@
 <body>
     <!-- Top bar header with login details and logout button -->
     <header class="top-bar">
+    <link rel="stylesheet" href="/static/css/logo.css">
+    <script defer src="/static/js/logo.js"></script>
         <div class="user-info">
             Logged in as: <span id="logged-in-user" class="user-id"></span>
         </div>
@@ -49,8 +53,8 @@
                     <td>{{ plan['Plan Name'] }}</td>
                     <td>
                         <select class="status-select" data-plan-name="{{ plan['Plan Name'] }}">
-                            <option value="Active" {% if plan.Status == 'Active' %}selected{% endif %}>Active</option>
-                            <option value="Inactive" {% if plan.Status == 'Inactive' %}selected{% endif %}>Inactive</option>
+                            <option value="Active" {% if plan.Status|lower == 'active' %}selected{% endif %}>Active</option>
+                            <option value="Inactive" {% if plan.Status|lower == 'inactive' %}selected{% endif %}>Inactive</option>
                         </select>
                     </td>
                     <!-- Created/Modified info with requested defaults -->
@@ -170,3 +174,4 @@
     </script>
 </body>
 </html>
+
