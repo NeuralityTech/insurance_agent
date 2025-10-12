@@ -436,7 +436,31 @@ tr:nth-child(even) {
     color: #ffffff;
 }
 
-.badge.na { /* NA */
+.badge.na { /* NA (legacy) */
+    background-color: #ffeb3b; /* yellow */
+    color: #333333; /* dark text for contrast */
+}
+
+/* Explicit styled-table rules used by Combination Packages */
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.styled-table thead th {
+  background: #1976d2; /* blue header */
+  color: #fff;
+}
+.styled-table th,
+.styled-table td {
+  border: 1px solid #ccc; /* full grid borders */
+  padding: 8px;
+  text-align: left;
+}
+.styled-table tbody tr:nth-child(even) {
+  background-color: #f7f9fc;
+}
+
+.badge.open { /* OPEN */
     background-color: #ffeb3b; /* yellow */
     color: #333333; /* dark text for contrast */
 }

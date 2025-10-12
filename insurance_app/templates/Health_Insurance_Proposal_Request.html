@@ -47,8 +47,16 @@
         <button id="btn-directory" class="btn btn-secondary">Open Client Directory</button>
       </div>
     </div>
+  <!--@Srihari-->
+    <div class="choice-card">                                                                      
+          <h2>Approvals</h2>
+          <p>Agent update the client and UnderWriter Status (Approve / Reject / Suggest Changes).</p>
+          <div class="choice-actions">
+              <button id="btn-approvals" class="btn btn-secondary">Open Approvals</button>
+          </div>
+        </div>
   </div>
-
+  <!--END-->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const uid = localStorage.getItem('loggedInUserId');
@@ -67,6 +75,11 @@
       document.getElementById('btn-directory').addEventListener('click', function(){
         window.location.href = '/html/Client_Directory.html';
       });
+      //@SRIHARI
+        document.getElementById('btn-approvals').addEventListener('click', function(){
+            window.location.href = '/html/Approvals.html';
+      //END
+    });
     });
   </script>
 </body>

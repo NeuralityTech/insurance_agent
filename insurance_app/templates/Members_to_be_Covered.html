@@ -9,112 +9,104 @@
     <link rel="stylesheet" href="../css/members.css">
 </head>
 <body>
-
-
-<fieldset>
-    <div class="members-layout">
-        <div class="members-list-container">
-            <ul id="members-list">
-                <!-- Member list items will be dynamically added here -->
-            </ul>
-            <div class="member-actions">
-                <a href="member_details.html" id="add-member-link" class="btn" target="_blank" rel="noopener noreferrer">+ Add Member</a>
-                <button type="button" id="delete-selected-btn" class="btn btn-danger">- Delete Selected</button>
+    <fieldset>
+        <div class="members-layout">
+            <div class="members-list-container">
+                <ul id="members-list">
+                    <!-- Member list items will be dynamically added here -->
+                </ul>
+                <div class="member-actions">
+                    <a href="member_details.html" id="add-member-link" class="btn" target="_blank" rel="noopener noreferrer">+ Add Member</a>
+                    <button type="button" id="delete-selected-btn" class="btn btn-danger">- Delete Selected</button>
+                </div>
+            </div>
+            <div class="member-summary-placeholder">
+                <div id="summary-content">
+                    <p class="placeholder-text">Hover over a member to see their details.</p>
+                    <!-- The full summary grid will be injected here by JS -->
+                </div>
             </div>
         </div>
-        <div class="member-summary-placeholder">
-            <div id="summary-content">
-                <p class="placeholder-text">Hover over a member to see their details.</p>
-                <!-- The full summary grid will be injected here by JS -->
+        <!-- Template for a new member list item -->
+        <template id="member-list-item-template">
+            <li class="member-list-item" tabindex="0">
+                <div class="item-info">
+                    <span class="member-name"></span>
+                    <span class="separator">-</span>
+                    <span class="member-relationship"></span>
+                    <span class="separator">-</span>
+                    <span class="bmi-summary">BMI: <span class="member-bmi"></span></span>
+                </div>
+                <div class="item-actions">
+                    <button type="button" class="btn-edit">Edit</button>
+                    <input type="checkbox" class="member-select-checkbox">
+                </div>
+                <!-- Full details will be stored in a hidden div -->
+                <div class="full-member-details" style="display: none;"></div>
+            </li>
+        </template>
+        <!-- Template for the summary card details -->
+        <template id="member-summary-template">
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <span class="summary-label">Name:</span>
+                    <span class="summary-value member-name"></span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Relationship:</span>
+                    <span class="summary-value member-relationship"></span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">DOB:</span>
+                    <span class="summary-value member-dob"></span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Age:</span>
+                    <span class="summary-value member-age"></span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Height:</span>
+                    <span class="summary-value member-height"></span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Weight:</span>
+                    <span class="summary-value member-weight"></span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">BMI:</span>
+                    <span class="summary-value member-bmi"></span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Smoker:</span>
+                    <span class="summary-value member-smoker"></span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Alcohol:</span>
+                    <span class="summary-value member-alcohol"></span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Risky Hobbies:</span>
+                    <span class="summary-value member-risky-hobbies"></span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Occupational Risk:</span>
+                    <span class="summary-value member-occupational-risk"></span>
+                </div>
+                <div class="summary-item summary-item-full-width">
+                    <span class="summary-label">Occupational Risk Details:</span>
+                    <span class="summary-value member-occupational-risk-details"></span>
+                </div>
+                <div class="summary-item summary-item-full-width">
+                    <span class="summary-label">Medical History:</span>
+                    <span class="summary-value member-medical-history"></span>
+                </div>
+                <div class="summary-item summary-item-full-width">
+                    <span class="summary-label">Planned Surgeries:</span>
+                    <span class="summary-value member-planned-surgeries"></span>
+                </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Template for a new member list item -->
-    <template id="member-list-item-template">
-        <li class="member-list-item" tabindex="0">
-            <div class="item-info">
-                <span class="member-name"></span>
-                <span class="separator">-</span>
-                <span class="member-relationship"></span>
-                <span class="separator">-</span>
-                <span class="bmi-summary">BMI: <span class="member-bmi"></span></span>
-            </div>
-            <div class="item-actions">
-                <button type="button" class="btn-edit">Edit</button>
-                <input type="checkbox" class="member-select-checkbox">
-            </div>
-            <!-- Full details will be stored in a hidden div -->
-            <div class="full-member-details" style="display: none;"></div>
-        </li>
-    </template>
-
-    <!-- Template for the summary card details -->
-    <template id="member-summary-template">
-        <div class="summary-grid">
-            <div class="summary-item">
-                <span class="summary-label">Name:</span>
-                <span class="summary-value member-name"></span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Relationship:</span>
-                <span class="summary-value member-relationship"></span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">DOB:</span>
-                <span class="summary-value member-dob"></span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Age:</span>
-                <span class="summary-value member-age"></span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Height:</span>
-                <span class="summary-value member-height"></span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Weight:</span>
-                <span class="summary-value member-weight"></span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">BMI:</span>
-                <span class="summary-value member-bmi"></span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Smoker:</span>
-                <span class="summary-value member-smoker"></span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Alcohol:</span>
-                <span class="summary-value member-alcohol"></span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Risky Hobbies:</span>
-                <span class="summary-value member-risky-hobbies"></span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Occupational Risk:</span>
-                <span class="summary-value member-occupational-risk"></span>
-            </div>
-            <div class="summary-item summary-item-full-width">
-                <span class="summary-label">Occupational Risk Details:</span>
-                <span class="summary-value member-occupational-risk-details"></span>
-            </div>
-            <div class="summary-item summary-item-full-width">
-                <span class="summary-label">Medical History:</span>
-                <span class="summary-value member-medical-history"></span>
-            </div>
-            <div class="summary-item summary-item-full-width">
-                <span class="summary-label">Planned Surgeries:</span>
-                <span class="summary-value member-planned-surgeries"></span>
-            </div>
-        </div>
-    </template>
-</fieldset>
-
-<script src="../js/member_management.js"></script>
-
-    </details>
+        </template>
+    </fieldset>
+    <script src="../js/member_management.js"></script>
 </body>
 </html>
-

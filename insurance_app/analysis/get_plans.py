@@ -2,68 +2,85 @@ import os
 import sqlite3
 import sys
 
-
-
 # Function to fetch plan names based on derived summary
 
-from flask import current_app
+from flask import current_app, g
+from insurance_app.database import get_derived_db_connection
+from .plan_utils import is_plan_valid_for_family
 
-def fetch_plans(summary: dict) -> dict:
-    conn = sqlite3.connect(current_app.config['DERIVED_DB_PATH'])
-    cursor = conn.cursor()
-    # Verify 'plans' table exists
+import json
+import pandas as pd
+
+def _safe_int(val, default=0):
+    try:
+        if val is None or val == '':
+            return int(default)
+        # If it's a string like '12.0', cast via float first then int
+        if isinstance(val, str) and ('.' in val or val.strip().isdigit() is False):
+            return int(float(val))
+        return int(val)
+    except Exception:
+        return int(default)
+
+
+def _safe_float(val, default=0.0):
+    try:
+        if val is None or val == '':
+            return float(default)
+        return float(val)
+    except Exception:
+        return float(default)
+
+
+def fetch_plans(summary: dict, client_data: dict) -> dict:
+    # Load configuration from the JSON file
+    config_path = os.path.join(current_app.root_path, 'proposed_plans_config.json')
+    with open(config_path, 'r') as f:
+        config = json.load(f)
+
+    # --- Get family structure directly from the AI response (robust casting) ---
+    num_adults = _safe_int(summary.get('num_adults', 0), 0)
+    num_children = _safe_int(summary.get('num_children', 0), 0)
+
+    db = get_derived_db_connection()
+    cursor = db.cursor()
+    # Verify 'features' table exists
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='features';")
     if not cursor.fetchone():
         print("Error: 'features' table not found in derived.db")
-        tables = [row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table';").fetchall()]
-        print("Available tables:", tables)
-        sys.exit(1)
+        sys.exit(1) # Simplified error handling
 
     plans = {}
 
-    def query_plans(feature, value, base_plans):
-        # Create a placeholder string for the IN clause
+    def query_plans(feature_config, value, base_plans):
         placeholders = ','.join('?' for _ in base_plans)
         params = []
+        
+        # Dynamically build query based on config
+        feature_name = feature_config['feature']
+        query_type = feature_config.get('type', 'equality')
 
-        # Combined range query for adult and child ages
-        if feature == 'age':
-            sql = f'''
-                SELECT Plan_Name
-                  FROM features
-                 WHERE adult_min_entry_age <= ?
-                   AND adult_max_entry_age >= ?
-                   AND Plan_Name IN ({placeholders})
-            '''
-            params.extend([value, value])
-        elif feature == 'child_age':
-            age_in_days = int(float(value) * 365)
-            sql = f'''
-                SELECT Plan_Name
-                  FROM features
-                 WHERE child_min_entry_age <= ?
-                   AND child_max_entry_age >= ?
-                   AND Plan_Name IN ({placeholders})
-            '''
-            params.extend([age_in_days, value])
-        elif feature == 'gender':
+        if query_type == 'range':
+            min_col, max_col = feature_config['min_col'], feature_config['max_col']
+            # Special handling for child age in days
+            query_value = _safe_int(_safe_float(value, 0.0) * 365, 0) if feature_name == 'child_age' else value
+            sql = f'SELECT Plan_Name FROM features WHERE "{min_col}" <= ? AND "{max_col}" >= ? AND Plan_Name IN ({placeholders})'
+            params.extend([query_value, value])
+        
+        elif feature_name == 'gender': # Special handling for gender
             if value == 'Female':
-                # For females, include 'Female' specific and 'All' gender plans
                 sql = f'SELECT Plan_Name FROM features WHERE "gender" IN (?, ?) AND Plan_Name IN ({placeholders})'
                 params.extend(['Female', 'All'])
-            else: # Handles 'Male', 'All', or any other value
-                # For males or others, only include 'All' gender plans
+            else:
                 sql = f'SELECT Plan_Name FROM features WHERE "gender" = ? AND Plan_Name IN ({placeholders})'
                 params.append('All')
-        else:
-            # Default equality filter for other features
-            sql = f'SELECT Plan_Name FROM features WHERE "{feature}" = ? AND Plan_Name IN ({placeholders})'
+        else: # Default equality
+            sql = f'SELECT Plan_Name FROM features WHERE "{feature_name}" = ? AND Plan_Name IN ({placeholders})'
             params.append(value)
-        
+
         params.extend(base_plans)
         cursor.execute(sql, params)
-        rows = cursor.fetchall()
-        return [r[0] for r in rows]
+        return [r[0] for r in cursor.fetchall()]
 
     # Build plans by scoring feature matches
     for section, features in summary.items():
@@ -71,44 +88,95 @@ def fetch_plans(summary: dict) -> dict:
             continue
 
         member_name = features.get('name', section)
-        status = features.get('status', 'active')  # Default to 'active'
-        disease_code = features.get('disease_code')
-
-        # Step 1: Pre-filter plans based on status and disease code
-        if disease_code and disease_code != 'GENERAL':
-            # Strict filter: Only get plans for the specific disease, using LIKE for robustness
-            cursor.execute('SELECT Plan_Name FROM features WHERE "status" LIKE ? AND "Disease_Code" LIKE ?', (status, disease_code))
-        else:
-            # Broad filter: Get all general and active plans
-            cursor.execute('SELECT Plan_Name FROM features WHERE "status" = ?', (status,))
         
+        # --- Step 1: Hard Filtering (Simplified and Corrected) ---
+        age = _safe_int(features.get('age'), 0)
+        status = features.get('status', 'active')
+        member_disease_code = features.get('disease_code', 'GENERAL').upper()
+
+        sql_params = []
+        
+        # Base query for universal filters
+        base_sql = """SELECT Plan_Name FROM features WHERE "status" = ? AND "Adult_Min_Entry_Age" <= ? AND "Adult_Max_Entry_Age" >= ?"""
+        sql_params.extend([status, age, age])
+
+        # Conditionally add the disease filter
+        if member_disease_code == 'GENERAL':
+            base_sql += ' AND ("Disease_Code" = ? OR "Disease_Code" IS NULL)'
+            sql_params.append('GENERAL')
+        else:
+            codes = {c.strip() for c in member_disease_code.split(',') if c.strip() and c.strip() != 'MULTI'}
+            if codes:
+                placeholders = ', '.join('?' for _ in codes)
+                base_sql += f' AND "Disease_Code" IN ({placeholders})'
+                sql_params.extend(list(codes))
+
+        current_app.logger.info(f"Executing query for {member_name}: {base_sql}")
+        current_app.logger.info(f"With parameters: {sql_params}")
+        cursor.execute(base_sql, sql_params)
         active_plans = [row[0] for row in cursor.fetchall()]
 
         if not active_plans:
             plans[section] = {'name': member_name, 'plans': []}
             continue
 
+        # --- Step 2: Value-based Scoring based on config ---
         plan_scores = {}
-        features_to_query = {k: v for k, v in features.items() if k not in ['name', 'status']}
+        features_to_query = {k: v for k, v in features.items() if k not in ['name', 'status', 'disease_code']}
+        
+        # Add disease_code back for scoring
+        if features.get('disease_code') and features.get('disease_code') != 'GENERAL':
+            features_to_query['disease_code'] = features['disease_code']
 
-        # For each feature, get matching plans from the active set and increment their score
+        # Get scoring weights from config
+        weights = config['scoring']['weights']
+        default_weight = weights.get('default', 1)
+
         for k, v in features_to_query.items():
-            matching_plans = query_plans(k, v, active_plans)
+            score_increment = weights.get(k, default_weight)
+            
+            # Find the matching filter config for the feature 'k'
+            filter_config = next((item for item in config['value_filters'] if item['feature'] == k), None)
+            
+            # For disease_code, we just check for its presence for scoring
+            if k == 'disease_code':
+                # The hard filter already selected plans with this disease, so all active_plans get the score
+                matching_plans = active_plans
+            elif filter_config:
+                matching_plans = query_plans(filter_config, v, active_plans)
+            else:
+                continue # Skip if no filter config found
+
             for plan in matching_plans:
-                plan_scores[plan] = plan_scores.get(plan, 0) + 1
+                plan_scores[plan] = plan_scores.get(plan, 0) + score_increment
         
-        # Sort plans by score (number of matched features) in descending order
         sorted_plans = sorted(plan_scores.items(), key=lambda item: item[1], reverse=True)
-        
-        # Get the names of the top 5 plans
-        top_5_plans = [plan[0] for plan in sorted_plans[:5]]
+
+        # --- New Logic: Conditionally validate GENERAL plans against family structure ---
+        validated_plans = []
+        if member_disease_code == 'GENERAL':
+            # For general plans, we must check if they fit the family structure
+            all_plan_details = pd.read_sql_query(f"SELECT Plan_Name, Policy_Code FROM features WHERE Plan_Name IN ({','.join('?' for _ in sorted_plans)})", db, params=[p[0] for p in sorted_plans])
+            plan_code_map = dict(zip(all_plan_details['Plan_Name'], all_plan_details['Policy_Code']))
+
+            for plan_name, score in sorted_plans:
+                policy_code = plan_code_map.get(plan_name)
+                is_valid = is_plan_valid_for_family(policy_code, num_adults, num_children, current_app.logger)
+                if is_valid:
+                    validated_plans.append((plan_name, score))
+        else:
+            # For disease-specific plans, we assume they are individual and don't filter by family structure here
+            validated_plans = sorted_plans
+
+        top_n = config['scoring'].get('top_n', 5) # Default to 5 if not in config
+        top_5_plans = [plan[0] for plan in validated_plans[:top_n]]
 
         plans[section] = {
             'name': member_name,
             'plans': top_5_plans
         }
-    conn.close()
-
+        
+    db.close()
     return plans
 
 

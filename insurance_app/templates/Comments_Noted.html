@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="/static/css/logo.css">
+    <script defer src="/static/js/logo.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comments Noted</title>
+    <link rel="stylesheet" href="../css/common.css">
+    <style>
+        .comments-section {
+            margin-top: 20px;
+        }
+        .add-comment-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .comments-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .comments-table th,
+        .comments-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .comments-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .comment-text {
+            max-width: 300px;
+            word-wrap: break-word;
+        }
+        #new-comment {
+            width: 100%;
+            min-height: 60px;
+            resize: vertical;
+        }
+        .comments-count {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .no-comments-message {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+        }
+        .last-modified-footer {
+            position: fixed;
+            right: 16px;
+            bottom: 10px;
+            background: rgba(255,255,255,0.9);
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            color: #333;
+            z-index: 1000;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+    </style>
+</head>
+<body>
+    <fieldset>
+        <legend>Comments Noted</legend>
+        
+        <div class="add-comment-section">
+            <div class="form-group">
+                <label for="new-comment">Add New Comment</label>
+                <textarea id="new-comment" name="new_comment" rows="3" placeholder="Enter your comment here..."></textarea>
+            </div>
+            <button type="button" id="add-comment-btn" class="btn btn-secondary">Add Comment</button>
+        </div>
+
+        <div class="comments-section">
+            <div id="comments-count" class="comments-count">No comments yet</div>
+            
+            <div id="no-comments-message" class="no-comments-message" style="display: block;">
+                No comments have been added yet.
+            </div>
+            
+            <table id="comments-table" class="comments-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Modifier (Agent)</th>
+                        <th>Comments</th>
+                        <th>Date & Time</th>
+                    </tr>
+                </thead>
+                <tbody id="comments-tbody">
+                </tbody>
+            </table>
+        </div>
+    </fieldset>
+
+    <!-- Last Modified Footer -->
+    <div id="last-modified-footer" class="last-modified-footer" style="display: none;">
+        Last Modified by <span id="last-modified-by">—</span> on <span id="last-modified-date">—</span>
+    </div>
+</body>
+</html>

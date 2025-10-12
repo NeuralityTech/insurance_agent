@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Policy Creation</title>
+  <link rel="stylesheet" href="../css/common.css" />
+  <link rel="stylesheet" href="../css/top_bar.css" />
+  <style>
+    body { min-height: 100vh; }
+    .container { max-width: 1100px; width: 95%; margin: 2rem auto; background: #fff; padding: 1.5rem; border-radius: 8px; }
+    .form-row { display: grid; grid-template-columns: 260px 1fr; gap: 12px; align-items: center; margin-bottom: 12px; }
+    .form-row input, .form-row select { padding: 8px; }
+    .actions { margin-top: 16px; display: flex; gap: 8px; }
+    .btn { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; color: white; font-size: 14px; }
+    .btn-primary { background-color: #3b82f6; }
+    .btn-secondary { background-color: #64748b; }
+  </style>
+</head>
+<body>
+  <header class="top-bar">
+    <div class="user-info">Logged in as: <span id="logged-in-user" class="user-id"></span></div>
+    <div class="right-actions">
+      <button id="btn-approvals" class="btn btn-secondary">Back to Approvals</button>
+    </div>
+  </header>
+  <div class="container">
+    <h1>Policy Creation</h1>
+    <p>Enter policy details for the approved submission.</p>
+
+    <!-- Inline summary (no heading) -->
+    <div class="form-row" style="align-items: center;">
+      <div id="summaryLine" style="font-family: inherit; font-size: inherit; padding: 6px 0; white-space: nowrap;">
+        <strong>Unique ID:</strong> —   <strong>Proposer Name:</strong> —   <strong>Mobile Number:</strong> —
+      </div>
+    </div>
+
+    <!-- Dynamic tabular form -->
+    <div style="margin-top: 12px; overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; background:#fff;">
+        <thead>
+          <tr style="background:#f2f2f2;">
+            <th style="text-align:left; padding:8px; border:1px solid #eee;">Policy Number</th>
+            <th style="text-align:left; padding:8px; border:1px solid #eee;">Member Number</th>
+            <th style="text-align:left; padding:8px; border:1px solid #eee;">Member Name</th>
+            <th style="text-align:left; padding:8px; border:1px solid #eee;">Plan</th>
+            <th style="text-align:left; padding:8px; border:1px solid #eee;">Policy Start Date</th>
+            <th style="text-align:left; padding:8px; border:1px solid #eee;">Policy Period</th>
+            <th style="text-align:left; padding:8px; border:1px solid #eee;">Policy End date</th>
+            <th style="text-align:left; padding:8px; border:1px solid #eee; width:100px;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="policyRows"></tbody>
+      </table>
+      <div style="margin-top:8px;">
+        <button id="addRowBtn" class="btn btn-secondary" type="button">Add Row</button>
+      </div>
+    </div>
+
+    <!-- Application comments -->
+    <div class="form-row" style="align-items: start; margin-top: 12px; grid-template-columns: auto 1fr;">
+      <label for="appComments" style="font-size: 13px; font-weight: 600; white-space: nowrap;">Comments</label>
+      <textarea id="appComments" rows="2" style="min-height:40px; max-width: 520px; width:100%; font-size: 13px;" placeholder="Add any comments for this policy update"></textarea>
+    </div>
+
+    <div class="actions">
+      <button id="saveBtn" class="btn btn-primary">Save Policy</button>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const uid = new URLSearchParams(window.location.search).get('uid') || '';
+      const loggedInUserEl = document.getElementById('logged-in-user');
+      const backBtn = document.getElementById('btn-approvals');
+      const saveBtn = document.getElementById('saveBtn');
+      const addRowBtn = document.getElementById('addRowBtn');
+      const rowsTbody = document.getElementById('policyRows');
+      const summaryLine = document.getElementById('summaryLine');
+
+      try {
+        const uidLS = localStorage.getItem('loggedInUserId');
+        if (uidLS && loggedInUserEl) loggedInUserEl.textContent = uidLS; else window.location.href = 'Main_login.html';
+      } catch {}
+
+      // Prefill Policy holder (memberName) and Member number (mobile) from DB submission
+      async function prefillFromSubmission() {
+        if (!uid) return;
+        try {
+          const res = await fetch(`/api/agent/submission/${encodeURIComponent(uid)}`);
+          if (!res.ok) return;
+          const data = await res.json();
+
+          // Fetch and store client agreed plans
+          if (data && data.Client_Agreed_Plans) {
+            try {
+              window.clientAgreedPlans = JSON.parse(data.Client_Agreed_Plans);
+            } catch (e) {
+              window.clientAgreedPlans = [];
+              console.error('Failed to parse Client_Agreed_Plans:', e);
+            }
+          }
+
+          let form = data?.form_summary;
+          if (typeof form === 'string') {
+            try { form = JSON.parse(form); } catch { form = null; }
+          }
+
+          // Utility: deep-search the first value by key name match
+          function isPrimitive(val) {
+            return (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean');
+          }
+
+          function sanitizeMobile(raw) {
+            if (raw === undefined || raw === null) return '';
+            const s = String(raw);
+            // Extract digits
+            const digits = (s.match(/\d+/g) || []).join('');
+            // Prefer 10-15 digit sequences typical of phone numbers
+            if (digits.length >= 10 && digits.length <= 15) return digits;
+            // Fall back to original trimmed string
+            return s.trim();
+          }
+
+          function findFirstByKeyNames(obj, keys) {
+            const seen = new Set();
+            function walk(o) {
+              if (!o || typeof o !== 'object' || seen.has(o)) return undefined;
+              seen.add(o);
+              // direct keys
+              for (const k of Object.keys(o)) {
+                const lower = k.toLowerCase();
+                if (keys.some(kk => lower.includes(kk))) {
+                  const v = o[k];
+                  // Only accept primitives or arrays of primitives
+                  if (v !== undefined && v !== null) {
+                    if (isPrimitive(v)) {
+                      const sv = String(v).trim();
+                      if (sv !== '') return sv;
+                    } else if (Array.isArray(v)) {
+                      const firstPrim = v.find(isPrimitive);
+                      if (firstPrim !== undefined && String(firstPrim).trim() !== '') return String(firstPrim).trim();
+                    }
+                  }
+                }
+              }
+              // nested
+              for (const k of Object.keys(o)) {
+                const v = o[k];
+                const res = walk(v);
+                if (res !== undefined) return res;
+              }
+              return undefined;
+            }
+            return walk(obj);
+          }
+
+          function pickName(obj) {
+            if (!obj || typeof obj !== 'object') return '';
+            // Look for likely name fields first
+            const v = findFirstByKeyNames(obj, ['primary_contact_name','applicant_name','policy_holder','holder_name','full_name','name']);
+            return v ? String(v) : '';
+          }
+          function pickMobile(obj) {
+            if (!obj || typeof obj !== 'object') return '';
+            const v = findFirstByKeyNames(obj, ['mobile','phone','contact number','mobile no','phone no','contact_number','mobile_no','phone_no']);
+            return v ? sanitizeMobile(v) : '';
+          }
+
+          let holderName = '';
+          let mobileNo = '';
+          let memberNames = [];
+
+          // Helper: basic validator to filter out non-name tokens (e.g., 'aadhaar', 'pan')
+          function isLikelyName(str) {
+            if (!str) return false;
+            const s = String(str).trim();
+            if (!s) return false;
+            const lower = s.toLowerCase();
+            // Exclude common non-name tokens and IDs
+            const banned = [
+              'aadhaar','aadhar','pan','passport','voter','dl','driving','license','licence',
+              'policy','number','mobile','phone','contact',
+              'cardiac','cancer','diabetes','others'
+            ];
+            if (banned.some(b => lower.includes(b))) return false;
+            // Exclude if mostly digits/symbols
+            const letters = s.replace(/[^A-Za-z'\-\.\s]/g, '');
+            if (letters.length < Math.ceil(s.length * 0.6)) return false;
+            // Likely name pattern: letters, spaces, apostrophes, hyphens, dots
+            return /^[A-Za-z][A-Za-z'\-\.\s]*$/.test(s);
+          }
+          // Try from parsed form JSON
+          if (form && typeof form === 'object') {
+            // Holder name and mobile
+            holderName = pickName(form) || pickName(form.primary_contact || form.primaryContact) || holderName;
+            mobileNo = pickMobile(form) || pickMobile(form.primary_contact || form.primaryContact) || mobileNo;
+
+            // Prefer explicit members array if present
+            const membersArr = form.members || form.family_members || form.dependents || [];
+            if (Array.isArray(membersArr) && membersArr.length) {
+              membersArr.forEach(m => {
+                const nm = (m && (m.name || m.member_name || m.full_name)) ? String(m.name || m.member_name || m.full_name).trim() : '';
+                if (isLikelyName(nm)) memberNames.push(nm);
+              });
+            } else {
+              // Fallback: conservative deep search for name-like fields
+              (function collectMemberNames(obj){
+                if (obj == null) return;
+                if (Array.isArray(obj)) {
+                  for (const it of obj) collectMemberNames(it);
+                  return;
+                }
+                if (typeof obj === 'object') {
+                  for (const [k,v] of Object.entries(obj)) {
+                    const key = String(k).toLowerCase();
+                    if (typeof v === 'string' && v.trim() && (key.includes('name') || key.includes('member'))) {
+                      if (isLikelyName(v)) memberNames.push(v.trim());
+                    }
+                    if (v && typeof v === 'object') collectMemberNames(v);
+                  }
+                }
+              })(form);
+            }
+          }
+
+          // If there are saved policy_details (from a prior save), include member_name values
+          try {
+            let details = data?.policy_details;
+            if (typeof details === 'string' && details.trim()) {
+              try { details = JSON.parse(details); } catch { details = null; }
+            }
+            if (details && typeof details === 'object') {
+              const rows = Array.isArray(details.rows) ? details.rows : [];
+              for (const r of rows) {
+                if (r && r.member_name) memberNames.push(String(r.member_name).trim());
+              }
+            }
+          } catch {}
+          // Fallback: inspect top-level data object (in case values are not inside form_summary)
+          if ((!holderName || holderName.trim() === '') && data && typeof data === 'object') {
+            holderName = pickName(data) || holderName;
+          }
+          if ((!mobileNo || mobileNo.trim() === '') && data && typeof data === 'object') {
+            mobileNo = pickMobile(data) || mobileNo;
+          }
+          // Build inline summary line
+          if (summaryLine) {
+            const u = uid || '—';
+            const h = holderName || '—';
+            const m = mobileNo || '—';
+            summaryLine.innerHTML = `<strong>Unique ID:</strong> ${u}   <strong>Proposer Name:</strong> ${h}   <strong>Mobile Number:</strong> ${m}`;
+          }
+
+          // Pull canonical names from backend helper
+          try {
+            const mnRes = await fetch(`/api/agent/member_names/${encodeURIComponent(uid)}`);
+            if (mnRes.ok) {
+              const arr = await mnRes.json();
+              if (Array.isArray(arr)) memberNames.push(...arr);
+            }
+          } catch {}
+
+          // Fallbacks and de-duplication
+          if (holderName && isLikelyName(holderName)) memberNames.push(holderName);
+          // Consider comma-separated names, filtered
+          memberNames = memberNames
+            .filter(Boolean)
+            .flatMap(n => String(n).includes(',') ? String(n).split(',').map(s=>s.trim()).filter(Boolean) : [String(n).trim()])
+            .filter(isLikelyName);
+          // Deduplicate preserving order
+          const seen = new Set();
+          memberNames = memberNames.filter(n => (n && !seen.has(n) && seen.add(n)));
+
+          // Initialize first row using defaults (do NOT prefill Member Number)
+          addRow({ memberName: memberNames[0] || '' }, memberNames);
+          // Save a master member list to avoid duplicating options when adding more rows
+          try { window.__memberNamesMaster = memberNames.slice(); } catch {}
+        } catch (e) {
+          console.warn('Prefill failed', e);
+        }
+      }
+
+      prefillFromSubmission();
+
+      // Row helpers
+      function computeRowEndDate(row){
+        const startEl = row.querySelector('.pc-start');
+        const periodEl = row.querySelector('.pc-period');
+        const endEl = row.querySelector('.pc-end');
+        const start = startEl?.value || '';
+        const months = parseInt(periodEl?.value || '12', 10);
+        // Validate proper HTML date format yyyy-MM-dd before computing
+        if (!start || !/^\d{4}-\d{2}-\d{2}$/.test(start)) { if (endEl) endEl.value = ''; return; }
+        try {
+          const [y,m,d] = start.split('-').map(Number);
+          let endYear = y + Math.floor((m - 1 + months) / 12);
+          let endMonth = ((m - 1 + months) % 12) + 1;
+          const lastDay = new Date(endYear, endMonth, 0).getDate();
+          const endDay = Math.min(d, lastDay);
+          const mm = String(endMonth).padStart(2,'0');
+          const dd = String(endDay).padStart(2,'0');
+          if (endEl) endEl.value = `${endYear}-${mm}-${dd}`;
+        } catch (e) {
+          if (endEl) endEl.value = '';
+        }
+      }
+
+      function addRow(defaults = {}, memberNames = []){
+        // Deduplicate and normalize member list for this row
+        let names = Array.isArray(memberNames) ? memberNames.slice() : [];
+        names = names
+          .map(n => (n == null ? '' : String(n).trim()))
+          .filter(Boolean);
+        const seenNames = new Set();
+        names = names.filter(n => (!seenNames.has(n) && (seenNames.add(n), true)));
+        const memberNameOptions = '<option value="">Select a member</option>' + names.map(n => `<option value="${n}">${n}</option>`).join('');
+
+        const planOptions = '<option value="">Select a plan</option>' + (window.clientAgreedPlans || []).map(p => `<option value="${p}">${p}</option>`).join('');
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="padding:6px; border:1px solid #eee;"><input type="text" class="pc-number" placeholder="Enter policy number" style="width:100%"></td>
+          <td style="padding:6px; border:1px solid #eee;"><input type="text" class="pc-member-number" placeholder="Member number" style="width:100%"></td>
+          <td style="padding:6px; border:1px solid #eee;">
+            <select class="pc-member-name" style="width:100%">
+              ${memberNameOptions}
+            </select>
+          </td>
+          <td style="padding:6px; border:1px solid #eee;">
+            <select class="pc-plan" style="width:100%">
+              ${planOptions}
+            </select>
+          </td>
+          <td style="padding:6px; border:1px solid #eee;"><input type="date" class="pc-start" style="width:100%"></td>
+          <td style="padding:6px; border:1px solid #eee;">
+            <select class="pc-period" style="width:100%">
+              <option value="12">1 year</option>
+              <option value="24">2 years</option>
+              <option value="36">3 years</option>
+            </select>
+          </td>
+          <td style="padding:6px; border:1px solid #eee;"><input type="date" class="pc-end" style="width:100%" readonly></td>
+          <td style="padding:6px; border:1px solid #eee;">
+            <button type="button" class="btn btn-secondary pc-remove">Remove</button>
+          </td>
+        `;
+        rowsTbody.appendChild(tr);
+        // Apply defaults
+        if (defaults.policyNumber) tr.querySelector('.pc-number').value = defaults.policyNumber;
+        if (defaults.memberNumber) tr.querySelector('.pc-member-number').value = defaults.memberNumber;
+        if (defaults.memberName) tr.querySelector('.pc-member-name').value = defaults.memberName;
+        // Wire end-date compute
+        tr.querySelector('.pc-start').addEventListener('change', () => computeRowEndDate(tr));
+        tr.querySelector('.pc-period').addEventListener('change', () => computeRowEndDate(tr));
+        // Remove handler
+        tr.querySelector('.pc-remove').addEventListener('click', () => tr.remove());
+      }
+
+      if (addRowBtn) addRowBtn.addEventListener('click', () => {
+        // Prefer the master list computed at prefill time
+        let opts = Array.isArray(window.__memberNamesMaster) ? window.__memberNamesMaster.slice() : [];
+        if (!opts.length) {
+          // Fallback: read from the first select only and de-duplicate
+          const firstSel = document.querySelector('.pc-member-name');
+          if (firstSel) {
+            const seen = new Set();
+            opts = Array.from(firstSel.options)
+              .map(o => (o.value || '').trim())
+              .filter(v => v && !seen.has(v) && (seen.add(v), true));
+          }
+        }
+        addRow({}, opts);
+      });
+
+      backBtn.addEventListener('click', function(){
+        window.location.href = '/html/Approvals.html?uid=' + encodeURIComponent(uid);
+      });
+      // Removed Cancel button; Back to Approvals available in header
+
+      saveBtn.addEventListener('click', async function(){
+        // Extract rows
+        const rows = Array.from(rowsTbody.querySelectorAll('tr')).map(tr => ({
+          policy_number: tr.querySelector('.pc-number')?.value.trim() || '',
+          member_number: tr.querySelector('.pc-member-number')?.value.trim() || '',
+          member_name: tr.querySelector('.pc-member-name')?.value || '',
+          plan: tr.querySelector('.pc-plan')?.value || '',
+          policy_start_date: tr.querySelector('.pc-start')?.value || '',
+          policy_period_months: parseInt(tr.querySelector('.pc-period')?.value || '12', 10),
+          policy_end_date: tr.querySelector('.pc-end')?.value || ''
+        }));
+        if (!rows.length) { return alert('Please add at least one row.'); }
+        const first = rows[0];
+        if (!first.policy_number || !first.member_number || !first.member_name || !first.policy_start_date) {
+          return alert('Please fill all required fields in the first row.');
+        }
+        const payload = {
+          unique_id: uid,
+          policy_number: first.policy_number,
+          policy_name: '',
+          member_number: first.member_number,
+          member_name: first.member_name,
+          policy_start_date: first.policy_start_date,
+          policy_period_months: first.policy_period_months,
+          close_comments: (document.getElementById('appComments')?.value || '').trim(),
+          // Serialize all rows into policy_details for reference/audit
+          policy_details: JSON.stringify({ rows })
+        };
+        try {
+          const resp = await fetch('/api/agent/policy_details', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown') },
+            body: JSON.stringify(payload)
+          });
+          if (!resp.ok) {
+            const t = await resp.text().catch(()=> '');
+            console.error('Save policy failed', resp.status, t);
+            return alert('Failed to save policy details');
+          }
+          const data = await resp.json();
+          if (data && data.policy_end_date) {
+            const firstEndEl = rowsTbody.querySelector('tr .pc-end');
+            if (firstEndEl) firstEndEl.value = data.policy_end_date;
+          }
+          alert('Policy details saved');
+          window.location.href = '/html/Approvals.html?uid=' + encodeURIComponent(uid);
+        } catch (e) {
+          console.error(e);
+          alert('Failed to save policy details');
+        }
+      });
+
+    })();
+  </script>
+</body>
+</html>

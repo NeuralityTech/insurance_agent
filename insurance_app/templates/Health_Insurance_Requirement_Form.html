@@ -10,6 +10,12 @@
     <link rel="stylesheet" href="../css/health_history.css">
     <link rel="stylesheet" href="../css/members.css">
     <link rel="stylesheet" href="../css/top_bar.css">
+    <style>
+        /* Right-align header actions (Logout, Home) and keep them adjacent */
+        .top-bar { display: flex; align-items: center; gap: 12px; }
+        .top-bar .user-info { margin-right: auto; }
+        .top-bar .right-actions { display: flex; gap: 8px; align-items: center; }
+    </style>
 </head>
 <body>
     <header class="top-bar">
@@ -18,7 +24,10 @@
         <div class="user-info">
             Logged in as: <span id="logged-in-user" class="user-id"></span>
         </div>
-        <button id="logout-btn" class="btn btn-logout">Logout</button>
+        <div class="right-actions">
+            <button id="logout-btn" class="btn btn-logout">Logout</button>
+            <button id="btn-home" class="btn">Home</button>
+        </div>
     </header>
     <div class="container">
         <header class="page-header">
@@ -37,7 +46,7 @@
         <div id="existing-coverage-placeholder" class="section"></div>
         <div id="claims-service-placeholder" class="section"></div>
         <div id="Finance-Documentation-placeholder" class="section"></div>
-        <div id="other-notes-placeholder" class="section"></div>
+        <div id="comments-noted-placeholder" class="section"></div>
 
         <div class="form-actions">
             <button type="submit" id="submit-btn" class="btn">Submit</button>
@@ -51,7 +60,7 @@
     <script src="../js/validation.js"></script>
     <script src="../js/member_management.js"></script>
     <script src="../js/disease_details.js"></script>
-    <script src="../js/other_notes.js"></script>
+    <script src="../js/comments_noted.js"></script>
 
     <!-- Main script to load sections -->
     <script src="../js/script.js" defer></script>
@@ -61,6 +70,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const loggedInUserEl = document.getElementById('logged-in-user');
             const logoutBtn = document.getElementById('logout-btn');
+            const homeBtn = document.getElementById('btn-home');
 
             // Display the logged-in user's ID
             const userId = localStorage.getItem('loggedInUserId');
@@ -71,11 +81,24 @@
                 window.location.href = 'Main_login.html';
             }
 
+            // Reset submit button state on page load
+            const submitBtn = document.getElementById('submit-btn');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit';
+            }
+
             // Handle logout
             logoutBtn.addEventListener('click', function() {
                 localStorage.removeItem('loggedInUserId');
                 window.location.href = 'Main_login.html';
             });
+
+            if (homeBtn) {
+                homeBtn.addEventListener('click', function(){
+                    window.location.href = '/html/Health_Insurance_Proposal_Request.html';
+                });
+            }
         });
     </script>
 </body>

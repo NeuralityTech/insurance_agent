@@ -1,85 +1,35 @@
-# pip install pandas numpy
-import re
+import os
 import json
+import re
+from copy import deepcopy
+
 import numpy as np
 import pandas as pd
 
 # ---------------------------
-# 1) Ailment extraction (from your client JSON)
-# ---------------------------
-AilmentKeywords = {
-    "cardiac":  ["cardiac", "heart", "cardio"],
-    "cancer":   ["cancer", "onco", "tumor", "tumour"],
-    "diabetes": ["diabetes", "diabetic"],
-    "renal":    ["renal", "kidney"],
-    "liver":    ["liver", "hepati"],
-    "neuro":    ["neuro", "stroke", "brain"],
-}
-
-def _normalize_ailment_name(s: str) -> str | None:
-    if not s:
-        return None
-    s = s.lower()
-    for k, kws in AilmentKeywords.items():
-        if any(kw in s for kw in kws):
-            return k
-    return s.strip() or None
-
-def extract_member_ailments(client: dict) -> dict[str, list[str]]:
-    """Returns a dict mapping member name to their unique normalized ailments."""
-    member_ailments = {}
-
-    # Primary applicant
-    applicant_name = client.get("primaryContact", {}).get("applicant_name", "Self")
-    self_ailments = []
-    for d in client.get("healthHistory", {}).get("disease", []) or []:
-        a = _normalize_ailment_name(d)
-        if a and a not in self_ailments: self_ailments.append(a)
-    if self_ailments:
-        member_ailments[applicant_name] = self_ailments
-
-    # Other members
-    for member in client.get("members", []) or []:
-        member_name = member.get("name", "UnknownMember")
-        ailments = []
-        for k in (member.get("healthHistory", {}) or {}).keys():
-            a = _normalize_ailment_name(k)
-            if a and a not in ailments: ailments.append(a)
-        if ailments:
-            member_ailments[member_name] = ailments
-            
-    return member_ailments
 
 # ---------------------------
 # 2) Plan → ailment capability heuristics (no external data)
 # ---------------------------
-def plan_support_for_ailment(plan_row: pd.Series, ailment: str) -> float:
-    """
-    Heuristic: 
-      1.0 if plan looks ailment-specific,
-      0.8 if comprehensive,
-      0.6 generic,
-      0.5 if plan category seems specific to a *different* ailment.
-    """
-    name  = str(plan_row.get("Plan Name", "")).lower()
-    cat   = str(plan_row.get("Category", "")).lower()
-    dcode = str(plan_row.get("Disease Code", "")).lower()
+def plan_support_for_ailment(plan_row: pd.Series, ailment_code: str, config: dict) -> float:
+    """Calculates a score based on the user's explicit flowchart logic."""
+    plan_dcode = str(plan_row.get("Disease_Code", "")).strip().upper()
+    scores = config.get('ailment_support_scores', {})
 
-    kws = AilmentKeywords.get(ailment, [])
-    is_comprehensive = ("comprehensive" in cat) or ("comprehensive" in name)
-    specific_match = any(kw in name or kw in cat for kw in kws)
-    dcode_match = any(kw in dcode for kw in kws) if dcode else False
+    # 1. Direct Match
+    if ailment_code == plan_dcode:
+        return scores.get('direct_match_score', 1.0)
 
-    if specific_match or dcode_match:
-        return 1.0
-    if is_comprehensive:
-        return 0.8
-    # if plan is specific to some other disease (e.g., "Diabetes" category but ailment is cardiac)
-    if cat and (ailment not in cat):
-        # if the category itself contains any other-known ailment keyword, penalize a bit
-        if any(any(kw in cat for kw in v) for k, v in AilmentKeywords.items() if k != ailment):
-            return 0.5
-    return 0.6
+    # 2. Plan supports MULTI
+    if plan_dcode == 'MULTI':
+        return scores.get('multi_disease_score', 0.8)
+
+    # 3. Plan supports GENERAL (or is empty/NaN)
+    if plan_dcode == 'GENERAL' or not plan_dcode or plan_dcode == 'NAN':
+        return scores.get('general_plan_score', 0.6)
+
+    # 4. Plan is for a different, specific disease
+    return scores.get('mismatched_disease_score', 0.0)
 
 
 # ---------------------------
@@ -94,7 +44,7 @@ WITHIN_ROW = [0.55, 0.25, 0.15, 0.05]  # left→right importance
 # (Skip rows/cols that don’t exist in your CSV.)
 DEFAULT_PRECEDENCE_TO_CSV = {
     2: ["Adult Min Entry Age", "Adult Max Entry Age", "Child Min Entry Age", "Child Max Entry Age"],
-    3: ["AilmentScore"],  # injected by this code
+    3: ["AilmentScore"],  
     4: ["In-Patient", "Day-Care", "AYUSH", "Modern Tx"],
     5: ["Co-payment (%)", "top_up"],
     9: ["Maternity", "desired_opd"],
@@ -129,45 +79,20 @@ def _normalize_age(value, favor_max=True) -> float:
         return max(0.0, min(1.0, 1.0 - (v / cap)))  # lower min age is better
 
 def _within_row_weights(n: int) -> list[float]:
-    ws = WITHIN_ROW[:max(1, n)]
-    s = sum(ws)
+    """Return a weight vector of length n.
+    If n <= len(WITHIN_ROW), use the predefined template slice.
+    If n > len(WITHIN_ROW), fall back to equal weights.
+    """
+    n = max(1, int(n))
+    if n <= len(WITHIN_ROW):
+        ws = WITHIN_ROW[:n]
+    else:
+        ws = [1.0 / n] * n
+    s = sum(ws) or 1.0
     return [w / s for w in ws]
 
-def score_row(plan_row: pd.Series, cols: list[str]) -> float:
-    if not cols: 
-        return 0.0
-    ws = _within_row_weights(len(cols))
-    row_score = 0.0
-    for i, col in enumerate(cols):
-        if col not in plan_row.index:
-            # missing column → neutral
-            s = 0.5
-        else:
-            val = plan_row[col]
-            if col == "Co-payment (%)":
-                s = _normalize_copay(val)
-            elif col in ["top_up", "In-Patient", "Day-Care", "AYUSH", "Modern Tx", "Maternity", "desired_opd"]:
-                s = _normalize_binary(val)
-            elif col in ["Adult Min Entry Age", "Child Min Entry Age"]:
-                s = _normalize_age(val, favor_max=False)
-            elif col in ["Adult Max Entry Age", "Child Max Entry Age"]:
-                s = _normalize_age(val, favor_max=True)
-            elif col == "AilmentScore":
-                try:
-                    s = float(val)
-                except Exception:
-                    s = 0.5
-            else:
-                s = 0.5  # safe neutral for unhandled types
-        row_score += ws[i] * s
-    return row_score
 
-def compute_member_aware_scores(
-    plans_df: pd.DataFrame,
-    client: dict,
-    precedence_to_csv: dict[int, list[str]] = None,
-    row_weights: dict[int, float] = None
-) -> pd.DataFrame:
+def compute_member_aware_scores(plans_df: pd.DataFrame, derived_features: dict, app, precedence_to_csv: dict[int, list[str]] = None, row_weights: dict[int, float] = None) -> pd.DataFrame:
     """
     Adds two columns to a copy of plans_df:
       - AilmentScore (0..1)
@@ -177,19 +102,40 @@ def compute_member_aware_scores(
     precedence_to_csv = precedence_to_csv or DEFAULT_PRECEDENCE_TO_CSV
     row_weights = row_weights or ROW_WEIGHTS
 
-    # 1) extract ailments per member
-    member_ailments = extract_member_ailments(client)
+    df = plans_df.copy()
+
+    # Load configuration once at the top
+    config_path = os.path.join(app.root_path, 'select_plans_config.json')
+    with open(config_path, 'r') as f:
+        scoring_config = json.load(f)
+
+    # 1) Extract ailments for each member from the derived_features
+    member_ailments = {}
+    for member_key, member_data in derived_features.items():
+        if isinstance(member_data, dict) and 'name' in member_data:
+            member_name = member_data['name']
+            disease_codes_str = member_data.get('disease_code', 'GENERAL')
+            if disease_codes_str and isinstance(disease_codes_str, str):
+                codes = [code.strip().upper() for code in disease_codes_str.split(',')]
+                member_ailments[member_name] = [code for code in codes if code and code != 'GENERAL']
+            else:
+                member_ailments[member_name] = []
 
     # 2) compute ailment scores per member
-    df = plans_df.copy()
     # Standardize the Plan Name column to avoid KeyErrors
     if 'Plan_Name' in df.columns and 'Plan Name' not in df.columns:
         df.rename(columns={'Plan_Name': 'Plan Name'}, inplace=True)
     member_score_cols = []
     for member_name, ailments in member_ailments.items():
         col_name = f"Score_{member_name}"
+
         # Calculate the mean support for this member's ailments
-        df[col_name] = df.apply(lambda r: np.mean([plan_support_for_ailment(r, a) for a in ailments]), axis=1)
+        # If the member has specific ailments, score the plan's support for them.
+        if ailments:
+            df[col_name] = df.apply(lambda r: np.mean([plan_support_for_ailment(r, ailment_code, scoring_config) for ailment_code in ailments]), axis=1)
+        # If the member is healthy (no specific ailments), score the plan based on its general suitability.
+        else:
+            df[col_name] = df.apply(lambda r: plan_support_for_ailment(r, 'GENERAL', scoring_config), axis=1)
         member_score_cols.append(col_name)
 
     # The overall AilmentScore is the mean of all member-specific scores
@@ -198,25 +144,39 @@ def compute_member_aware_scores(
     else:
         df["AilmentScore"] = 1.0 # Default for a healthy household
 
-    # 3) compute total score per plan
-    total_scores = []
-    for _, r in df.iterrows():
-        total = 0.0
-        for prec_row, cols in precedence_to_csv.items():
-            if not cols: 
-                continue
-            rs = score_row(r, cols)
-            total += rs * row_weights.get(prec_row, 0.0)
-        total_scores.append(total)
-    df["Score_MemberAware"] = total_scores
+    # 3) Dynamically add member scores to the precedence calculation
+    # This finds the precedence row containing 'AilmentScore' and adds all
+    # generated 'Score_{MemberName}' columns to it, ensuring they are included
+    # in the final weighted score.
+    dynamic_precedence = deepcopy(precedence_to_csv)
+    for row_num, cols in dynamic_precedence.items():
+        if "AilmentScore" in cols:
+            # Add member scores to the same row as the overall AilmentScore
+            dynamic_precedence[row_num].extend(member_score_cols)
+            break
 
-    # Ensure essential columns are present for the dashboard
-    # Ensure essential columns are present for the dashboard
-    final_cols = list(set([
-        "Plan Name", "Category", "AilmentScore"
-    ] + member_score_cols + ["Score_MemberAware"]))
-    
-    return df[[c for c in final_cols if c in df.columns]]
+    # 4) Pre-normalize special columns that require custom logic (e.g., Co-payment).
+    # This converts their values to a standard 0-1 scale before the final calculation.
+    if 'Co-payment (%)' in df.columns:
+        df['normalized_copay'] = df['Co-payment (%)'].apply(_normalize_copay)
+        # Update precedence to use the new normalized column
+        for row, cols in precedence_to_csv.items():
+            if 'Co-payment (%)' in cols:
+                precedence_to_csv[row] = [c if c != 'Co-payment (%)' else 'normalized_copay' for c in cols]
+
+    # 5) Calculate the final weighted score
+    total_score = pd.Series(0.0, index=df.index)
+    for row_num, cols in dynamic_precedence.items():
+        w = row_weights.get(row_num, 0)
+        existing_cols = [c for c in cols if c in df.columns]
+        if w > 0 and existing_cols:
+            # Correctly calculate the weighted sum for the row
+            ws = _within_row_weights(len(existing_cols))
+            row_score = (df[existing_cols] * ws).sum(axis=1)
+            total_score += w * row_score
+    df['Score_MemberAware'] = total_score
+
+    return df.sort_values('Score_MemberAware', ascending=False)
 
 # ---------------------------
 # Example usage

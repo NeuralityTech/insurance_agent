@@ -17,6 +17,10 @@
     .results tr:hover { background: #fafafa; }
     .toolbar { display:flex; justify-content: space-between; align-items:center; margin-top: 8px; }
     .count { font-size: 0.9rem; color:#555; }
+    /* Right-align header actions (Logout, Home) and keep them adjacent */
+    .top-bar { display: flex; align-items: center; gap: 12px; }
+    .top-bar .user-info { margin-right: auto; }
+    .top-bar .right-actions { display: flex; gap: 8px; align-items: center; }
   </style>
 </head>
 <body>
@@ -24,10 +28,13 @@
     <link rel="stylesheet" href="/static/css/logo.css">
     <script defer src="/static/js/logo.js"></script>
     <div class="user-info">Logged in as: <span id="logged-in-user" class="user-id"></span></div>
-    <button id="logout-btn" class="btn btn-logout">Logout</button>
+    <div class="right-actions">
+      <button id="logout-btn" class="btn btn-logout">Logout</button>
+      <button id="btn-home" class="btn">Home</button>
+    </div>
   </header>
   <div class="container">
-    <h1>Client Directory</h1>
+    <h1>Application Directory</h1>
     <p>Filter clients by Supervisor, Status, or Unique ID.</p>
 
     <div class="filters">
@@ -42,9 +49,9 @@
         <select id="filter-status">
           <option value="">All Statuses</option>
           <option value="approved">Approved</option>
-          <option value="pending">Pending</option>
+          <option value="sup_review">Sup_Review</option>
           <option value="rejected">Rejected</option>
-          <option value="na">NA</option>
+          <option value="open">Open</option>
         </select>
       </div>
       <div class="form-group">
@@ -71,7 +78,7 @@
             <th>Name</th>
             <th>Unique ID</th>
             <th>Agent</th>
-            <th>Supervisor Status</th>
+            <th>Application Status</th>
           </tr>
         </thead>
         <tbody id="results-body"></tbody>
@@ -80,6 +87,24 @@
   </div>
 
   <script src="../js/client_directory.js"></script>
+  <script>
+    (function(){
+      const logoutBtn = document.getElementById('logout-btn');
+      const homeBtn = document.getElementById('btn-home');
+      const userEl = document.getElementById('logged-in-user');
+      try {
+        const uid = localStorage.getItem('loggedInUserId');
+        if (uid && userEl) userEl.textContent = uid; else window.location.href = 'Main_login.html';
+      } catch {}
+      if (logoutBtn) logoutBtn.addEventListener('click', function(){
+        try { localStorage.removeItem('loggedInUserId'); } catch {}
+        window.location.href = 'Main_login.html';
+      });
+      if (homeBtn) homeBtn.addEventListener('click', function(){
+        window.location.href = '/html/Health_Insurance_Proposal_Request.html';
+      });
+    })();
+  </script>
 </body>
 </html>
 

@@ -1,0 +1,11 @@
+{
+  "ailment_support_scores": {
+    "direct_match_score": 1.0,
+    "multi_disease_score": 0.8,
+    "general_plan_score": 0.6,
+    "mismatched_disease_score": 0.0
+  },
+  "family_composition": {
+    "adult_age_threshold": 25
+  }
+}

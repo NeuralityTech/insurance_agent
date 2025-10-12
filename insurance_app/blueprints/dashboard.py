@@ -1,12 +1,14 @@
 import json
 import pandas as pd
 from flask import Blueprint, jsonify, render_template, current_app
+from collections import Counter
 from ..database import get_db_connection, get_user_db_connection, get_derived_db_connection
 from itertools import chain
 from ..analysis.get_plans import fetch_plans
 from ..analysis.ailment_score import compute_member_aware_scores
 from ..analysis.plan_analyzer import bundle_plans_by_score
 from ..analysis.query_fetcher import generate, clean_and_parse
+from .analysis import _clean_nan
 
 dashboard_bp = Blueprint('dashboard_bp', __name__)
 
@@ -60,8 +62,24 @@ def list_supervisors():
 def list_clients():
     try:
         conn = get_db_connection()
-        rows = conn.execute('''SELECT COALESCE(full_name, json_extract(form_summary, '$.primaryContact.applicant_name')) AS name, unique_id, agent, supervisor_approval_status FROM submissions ORDER BY timestamp DESC''').fetchall()
-        result = [{'name': r['name'], 'unique_id': r['unique_id'], 'agent': r['agent'], 'supervisor_status': (r['supervisor_approval_status'] or '').lower()} for r in rows]
+        rows = conn.execute('''
+            SELECT 
+                COALESCE(full_name, json_extract(form_summary, '$.primaryContact.applicant_name')) AS name,
+                unique_id,
+                agent,
+                supervisor_approval_status,
+                application_status
+            FROM submissions
+            ORDER BY timestamp DESC
+        ''').fetchall()
+        # Expose application_status directly; keep supervisor_status (lowercased) for backward compatibility
+        result = [{
+            'name': r['name'],
+            'unique_id': r['unique_id'],
+            'agent': r['agent'],
+            'supervisor_status': (r['supervisor_approval_status'] or '').lower(),
+            'application_status': r['application_status']
+        } for r in rows]
         return jsonify(result), 200
     except Exception as e:
         current_app.logger.error(f"Error listing clients: {e}")
@@ -106,10 +124,42 @@ def get_client_details(unique_id):
     supervisor_status = (row['supervisor_approval_status'] or '').upper() if 'supervisor_approval_status' in row.keys() else ''
     derived_text = generate(json.dumps(client_data))
     derived_features = clean_and_parse(derived_text)
-    initial_plans = fetch_plans(derived_features)
+    # fetch_plans expects (summary, client_data)
+    initial_plans = fetch_plans(derived_features, client_data)
+
+    # Build family structure from derived features
+    def _is_member(k, v):
+        return isinstance(v, dict) and ('name' in v or 'age' in v or 'disease_code' in v)
+    member_ages = {}
+    member_ailments = {}
+    for key, val in derived_features.items():
+        if not _is_member(key, val):
+            continue
+        name = val.get('name') or key
+        try:
+            age = int(val.get('age') or 0)
+        except Exception:
+            age = 0
+        member_ages[name] = age
+        dcodes = (val.get('disease_code') or '').strip()
+        if dcodes:
+            codes = [c.strip().upper() for c in dcodes.split(',') if c.strip() and c.strip().upper() != 'GENERAL']
+        else:
+            codes = []
+        member_ailments[name] = codes
+    adult_age_threshold = 25
+    num_adults = sum(1 for a in member_ages.values() if a >= adult_age_threshold)
+    num_children = max(0, len(member_ages) - num_adults)
+    family_structure = {
+        'adults': num_adults,
+        'children': num_children,
+        'member_ailments': member_ailments,
+        'member_ages': member_ages,
+    }
     union_of_plans = set(chain.from_iterable(p['plans'] for p in initial_plans.values() if p.get('plans')))
     if not union_of_plans:
-        return jsonify({'summary': client_data, 'analysis': {'option_1_full_family_plans': {}, 'option_2_combination_plans': {'individual_plans': {}, 'combo_plans': {}}}, 'ranked_plans': [], 'chosen_plans': chosen_plans, 'supervisor_status': supervisor_status})
+        safe_payload = _clean_nan({'summary': client_data, 'analysis': {'option_1_full_family_plans': {}, 'option_2_combination_plans': {'individual_plans': {}, 'combo_plans': {}}}, 'ranked_plans': [], 'chosen_plans': chosen_plans, 'supervisor_status': supervisor_status, 'proposed_plans': {}})
+        return jsonify(safe_payload)
     try:
         derived_conn = get_derived_db_connection()
         all_plans_df = pd.read_sql_query("SELECT * FROM features", derived_conn)
@@ -117,16 +167,39 @@ def get_client_details(unique_id):
         plans_to_score_df = all_plans_df[all_plans_df['Plan_Name'].isin(union_of_plans)].copy()
         if 'Plan_Name' in plans_to_score_df.columns:
             plans_to_score_df.rename(columns={'Plan_Name': 'Plan Name'}, inplace=True)
+        # Precompute Family_Fit for visibility/debugging
+        def _capacity_from_policy(policy_code: str):
+            try:
+                parts = str(policy_code).strip().upper().split('_')
+                if len(parts) == 3 and parts[0] in ('FLO', 'MIX') and parts[1].isdigit() and parts[2].isdigit():
+                    return int(parts[1]), int(parts[2])
+            except Exception:
+                pass
+            return 1, 0  # default individual plan
+        if 'Policy_Code' in plans_to_score_df.columns:
+            caps = plans_to_score_df['Policy_Code'].apply(_capacity_from_policy)
+            plans_to_score_df['Plan_Adults'] = caps.apply(lambda t: t[0])
+            plans_to_score_df['Plan_Children'] = caps.apply(lambda t: t[1])
+            plans_to_score_df['Family_Fit'] = (
+                (plans_to_score_df['Plan_Adults'] >= family_structure['adults']) &
+                (plans_to_score_df['Plan_Children'] >= family_structure['children'])
+            ).astype(int)
     except Exception as e:
         return jsonify({'error': 'Could not load plan features from the database.'}), 500
     if plans_to_score_df.empty:
-        return jsonify({'summary': client_data, 'analysis': {'option_1_full_family_plans': {}, 'option_2_combination_plans': {'individual_plans': {}, 'combo_plans': {}}}, 'ranked_plans': [], 'chosen_plans': chosen_plans, 'supervisor_status': supervisor_status})
-    scored_plans_df = compute_member_aware_scores(plans_to_score_df, client_data)
-    analysis_results = bundle_plans_by_score(initial_plans, scored_plans_df)
+        safe_payload = _clean_nan({'summary': client_data, 'analysis': {'option_1_full_family_plans': {}, 'option_2_combination_plans': {'individual_plans': {}, 'combo_plans': {}}}, 'ranked_plans': [], 'chosen_plans': chosen_plans, 'supervisor_status': supervisor_status, 'proposed_plans': initial_plans})
+        return jsonify(safe_payload)
+    # compute_member_aware_scores expects (plans_df, derived_features, app)
+    scored_plans_df = compute_member_aware_scores(plans_to_score_df, derived_features, current_app)
+    # bundle_plans_by_score expects a family_structure dict
+    analysis_results = bundle_plans_by_score(initial_plans, scored_plans_df, family_structure)
     ranked_plans_df = scored_plans_df.sort_values(by=['Score_MemberAware'], ascending=False)
     ranked_plans_df['Rank'] = range(1, len(ranked_plans_df) + 1)
-    ranked_plans_json = ranked_plans_df.to_dict(orient='records')
-    return jsonify({'summary': client_data, 'analysis': analysis_results, 'ranked_plans': ranked_plans_json, 'chosen_plans': chosen_plans, 'supervisor_status': supervisor_status})
+    # Replace NaN with None to produce valid JSON
+    safe_ranked = ranked_plans_df.where(pd.notnull(ranked_plans_df), None)
+    ranked_plans_json = safe_ranked.to_dict(orient='records')
+    safe_payload = _clean_nan({'summary': client_data, 'analysis': analysis_results, 'ranked_plans': ranked_plans_json, 'chosen_plans': chosen_plans, 'supervisor_status': supervisor_status, 'proposed_plans': initial_plans})
+    return jsonify(safe_payload)
 
 @dashboard_bp.route('/submissions', methods=['GET'])
 def list_submissions():
@@ -136,3 +209,39 @@ def list_submissions():
     submissions = [dict(row) for row in rows]
     current_app.logger.info("Listing %d submissions", len(submissions))
     return jsonify(submissions), 200
+
+from .analysis import _run_full_analysis
+
+@dashboard_bp.route('/plan_analysis_dashboard')
+def plan_analysis_dashboard():
+    """Runs analysis on all submissions and aggregates the results for a dashboard."""
+    conn = get_db_connection()
+    submissions = conn.execute('SELECT unique_id, form_summary FROM submissions').fetchall()
+    conn.close()
+
+    all_clients_analysis = []
+    for submission in submissions:
+        client_data = json.loads(submission['form_summary'])
+        client_name = client_data.get('primaryContact', {}).get('applicant_name', 'Unknown Client')
+        unique_id = submission['unique_id']
+
+        # Generate derived features for this client
+        derived_text = generate(json.dumps(client_data))
+        derived_features = clean_and_parse(derived_text)
+        
+        # Run the full analysis
+        analysis_result = _run_full_analysis(client_data, derived_features, current_app)
+        if analysis_result:
+            all_clients_analysis.append({
+                'client_name': client_name,
+                'unique_id': unique_id,
+                'analysis': analysis_result
+            })
+
+    # Prepare data for the template
+    dashboard_data = {
+        'total_clients_analyzed': len(all_clients_analysis),
+        'client_analyses': all_clients_analysis
+    }
+
+    return render_template('Plan_Analysis_Dashboard.html', data=dashboard_data, supervisor_status=None) # Pass a default value

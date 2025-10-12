@@ -17,7 +17,10 @@
         <div class="user-info">
             Logged in as: <span id="logged-in-user" class="user-id"></span>
         </div>
-        <button id="logout-btn" class="btn btn-logout">Logout</button>
+        <div class="top-actions">
+            <button type="button" id="btn-home" class="btn">Home</button>
+            <button id="logout-btn" class="btn btn-logout">Logout</button>
+        </div>
     </header>
     <div class="container">
         <header class="page-header">
@@ -30,8 +33,8 @@
                 <!-- Proposed plans will be injected here by proposed_plans.js -->
             </div>
             <div class="form-actions">
-                <button type="button" id="btn-home" class="btn">Home</button>
-                <button type="button" onclick="window.history.back()" class="btn btn-secondary">Back</button>
+                <button type="button" id="btn-previous" class="btn btn-secondary">Previous</button>
+                <button type="button" id="btn-next" class="btn" disabled>Next</button>
                 <button type="button" id="analysis-btn" class="btn btn-info">Select Plan</button>
                 </div>
         </main>
@@ -41,6 +44,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             const loggedInUserEl = document.getElementById('logged-in-user');
             const logoutBtn = document.getElementById('logout-btn');
+            const prevBtn = document.getElementById('btn-previous');
+            const nextBtn = document.getElementById('btn-next');
+            const analysisBtn = document.getElementById('analysis-btn');
 
             const userId = localStorage.getItem('loggedInUserId');
             if (userId) {
@@ -53,10 +59,94 @@
                 localStorage.removeItem('loggedInUserId');
                 window.location.href = 'Main_login.html';
             });
+
+            // Derive unique_id from URL or localStorage
+            const urlParams = new URLSearchParams(window.location.search);
+            let uniqueId = urlParams.get('unique_id');
+            if (!uniqueId) {
+                try {
+                    const summary = JSON.parse(localStorage.getItem('formSummary'));
+                    if (summary && summary.primaryContact) {
+                        uniqueId = summary.primaryContact['unique_id'] || summary.primaryContact['Unique Id'] || null;
+                    }
+                } catch (e) {}
+            }
+
+            // Previous: go back to Summary with same unique_id
+            if (prevBtn) {
+                prevBtn.addEventListener('click', function() {
+                    if (uniqueId) {
+                        // Mark return path for Summary back button to preserve state
+                        try { sessionStorage.setItem('previousFormPage', window.location.pathname); } catch(e) {}
+                        window.location.href = `Summary.html?unique_id=${encodeURIComponent(uniqueId)}`;
+                    } else {
+                        window.history.back();
+                    }
+                });
+            }
+
+            // Next: enable only when the next page exists; default to Analysis_Dashboard.html
+            if (nextBtn) {
+                let afterPage = null;
+                try { afterPage = sessionStorage.getItem('afterPage') || null; } catch(e) {}
+                if (!afterPage) { afterPage = 'Analysis_Dashboard.html'; }
+                if (afterPage && uniqueId) {
+                    const targetUrl = `${afterPage}?unique_id=${encodeURIComponent(uniqueId)}`;
+                    fetch(targetUrl, { method: 'GET' })
+                        .then(resp => {
+                            if (resp && resp.ok) {
+                                nextBtn.disabled = false;
+                                nextBtn.onclick = () => { window.location.href = targetUrl; };
+                            } else {
+                                nextBtn.disabled = true;
+                            }
+                        })
+                        .catch(() => { nextBtn.disabled = true; });
+                } else {
+                    nextBtn.disabled = true;
+                }
+            }
+
+            // If we navigated here from Analysis_Dashboard, disable Select Plan button
+            try {
+                const fromFlag = sessionStorage.getItem('fromAnalysisDashboard') === '1';
+                const fromRef = document.referrer && document.referrer.indexOf('Analysis_Dashboard.html') !== -1;
+                if (analysisBtn && (fromFlag || fromRef)) {
+                    // Ensure the action container is interactive again
+                    const actionsContainer = document.querySelector('.form-actions');
+                    if (actionsContainer) {
+                        actionsContainer.classList.remove('disabled');
+                        actionsContainer.removeAttribute('aria-disabled');
+                    }
+                    // Enable navigation buttons (prev/next handled above for afterPage/uniqueId)
+                    if (prevBtn) prevBtn.disabled = false;
+                    if (nextBtn && !nextBtn.onclick) nextBtn.disabled = true; // will be enabled by afterPage logic if available
+
+                    // Keep Select Plan disabled per requirement
+                    analysisBtn.disabled = true;
+                    analysisBtn.classList.add('is-disabled');
+                    analysisBtn.setAttribute('aria-disabled', 'true');
+                    analysisBtn.title = 'Disabled when returning from Analysis Dashboard';
+                    // Reset label if it was stuck in progress
+                    if (analysisBtn.textContent && analysisBtn.textContent.toLowerCase().includes('selecting')) {
+                        analysisBtn.textContent = 'Select Plan';
+                    }
+                    // One-time flag; clear it so future visits behave normally
+                    sessionStorage.removeItem('fromAnalysisDashboard');
+                }
+            } catch (e) {}
         });
     </script>
     <script>
         document.getElementById('analysis-btn').addEventListener('click', function() {
+            // Prevent double-clicks
+            if (this.dataset.clicked === 'true') return;
+            this.dataset.clicked = 'true';
+
+            // Disable this button and show progress text
+            this.disabled = true;
+            this.textContent = 'Selecting plans...';
+
             // Extract unique_id from the current URL, assuming it's a query parameter
             const urlParams = new URLSearchParams(window.location.search);
             const uniqueId = urlParams.get('unique_id');
@@ -64,6 +154,10 @@
                 window.location.href = `/proposed_plans/${uniqueId}`;
             } else {
                 alert('Could not find a unique ID to analyze.');
+                // Re-enable if navigation is not possible
+                this.disabled = false;
+                this.textContent = 'Select Plan';
+                this.dataset.clicked = 'false';
             }
         });
         // Home button

@@ -1,0 +1,161 @@
+You are an expert insurance plan analyst. Your task is to enhance the following JSON report. You must return a valid JSON object with the exact same structure, but with ai reasoning as additions:
+
+for your context, 
+the below are possible values
+policy_code
+IND_1_0   : Single adult only
+FLO_2_0   : Two adults only
+FLO_2_3   : Two adults and up to three children
+FLO_6_3   : Up to six adults and three children
+FLO_2_gt0 : Two adults and at least one child (no limit)
+MIX_1_1   : One adult and one child option
+MIX_2_4   : Up to two adults and four children
+MIX_2_3   : Up to two adults and three children
+MIX_2_2   : Up to two adults and two children
+MIX_1_gt0 : One adult and at least one child
+MIX_2_gt0 : Up to two adults and at least one child
+ADN_NA_0  : Rider add-on using base plan counts
+FLO_Sr_2_0: Two senior adults only
+
+Disease Code
+DIAB : if a member has diabetes
+CARD : if a member has cardiac
+CANC : if a member has cancer
+MULTI : if a member has multiple diseases
+GENERAL : if a member has general health issues
+
+
+ailment_score = mean of member_specific_scores
+member_specific_scores can take 0.0, 0.6, 0.8, 1.0
+1.0 when the disease code of the plan matches the disease code of the member
+0.8 when the disease code of the plan is a MULTI and the members disease could be any other than GENERAL
+0.6 when the disease code of the plan is GENERAL and the members disease is any other than GENERAL
+0.0 when the disease code of the plan is not GENERAL and MULTI and the members disease is any other than GENERAL
+
+
+Do not mention technical details like 'policy_code'. Your response must be only the final, valid JSON object.
+
+--- EXAMPLE ---
+
+**INPUT JSON:**
+```json
+{
+    "detailed_justification": [
+        {
+            "plan_name": "Smart Health Pro",
+            "policy_code": "MIX_2_3",
+            "proposed_for": [
+                "kiran",
+                "Aditi"
+            ],
+            "reason_for_proposal": "Proposed for members with needs: GENERAL",
+            "family_fit_check_result": "Passed",
+            "ailment_score": 1.0,
+            "member_specific_scores": {
+                "kiran": 1.0,
+                "Aditi": 1.0
+            },
+            "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING"
+        },
+        {
+            "plan_name": "Star Health Assure",
+            "policy_code": "FLO_6_3",
+            "proposed_for": [
+                "kiran",
+                "Aditi"
+            ],
+            "reason_for_proposal": "Proposed for members with needs: GENERAL",
+            "family_fit_check_result": "Passed",
+            "ailment_score": 1.0,
+            "member_specific_scores": {
+                "kiran": 1.0,
+                "Aditi": 1.0
+            },
+            "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING"
+        },
+        {
+            "plan_name": "Platinum Sec 2 (Cardiac Ailments)",
+            "policy_code": "IND_1_0",
+            "proposed_for": [
+                "kiran"
+            ],
+            "reason_for_proposal": "Proposed for members with needs: CARD",
+            "family_fit_check_result": "Not Applicable (Individual Plan)",
+            "ailment_score": 0.5,
+            "member_specific_scores": {
+                "kiran": 1.0,
+                "Aditi": 0.0
+            },
+            "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
+            "ai_reasoning": "This individual plan provides a perfect match for Kiran's cardiac needs. Aditi has no relevant health concerns for this specific cardiac plan."
+        }
+    ]
+}
+```
+
+**EXPECTED OUTPUT JSON:**
+```json
+{
+    "detailed_justification": [
+        {
+            "plan_name": "Smart Health Pro",
+            "policy_code": "MIX_2_3",
+            "proposed_for": [
+                "kiran",
+                "Aditi"
+            ],
+            "reason_for_proposal": "Proposed for members with needs: GENERAL",
+            "family_fit_check_result": "Passed",
+            "ailment_score": 1.0,
+            "member_specific_scores": {
+                "kiran": 1.0,
+                "Aditi": 1.0
+            },
+            "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
+            "ai_reasoning": "Both Kiran and Aditi achieved perfect match with a passed family-fit check, indicating strong alignment with your general health needs."
+        },
+        {
+            "plan_name": "Star Health Assure",
+            "policy_code": "FLO_6_3",
+            "proposed_for": [
+                "kiran",
+                "Aditi"
+            ],
+            "reason_for_proposal": "Proposed for members with needs: GENERAL",
+            "family_fit_check_result": "Passed",
+            "ailment_score": 1.0,
+            "member_specific_scores": {
+                "kiran": 1.0,
+                "Aditi": 1.0
+            },
+            "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
+            "ai_reasoning": "This shared family cover also delivers perfect match for both members and passes the family-fit check, making it a strong primary option."
+        },
+        {
+            "plan_name": "Platinum Sec 2 (Cardiac Ailments)",
+            "policy_code": "IND_1_0",
+            "proposed_for": [
+                "kiran"
+            ],
+            "reason_for_proposal": "Proposed for members with needs: CARD",
+            "family_fit_check_result": "Not Applicable (Individual Plan)",
+            "ailment_score": 0.5,
+            "member_specific_scores": {
+                "kiran": 1.0,
+                "Aditi": 0.0
+            },
+            "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
+            "ai_reasoning": "This is an individual plan and provides a perfect match for Kiran's cardiac needs only. For rest of the family members this is not right plan."
+        }
+    ]
+}
+```
+
+--END EXAMPLE--
+
+
+Note: 
+1. Dont use the score values in the ai reasoning. use "no match", "perfect match", "partial match" phrases in the reasoning section.
+
+
+

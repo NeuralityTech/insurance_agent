@@ -1,0 +1,2126 @@
+<!--@Srihari-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/static/css/logo.css">
+  <script defer src="/static/js/logo.js"></script>
+  <meta charset="UTF-8" />
+  <title>Approvals</title>
+  <link rel="stylesheet" href="../css/common.css" />
+  <link rel="stylesheet" href="../css/top_bar.css" />
+  <script defer src="{{ url_for('static', filename='js/plan_selection_summary_v2.js') }}"></script>
+
+  <style>
+    h1 {
+      background-color: #3b82f6;
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 28px;
+      box-shadow: 0 2px 4px rgb(255, 254, 254);
+      margin-bottom: 24px;
+    }
+    h3 {
+      background-color: #3b82f6;
+      color: white;
+      padding: 10px 16px;
+      border-left: 6px solid 3b82f6;
+      border-radius: 6px;
+      font-size: 20px;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgb(255, 255, 255);
+    }
+    #statusBox { margin: 10px 0; padding: 10px; border-radius: 6px; font-weight: bold; display: inline-block; }
+    .status-Approved { background-color: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px; }
+    .status-Rejected { background-color: #e53935; color: white; padding: 4px 8px; border-radius: 4px; }
+    .status-Changes { background-color: #fbc02d; color: black; padding: 4px 8px; border-radius: 4px; }
+
+    .container { max-width: 800px; margin: 2rem auto; background: #fff; padding: 1.5rem; border-radius: 8px; }
+    .form-summary { background: #f9f9f9; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
+    .actions button { margin-right: 1rem; }
+
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
+    .modal-content { background: white; padding: 1.5rem; border-radius: 8px; width: 400px; }
+
+    .collapsible { margin-bottom: 1rem; }
+    .collapsible-btn { background: #f0f6f4; color: black; cursor: pointer; padding: 10px 12px; width: 100%; border: 1px solid #d0d0d0; text-align: left; font-size: 16px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .collapsible-btn:hover { background: #e9f2ef; }
+    .content { display: none; background-color: #fff; padding: 12px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 6px 6px; margin-top: 6px; }
+
+    .form-kv table { width: 100%; border-collapse: collapse; }
+    .form-kv td { border: 1px solid #ccc; padding: 6px 10px; }
+    .form-kv td:first-child { font-weight: bold; width: 200px; background: #f0f0f0; }
+    .plans-list { padding-left: 18px; margin: 6px 0; }
+
+    #statusBox, 
+    #uwStatusBox {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: bold;
+      margin: 6px 0;
+      padding: 4px 0;
+    }
+
+    #statusBox strong,
+    #uwStatusBox strong {
+      font-weight: bold;
+      margin: 0;
+      padding: 0;
+    }
+
+    #clientStatus, 
+    #underwriterStatus {
+      display: inline-block;
+    }
+
+    .btn { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; color: white; font-size: 14px; margin-right: 8px; }
+    .btn-Approve { background-color: #4CAF50; }
+    .btn-Reject { background-color: #e53935; }
+    .btn-Changes { background-color: #fbc02d; color: black; }
+    .btn[disabled] { opacity: 0.55; cursor: not-allowed; pointer-events: none; }
+
+    .top-bar { display: flex; align-items: center; gap: 12px; }
+    .top-bar .user-info { margin-right: auto; }
+    .top-bar .right-actions { display: flex; gap: 8px; align-items: center; }
+  </style>
+</head>
+<body>
+  <header class="top-bar">
+    <link rel="stylesheet" href="/static/css/logo.css">
+    <script defer src="/static/js/logo.js"></script>
+    <div class="user-info">Logged in as: <span id="logged-in-user" class="user-id"></span></div>
+    <div class="right-actions">
+      <button id="logout-btn" class="btn btn-logout">Logout</button>
+      <button id="btn-home" class="btn">Home</button>
+    </div>
+  </header>
+  <div class="container mt-4">
+    <h1 class="main-heading">Approvals</h1>
+    <p>Page to approve/reject the insurance proposal for Client and Underwriter </p>
+
+    <label for="uniqueIdInput" class="form-label fw-bold">Unique ID</label>
+    <input type="text" id="uniqueIdInput" class="form-control" placeholder="Enter Unique ID">
+    <button id="searchBtn" class="btn btn-primary">Search</button>
+
+    <div id="result" style="display:none; margin-top:20px;">
+      <div id="createdMeta" class="created-meta" style="display:none; margin: 8px 0;">
+        <strong>Created On:</strong> <span id="createdOn"></span>
+        <span style="margin-left:12px;"><strong>No. of Days:</strong> <span id="ageDays"></span> days</span>
+        <span style="margin-left:12px;"><strong>Created By:</strong> <span id="createdBy"></span></span>
+      </div>
+
+      <!-- Status section (moved here to appear right below Created Meta) -->
+      <section id="supervisor-meta" class="section supervisor-meta" style="display:none; margin-top:8px;">
+        <div class="form-group" style="margin-top:8px;">
+          <div><strong>Status</strong></div>
+          <div id="sup-summary" class="comment-box" role="textbox" aria-readonly="true"
+               style="border:1px solid #ccc; background:#fff; white-space:normal; font-family: inherit; font-size: inherit; line-height:1.2; min-height: 48px; padding:8px; margin:0;"></div>
+        </div>
+      </section>
+
+
+      <div class="collapsible" style="margin-top:16px;">
+        <button class="collapsible-btn">Form Summary <span class="caret">▼</span></button>
+        <div class="content" id="formSummary"></div>
+      </div>
+
+      <div class="collapsible">
+        <button class="collapsible-btn">Supervisor Selected Plans<span class="caret">▼</span></button>
+        <div class="content" id="plansChosen"></div>
+      </div>
+
+      <div class="collapsible" id="underwriterSummaryContainer" style="display:none;">
+        <button class="collapsible-btn">Underwriter Summary <span class="caret">▼</span></button>
+        <div class="content" id="underwriterSummaryContent">
+          <!-- Summary of underwriter feedback will be populated here -->
+        </div>
+      </div>
+
+      <!-- Policy Updates (collapsible summary) -->
+      <div class="collapsible" id="policyOutcomeSummaryContainer" style="display:none;">
+        <button class="collapsible-btn">Policy Updates <span class="caret">▼</span></button>
+        <div class="content" id="policyOutcomeSummaryContent">
+          <!-- Summary of policy outcome will be populated here -->
+        </div>
+      </div>
+
+      <!-- Client Review (collapsible summary) -->
+      <div class="collapsible">
+        <button class="collapsible-btn">Client Review <span class="caret">▼</span></button>
+        <div class="content" id="clientReviewSummaryContent"></div>
+      </div>
+
+      <!-- Underwriter Decision (collapsible summary) - moved under Client Review -->
+      <div class="collapsible" id="uwDecisionCollapsible" style="display:none;">
+        <button class="collapsible-btn">Underwriter Review <span class="caret">▼</span></button>
+        <div class="content" id="uwDecisionContent"></div>
+      </div>
+
+      <!-- Policy Outcome (collapsible summary) -->
+      <div class="collapsible" id="policyOutcomeCollapsible" style="display:none;">
+        <button class="collapsible-btn">Policy Outcome <span class="caret">▼</span></button>
+        <div class="content" id="policyOutcomeContent"></div>
+      </div>
+
+      <!-- Client Closure (collapsible summary) -->
+      <div class="collapsible" id="clientClosureCollapsible" style="display:none;">
+        <button class="collapsible-btn">Client Closure <span class="caret">▼</span></button>
+        <div class="content" id="clientClosureContent"></div>
+      </div>
+
+      <!-- CLIENT Review (kept) -->
+      <div id="clientSection">
+        <div class="client-actions" style="margin-top: 1rem; display: grid; gap: 12px;">
+          <div class="client-review" style="display: grid; gap: 8px; align-items: start;">
+            <label style="display:flex; align-items:center; gap:8px;">
+              <input type="checkbox" id="clientReviewChk" />
+              <span><strong>Client Review</strong></span>
+            </label>
+            <!-- Plans Selection Section with hierarchical checkboxes -->
+            <div id="plansSelectionSection" style="display: none; margin-top: 12px; padding: 16px; border: 1px solid #ddd; border-radius: 6px; background-color: #f9f9f9;">
+              <div style="margin-bottom: 16px;">
+                <strong style="font-size: 16px; color: #333;">Select Plans</strong>
+              </div>
+              
+              <!-- Family Floater Section -->
+              <div id="familyFloaterSection" style="display: none; margin-bottom: 20px; padding: 12px; border: 2px solid #28a745; border-radius: 6px; background-color: #f8fff9;">
+                <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-weight: bold; color: #333;">
+                  <input type="checkbox" id="familyFloaterChk" style="transform: scale(1.2);" />
+                  <span>Family</span>
+                </label>
+                <div id="familyFloaterPlans" style="display: none; margin-left: 24px; padding: 8px; border-left: 3px solid #28a745;">
+                  <!-- Family floater plans will be populated here -->
+                </div>
+              </div>
+              
+              <!-- Individual Section -->
+              <div id="individualSection" style="display: none; margin-bottom: 20px; padding: 12px; border: 2px solid #007bff; border-radius: 6px; background-color: #f8f9ff;">
+                <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-weight: bold; color: #333;">
+                  <input type="checkbox" id="individualChk" style="transform: scale(1.2);" />
+                  <span>Individual</span>
+                </label>
+                <div id="individualMembers" style="display: none; margin-left: 24px;">
+                  <!-- Individual members and their plans will be populated here -->
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; align-items: start;">
+              <textarea id="clientReviewComment" rows="3" style="width:100%;" placeholder="Add review comments" disabled></textarea>
+              <button id="clientReviewSaveBtn" class="btn btn-Changes" disabled>Update</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Next Action item (unified actions) -->
+      <section id="nextActionSection" style="display:none; margin-top: 16px; border-top:1px solid #eee; padding-top: 12px;">
+        <h3>Next Action item</h3>
+        <label for="nextActionSelect" class="fw-bold">Select Action</label>
+        <select id="nextActionSelect" class="form-control" style="max-width:280px; margin:6px 0;">
+          <option value="">Select an action</option>
+          <option value="With_UW">With UW</option>
+          <option value="Policy_Created">Policy Created</option>
+          <option value="Policy_Denied">Policy Denied</option>
+          <option value="Client_closed">Closed</option>
+        </select>
+
+        <div id="nextActionCommentBox" style="display:none; margin-top:8px;">
+          <textarea id="nextActionComment" rows="3" style="width:100%;" placeholder="Enter comments for this action" autocomplete="off"></textarea>
+          <button id="nextActionSaveBtn" class="btn btn-Approve" style="margin-top:6px;">Save</button>
+        </div>
+
+        <div id="nextActionPolicyCreateBox" style="display:none; margin-top:8px;">
+          <button id="openPolicyCreateBtn" class="btn btn-Approve">Open Policy Creation</button>
+        </div>
+      </section>
+
+      <hr style="margin:16px 0;" />
+
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="commentModal" class="modal">
+    <div class="modal-content">
+      <h3 id="modalTitle"></h3>
+      <textarea id="commentInput" rows="4" style="width:100%;" placeholder="Enter your comments"></textarea>
+      <br><br>
+      <button class="btn btn-Approve" id="submitCommentBtn">Submit</button>
+      <button class="btn btn-Reject" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      console.log('Page loaded with URL:', window.location.href);
+      const userEl = document.getElementById('logged-in-user');
+      const logoutBtn = document.getElementById('logout-btn');
+      const homeBtn = document.getElementById('btn-home');
+      try {
+        const uid = localStorage.getItem('loggedInUserId');
+        if (uid && userEl) userEl.textContent = uid; else window.location.href = 'Main_login.html';
+      } catch {}
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(){
+          try { localStorage.removeItem('loggedInUserId'); } catch {}
+          window.location.href = 'Main_login.html';
+        });
+      }
+      
+      if (homeBtn) {
+        homeBtn.addEventListener('click', function(){
+          window.location.href = '/html/Health_Insurance_Proposal_Request.html';
+        });
+      }
+    })();
+
+    // Helper: Build Policy Creation summary line (Unique ID, Proposer Name, Mobile)
+    function buildPolicyCreationSummary() {
+      const uid = (document.getElementById('uniqueIdInput')?.value || '').trim();
+      // Try to use already-fetched form summary details if present on the page
+      // Fallbacks attempt common field names
+      let proposer = '—';
+      let mobile = '—';
+      try {
+        const formSummaryEl = document.getElementById('formSummary');
+        if (formSummaryEl && formSummaryEl.textContent) {
+          // Best-effort parse from summary text if available (non-fatal)
+          const txt = formSummaryEl.textContent;
+          const mName = txt.match(/Full Name\s*:?\s*([^\n]+)/i);
+          const mMob = txt.match(/Mobile\s*:?\s*(\+?\d[\d\s-]+)/i);
+          if (mName && mName[1]) proposer = mName[1].trim();
+          if (mMob && mMob[1]) mobile = mMob[1].trim();
+        }
+      } catch {}
+      // If still blank, try common DOM fields that may exist on the page
+      if (proposer === '—') {
+        const nameEl = document.querySelector('#applicant_name, [name="applicant_name"], [data-proposer-name]');
+        if (nameEl && nameEl.value) proposer = String(nameEl.value).trim();
+      }
+      if (mobile === '—') {
+        const mobEl = document.querySelector('#mobile, [name="mobile"], [name="phone"], [data-mobile-number]');
+        if (mobEl && mobEl.value) mobile = String(mobEl.value).trim();
+      }
+      return { uid: uid || '—', proposer, mobile };
+    }
+    // Expose globally for other handlers
+    try { window.buildPolicyCreationSummary = buildPolicyCreationSummary; } catch {}
+
+    // Helper: get all selected plans from the hierarchical structure
+    window.getSelectedPlans = function() {
+      const selectedPlans = [];
+      
+      // Get family floater plans
+      const familyPlans = document.querySelectorAll('#familyFloaterPlans input[type="checkbox"]:checked');
+      familyPlans.forEach(checkbox => {
+        selectedPlans.push(checkbox.value);
+      });
+      
+      // Get individual plans
+      const individualPlans = document.querySelectorAll('#individualMembers input[type="checkbox"]:checked');
+      individualPlans.forEach(checkbox => {
+        if (!checkbox.classList.contains('member-checkbox')) { // Skip member checkboxes, only get plan checkboxes
+          selectedPlans.push(checkbox.value);
+        }
+      });
+      
+      return selectedPlans;
+    };
+    
+    // Helper: update the Client Review summary in real-time
+    window.updateClientReviewSummary = function() {
+      try {
+        const selectedPlans = window.getSelectedPlans();
+        const plansList = selectedPlans.length > 0 ? selectedPlans.join(', ') : '—';
+        const comments = (document.getElementById('clientReviewComment')?.value || '').trim() || '—';
+        
+        const summaryContent = document.getElementById('clientReviewSummaryContent');
+        if (summaryContent) {
+          summaryContent.innerHTML = '<div class="form-kv"><table>'+
+                                   `<tr><td>Plan(s) Agreed</td><td>${plansList}</td></tr>`+
+                                   `<tr><td>Client comments</td><td>${comments}</td></tr>`+
+                                   '</table></div>';
+        }
+      } catch (e) {
+        console.error('Error updating client review summary:', e);
+      }
+    };
+    
+    // Helper: restore saved client plans when plans section is opened
+    window.restoreSavedClientPlans = function() {
+      if (!window.savedClientPlans || window.savedClientPlans.length === 0) {
+        console.log('No saved client plans to restore');
+        return;
+      }
+      
+      console.log('Restoring saved client plans:', window.savedClientPlans);
+      
+      // Wait a bit for plans to be loaded
+      setTimeout(() => {
+        window.savedClientPlans.forEach(planName => {
+          // Find and check matching checkboxes
+          const checkboxes = document.querySelectorAll('#plansSelectionSection input[type="checkbox"]');
+          checkboxes.forEach(checkbox => {
+            const cbValue = checkbox.value;
+            
+            // Skip "on" values
+            if (cbValue === "on") return;
+            
+            // Use bidirectional matching
+            if (cbValue.includes(planName) || planName.includes(cbValue)) {
+              checkbox.checked = true;
+              console.log('✅ Restored checkbox:', planName, '→', cbValue);
+              
+              // Show member plans container if needed
+              if (checkbox.classList.contains('member-checkbox')) {
+                const memberName = checkbox.id.replace('member_', '');
+                const plansContainer = document.getElementById(`plans_${memberName}`);
+                if (plansContainer) {
+                  plansContainer.style.display = 'block';
+                }
+              }
+            }
+          });
+        });
+        
+        // Update the summary after restoration
+        window.updateClientReviewSummary();
+      }, 500);
+    };
+    
+    // Helper: extract plan names from data (supervisor or agent plans)
+    window.extractPlansFromChosen = function() {
+      const data = window.currentSubmissionData;
+      if (!data) return [];
+      
+      // Try supervisor plans first
+      let plans = [];
+      try {
+        if (data.supervisor_selected_plans) {
+          if (typeof data.supervisor_selected_plans === 'string') {
+            plans = JSON.parse(data.supervisor_selected_plans);
+          } else if (Array.isArray(data.supervisor_selected_plans)) {
+            plans = data.supervisor_selected_plans;
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing supervisor plans:', e);
+      }
+      
+      // If no supervisor plans, use agent plans as fallback
+      if (!plans || plans.length === 0) {
+        try {
+          if (data.plans_chosen) {
+            if (typeof data.plans_chosen === 'string') {
+              plans = JSON.parse(data.plans_chosen);
+            } else if (Array.isArray(data.plans_chosen)) {
+              plans = data.plans_chosen;
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing agent plans:', e);
+        }
+      }
+      
+      return plans || [];
+    };
+    
+    // Helper: parse plans data to separate family floater and individual plans
+    window.parsePlansData = function(plans) {
+      const result = {
+        familyFloater: [],
+        individual: {}
+      };
+      
+      // Get the form data to understand family structure
+      const formData = window.currentSubmissionData || {};
+      let formSummary = {};
+      try {
+        formSummary = formData.form_summary ? JSON.parse(formData.form_summary) : {};
+      } catch (e) {
+        console.error('Error parsing form_summary:', e);
+        formSummary = {};
+      }
+      
+      // Extract members from form data
+      const members = formSummary.members || [];
+      console.log('Available members from form data:', members);
+      
+      // Create a list of actual member names for matching
+      const memberNames = [];
+      
+      // Add primary contact name
+      if (formSummary.primaryContact && formSummary.primaryContact.applicant_name) {
+        memberNames.push(formSummary.primaryContact.applicant_name);
+      }
+      
+      // Add all member names
+      members.forEach(member => {
+        const memberName = member.name || member.member_name || '';
+        if (memberName && memberName.trim()) {
+          memberNames.push(memberName.trim());
+        }
+      });
+      
+      console.log('All member names for matching:', memberNames);
+      
+      plans.forEach(plan => {
+        const planStr = plan.toString().toLowerCase();
+        console.log('Processing plan:', plan, 'lowercase:', planStr);
+        
+        // Check if it's a family floater plan (enhanced detection)
+        if (planStr.includes('family') || planStr.includes('floater') || planStr.includes('cb') ||
+            planStr.includes('micro rural') || planStr.includes('farmers care') || 
+            planStr.includes('super surplus')) {
+          result.familyFloater.push(plan);
+        } else {
+          // For individual plans, try to extract member names
+          let matched = false;
+          
+          // First priority: Try to extract member name from plan string patterns like "Name - Plan"
+          const memberMatch = plan.match(/^([A-Za-z\s]+)\s*[-:]\s*(.+)$/);
+          if (memberMatch) {
+            const memberName = memberMatch[1].trim();
+            const planName = memberMatch[2].trim();
+            console.log('Extracted member name:', memberName, 'from plan:', plan);
+            if (!result.individual[memberName]) {
+              result.individual[memberName] = [];
+            }
+            result.individual[memberName].push(plan);
+            matched = true;
+          } else {
+            // Second priority: Check against known member names from form data
+            memberNames.forEach(memberName => {
+              if (memberName && planStr.includes(memberName.toLowerCase())) {
+                if (!result.individual[memberName]) {
+                  result.individual[memberName] = [];
+                }
+                result.individual[memberName].push(plan);
+                matched = true;
+              }
+            });
+          }
+          
+          // If still not matched, assign plans based on health conditions
+          if (!matched && memberNames.length > 0) {
+            // Get member health data to assign relevant plans
+            const members = formSummary.members || [];
+            const primaryContact = formSummary.primaryContact || {};
+            
+            // Assign plans based on health conditions
+            memberNames.forEach(memberName => {
+              if (!result.individual[memberName]) {
+                result.individual[memberName] = [];
+              }
+              
+              // Find member's health data and gender
+              let memberHealth = {};
+              let memberGender = '';
+              if (memberName === primaryContact.applicant_name) {
+                memberHealth = formSummary.healthHistory || {};
+                memberGender = (primaryContact.gender || '').toLowerCase();
+              } else {
+                const member = members.find(m => m.name === memberName);
+                memberHealth = member ? member.healthHistory || {} : {};
+                memberGender = member ? (member.gender || '').toLowerCase() : '';
+              }
+              
+              // Assign plans based on health conditions and gender
+              const planLower = planStr;
+              let shouldAssign = false;
+              
+              // First check gender compatibility
+              const isGenderSpecificPlan = planLower.includes('women') || planLower.includes('female') || 
+                                         planLower.includes('maternity') || planLower.includes('pregnancy');
+              
+              if (isGenderSpecificPlan && memberGender !== 'female') {
+                // Skip gender-specific plans for incompatible members
+                console.log(`Skipping gender-specific plan "${plan}" for ${memberName} (gender: ${memberGender})`);
+                shouldAssign = false;
+                // Continue to next member without assigning this plan
+              } else {
+              
+              // Check if plan matches member's health condition
+              if (planLower.includes('cardiac') || planLower.includes('heart')) {
+                // Cardiac plans for members with cardiac conditions
+                if ((memberHealth.disease && memberHealth.disease.includes('cardiac')) ||
+                    memberHealth.cardiac || 
+                    (memberHealth.disease && memberHealth.disease.includes('heart'))) {
+                  shouldAssign = true;
+                }
+              } else if (planLower.includes('cancer')) {
+                // Cancer plans for members with cancer conditions
+                if (memberHealth.cancer || 
+                    (memberHealth.disease && memberHealth.disease.includes('cancer'))) {
+                  shouldAssign = true;
+                }
+              } else if (planLower.includes('diabetes')) {
+                // Diabetes plans for members with diabetes conditions
+                if ((memberHealth.disease && memberHealth.disease.includes('diabetes')) ||
+                    memberHealth.diabetes ||
+                    (memberHealth.disease && memberHealth.disease.includes('diabetic'))) {
+                  shouldAssign = true;
+                }
+              } else {
+                // General health plans for everyone (Star Health Assure, Medi Classic Gold, etc.)
+                // Exclude condition-specific plans from general assignment
+                const isConditionSpecific = planLower.includes('diabetes') || 
+                                          planLower.includes('cardiac') || 
+                                          planLower.includes('cancer') ||
+                                          planLower.includes('safe');
+                
+                if (!isConditionSpecific) {
+                  shouldAssign = true;
+                }
+              }
+              
+              } // Close the else block for gender check
+              
+              if (shouldAssign) {
+                result.individual[memberName].push(plan);
+              }
+            });
+            matched = true;
+          }
+          
+          // Last resort: Use 'Individual' category only if no member names are available
+          if (!matched) {
+            console.log('Could not match plan to member, using Individual category:', plan);
+            if (!result.individual['Individual']) {
+              result.individual['Individual'] = [];
+            }
+            result.individual['Individual'].push(plan);
+          }
+        }
+      });
+      
+      return result;
+    };
+    
+    // Helper: populate family floater plans
+    window.populateFamilyFloaterPlans = function(plans) {
+      const container = document.getElementById('familyFloaterPlans');
+      if (!container) return;
+      
+      container.innerHTML = '';
+      plans.forEach((plan, index) => {
+        const planDiv = document.createElement('div');
+        planDiv.style.cssText = 'margin-bottom: 8px; padding: 6px; background-color: #f0f8f0; border-radius: 4px;';
+        
+        const label = document.createElement('label');
+        label.style.cssText = 'display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = plan;
+        checkbox.id = `familyPlan_${index}`;
+        checkbox.style.cssText = 'transform: scale(1.1);';
+        checkbox.addEventListener('change', () => window.updateClientReviewActionState());
+        
+        const span = document.createElement('span');
+        span.textContent = `${plan}`;
+        span.style.color = '#333';
+        
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        planDiv.appendChild(label);
+        container.appendChild(planDiv);
+      });
+    };
+    
+    // Helper: populate individual plans
+    window.populateIndividualPlans = function(individualData) {
+      const container = document.getElementById('individualMembers');
+      if (!container) return;
+      
+      container.innerHTML = '';
+      
+      // Create member selection row
+      const membersRow = document.createElement('div');
+      membersRow.style.cssText = 'display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;';
+      
+      // Create plans containers row
+      const plansRow = document.createElement('div');
+      plansRow.style.cssText = 'display: flex; gap: 16px; flex-wrap: wrap;';
+      
+      const memberNames = Object.keys(individualData);
+      memberNames.forEach(memberName => {
+        // Create member checkbox
+        const memberDiv = document.createElement('div');
+        memberDiv.style.cssText = 'padding: 8px 12px; border: 2px solid #007bff; border-radius: 4px; background-color: #f0f4ff;';
+        
+        const memberLabel = document.createElement('label');
+        memberLabel.style.cssText = 'display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: bold; color: #333;';
+        
+        const memberCheckbox = document.createElement('input');
+        memberCheckbox.type = 'checkbox';
+        memberCheckbox.classList.add('member-checkbox');
+        memberCheckbox.id = `member_${memberName}`;
+        memberCheckbox.style.cssText = 'transform: scale(1.1);';
+        
+        const memberSpan = document.createElement('span');
+        memberSpan.textContent = memberName;
+        
+        memberLabel.appendChild(memberCheckbox);
+        memberLabel.appendChild(memberSpan);
+        memberDiv.appendChild(memberLabel);
+        membersRow.appendChild(memberDiv);
+        
+        // Create plans container for this member
+        const memberPlansDiv = document.createElement('div');
+        memberPlansDiv.id = `plans_${memberName}`;
+        memberPlansDiv.style.cssText = 'display: none; min-width: 200px; padding: 12px; border: 1px solid #ddd; border-radius: 4px; background-color: #f9f9f9;';
+        
+        const plansTitle = document.createElement('div');
+        plansTitle.style.cssText = 'font-weight: bold; margin-bottom: 8px; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 4px;';
+        plansTitle.textContent = `${memberName}'s Plans`;
+        memberPlansDiv.appendChild(plansTitle);
+        
+        individualData[memberName].forEach((plan, planIndex) => {
+          const planDiv = document.createElement('div');
+          planDiv.style.cssText = 'margin-bottom: 6px; padding: 6px; background-color: #f0f8ff; border-radius: 3px; border-left: 3px solid #007bff;';
+          
+          const planLabel = document.createElement('label');
+          planLabel.style.cssText = 'display: flex; align-items: center; gap: 6px; cursor: pointer;';
+          
+          const planCheckbox = document.createElement('input');
+          planCheckbox.type = 'checkbox';
+          planCheckbox.value = plan.includes(memberName) ? plan : `${memberName} - ${plan}`;
+          planCheckbox.id = `plan_${memberName}_${planIndex}`;
+          planCheckbox.addEventListener('change', () => window.updateClientReviewActionState());
+          
+          const planSpan = document.createElement('span');
+          planSpan.textContent = `${plan.replace(memberName + ' - ', '').replace(memberName + ':', '').trim()}`;
+          planSpan.style.cssText = 'color: #555; font-size: 14px;';
+          
+          planLabel.appendChild(planCheckbox);
+          planLabel.appendChild(planSpan);
+          planDiv.appendChild(planLabel);
+          memberPlansDiv.appendChild(planDiv);
+        });
+        
+        plansRow.appendChild(memberPlansDiv);
+        
+        // Add event listener to show/hide member plans
+        memberCheckbox.addEventListener('change', function() {
+          memberPlansDiv.style.display = this.checked ? 'block' : 'none';
+          if (!this.checked) {
+            // Uncheck all plans for this member
+            const memberPlanCheckboxes = memberPlansDiv.querySelectorAll('input[type="checkbox"]');
+            memberPlanCheckboxes.forEach(cb => cb.checked = false);
+          }
+          window.updateClientReviewActionState();
+        });
+      });
+      
+      container.appendChild(membersRow);
+      container.appendChild(plansRow);
+    };
+    
+    // Helper: load plans into hierarchical structure (only once)
+    window.loadPlansIntoHierarchy = function(forceReload = false) {
+      // Check if already loaded to prevent recreation (unless forced)
+      if (window.__plansLoaded && !forceReload) {
+        console.log('Plans already loaded, skipping to preserve checkbox states');
+        return;
+      }
+      
+      console.log('Loading plans into hierarchy...');
+      let plans = window.extractPlansFromChosen();
+      console.log('Extracted plans:', plans);
+      
+      const familySection = document.getElementById('familyFloaterSection');
+      const individualSection = document.getElementById('individualSection');
+      
+      if (!plans || plans.length === 0) {
+        console.log('No plans found, creating demo data with actual member names');
+        
+        // Get actual member names from form data
+        const formData = window.currentSubmissionData || {};
+        let memberNames = [];
+        
+        try {
+          const formSummary = formData.form_summary ? JSON.parse(formData.form_summary) : {};
+          
+          // Add primary contact name
+          if (formSummary.primaryContact && formSummary.primaryContact.applicant_name) {
+            memberNames.push(formSummary.primaryContact.applicant_name);
+          }
+          
+          // Add all member names
+          if (formSummary.members && Array.isArray(formSummary.members)) {
+            formSummary.members.forEach(member => {
+              const memberName = member.name || member.member_name || '';
+              if (memberName && memberName.trim()) {
+                memberNames.push(memberName.trim());
+              }
+            });
+          }
+        } catch (e) {
+          console.error('Error extracting member names:', e);
+        }
+        
+        // Create demo data with actual member names if available, otherwise use defaults
+        if (memberNames.length > 0) {
+          plans = [
+            'Family Health Optima Insurance Plan',
+            'Star Super Surplus Floater Silver Plan'
+          ];
+          
+          // Add individual plans for each actual member based on their health conditions
+          try {
+            const formSummary = formData.form_summary ? JSON.parse(formData.form_summary) : {};
+            const members = formSummary.members || [];
+            const primaryContact = formSummary.primaryContact || {};
+            
+            memberNames.forEach(memberName => {
+              // Find member's health data
+              let memberHealth = {};
+              let memberGender = '';
+              
+              if (memberName === primaryContact.applicant_name) {
+                memberHealth = formSummary.healthHistory || {};
+                memberGender = (primaryContact.gender || '').toLowerCase();
+              } else {
+                const member = members.find(m => m.name === memberName);
+                memberHealth = member ? member.healthHistory || {} : {};
+                memberGender = member ? (member.gender || '').toLowerCase() : '';
+              }
+              
+              console.log(`DEBUG: Processing member ${memberName}:`, {
+                gender: memberGender,
+                health: memberHealth
+              });
+              
+              // Add basic plans for everyone
+              plans.push(`${memberName} - Star Health Assure`);
+              
+              // Add gender-specific plans
+              if (memberGender === 'female') {
+                plans.push(`${memberName} - Star Women Care`);
+              }
+              
+              // Add disease-specific plans based on health conditions
+              if (memberHealth.cancer || (memberHealth.disease && memberHealth.disease.includes('cancer'))) {
+                console.log(`DEBUG: Adding cancer plans for ${memberName}`);
+                plans.push(`${memberName} - Cancer Care Plan`);
+                plans.push(`${memberName} - Star Cancer Care`);
+              }
+              
+              if (memberHealth.diabetes || (memberHealth.disease && memberHealth.disease.includes('diabetes'))) {
+                plans.push(`${memberName} - Diabetes Care Plan`);
+                plans.push(`${memberName} - Star Diabetes Safe`);
+              }
+              
+              if (memberHealth.cardiac || (memberHealth.disease && memberHealth.disease.includes('cardiac'))) {
+                plans.push(`${memberName} - Cardiac Care Plan`);
+                plans.push(`${memberName} - Heart Protection Plan`);
+              }
+              
+              // Add general plans
+              plans.push(`${memberName} - Smart Health Pro`);
+            });
+          } catch (e) {
+            console.error('Error creating health-specific demo plans:', e);
+            // Fallback to simple plans
+            memberNames.forEach(memberName => {
+              plans.push(`${memberName} - Individual Health Plan`);
+              plans.push(`${memberName} - Premium Care Plan`);
+            });
+          }
+        } else {
+          // Fallback to default demo data
+          plans = [
+            'Family Health Optima Insurance Plan',
+            'Star Super Surplus Floater Silver Plan', 
+            'Individual - Basic Health Plan',
+            'Individual - Premium Care Plan'
+          ];
+        }
+        
+        console.log('Using demo plans with member names:', plans);
+      }
+      
+      // Parse plans data to separate family floater and individual plans
+      const parsedData = window.parsePlansData(plans);
+      console.log('Parsed data:', parsedData);
+      
+      // Always show both sections
+      if (familySection) familySection.style.display = 'block';
+      if (individualSection) individualSection.style.display = 'block';
+      
+      if (parsedData.familyFloater && parsedData.familyFloater.length > 0) {
+        window.populateFamilyFloaterPlans(parsedData.familyFloater);
+      } else {
+        const familyPlans = document.getElementById('familyFloaterPlans');
+        if (familyPlans) {
+          familyPlans.innerHTML = '<div style="padding: 8px; color: #666; font-style: italic;">No family floater plans selected by supervisor</div>';
+        }
+      }
+      
+      if (parsedData.individual && Object.keys(parsedData.individual).length > 0) {
+        window.populateIndividualPlans(parsedData.individual);
+      } else {
+        const individualMembers = document.getElementById('individualMembers');
+        if (individualMembers) {
+          individualMembers.innerHTML = '<div style="padding: 8px; color: #666; font-style: italic;">No individual plans selected by supervisor</div>';
+        }
+      }
+      
+      // Mark as loaded
+      window.__plansLoaded = true;
+      
+      // Restore saved client plans if any exist
+      if (window.restoreSavedClientPlans) {
+        window.restoreSavedClientPlans();
+      }
+    };
+    
+    // Helper: reset and reload plans (for testing/debugging)
+    window.resetAndReloadPlans = function() {
+      window.__plansLoaded = false;
+      window.loadPlansIntoHierarchy(true);
+    };
+    
+    // Global helper: enable controls based on rules
+    window.updateClientReviewActionState = function() {
+      try {
+        const allow = !!window.__allowClientReview;
+        const chk = document.getElementById('clientReviewChk');
+        const plansSection = document.getElementById('plansSelectionSection');
+        const txt = document.getElementById('clientReviewComment');
+        const btn = document.getElementById('clientReviewSaveBtn');
+        const chkOk = !!(chk && chk.checked);
+        
+        // Show/hide plans selection section based on checkbox
+        if (plansSection) {
+          plansSection.style.display = (allow && chkOk) ? 'block' : 'none';
+        }
+        
+        // Textarea editable only when checkbox is checked and allowed
+        if (txt) txt.disabled = !(allow && chkOk);
+        
+        // Check if any plans are selected
+        const hasSelectedPlans = window.getSelectedPlans().length > 0;
+        const txtOk = !!(txt && txt.value && txt.value.trim());
+        
+        // Button enabled only when checkbox checked, plans selected, and comment provided
+        if (btn) btn.disabled = !(allow && chkOk && hasSelectedPlans && txtOk);
+        
+        // Load plans into the hierarchical structure when checkbox is checked (only once)
+        if (allow && chkOk && plansSection && plansSection.style.display !== 'none') {
+          // Load plans only once to preserve checkbox states
+          window.loadPlansIntoHierarchy();
+        }
+        
+        // Update the Client Review summary in real-time
+        window.updateClientReviewSummary();
+      } catch {}
+    };
+    
+    // Global helper functions
+    window.tryParseJSON = function(value) {
+      if (!value) return null;
+      if (typeof value === 'object') return value;
+      try { return JSON.parse(value); } catch { return null; }
+    };
+
+    let selectedActor = null;
+    let selectedStatus = null;
+
+    function statusToDisplay(raw) {
+      if (!raw) return "Open";
+      const s = String(raw).toLowerCase();
+      if (s === 'approved') return 'Approved';
+      if (s === 'rejected') return 'Rejected';
+      if (s === 'sup_review') return 'Sup_Review';
+      // Legacy uw_approved now displayed as With_UW
+      if (s === 'uw_approved' || s === 'with_uw') return 'With_UW';
+      if (s === 'uw_rejected') return 'UW_Rejected';
+      if (s === 'with_uw') return 'With_UW';
+      if (s === 'policy_created') return 'Policy_Created';
+      if (s === 'policy denied' || s === 'policy_denied') return 'Policy_Denied';
+      if (s === 'client_closed' || s === 'closed') return 'Client_closed';
+      if (s === 'client_reviewed') return 'Client_reviewed';
+      if (s === 'closed') return 'Closed';
+      if (s === 'open') return 'Open';
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+
+    // Helper to sanitize placeholder phrases to display as empty
+    function sanitizeDisplay(val) {
+      const s = (val ?? '').toString().trim();
+      if (!s) return '—';
+      if (s.toLowerCase() === 'client review comments') return '&nbsp;';
+      return s;
+    }
+
+    function clearStatusClassesOn(el) {
+      if (!el) return;
+      el.classList.remove('status-Approved','status-Rejected','status-Changes');
+    }
+
+    function applyStatusClassOn(el, displayStatus) {
+      if (!el) return;
+      clearStatusClassesOn(el);
+      if (displayStatus === 'Approved') el.classList.add('status-Approved');
+      else if (displayStatus === 'Rejected' || displayStatus === 'UW_Rejected') el.classList.add('status-Rejected');
+    }
+
+    function enableUnderwriterButtons(enable) {
+      ['uwApproveBtn','uwRejectBtn'].forEach(id => {
+        const b = document.getElementById(id);
+        if (!b) return;
+        b.disabled = !enable;
+      });
+    }
+
+    function renderData(data) {
+      if (data === null || data === undefined || data === '') return '<em>Not available</em>';
+      if (Array.isArray(data)) {
+        return '<ul class="plans-list">' + data.map(i => `<li>${(typeof i === 'object') ? renderData(i) : String(i)}</li>`).join('') + '</ul>';
+      }
+      if (typeof data === 'object') {
+        return '<div class="form-kv"><table>' + Object.entries(data).map(([k,v]) => {
+          const cleanKey = k.replace(/_/g,' ');
+          if (!v && v !== 0) return `<tr><td>${cleanKey}</td><td><em>Not provided</em></td></tr>`;
+          if (typeof v === 'object') return `<tr><td>${cleanKey}</td><td>${renderData(v)}</td></tr>`;
+          return `<tr><td>${cleanKey}</td><td>${String(v)}</td></tr>`;
+        }).join('') + '</table></div>';
+      }
+      return String(data);
+    }
+
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('.collapsible-btn');
+      if (!btn) return;
+      const content = btn.nextElementSibling;
+      const caret = btn.querySelector('.caret');
+      if (!content) return;
+      if (content.style.display === 'block') {
+        content.style.display = 'none';
+        if (caret) caret.textContent = '▼';
+      } else {
+        content.style.display = 'block';
+        if (caret) caret.textContent = '▲';
+      }
+    });
+
+    async function reloadCurrent() {
+      const uid = document.getElementById('uniqueIdInput').value.trim();
+      if (!uid) return;
+      return await fetchAndRender(uid);
+    }
+
+    async function fetchAndRender(uid) {
+      try {
+        const res = await fetch(`/api/agent/submission/${encodeURIComponent(uid)}`);
+        if (!res.ok) {
+          const txt = await res.text().catch(()=> '');
+          console.error('Server returned', res.status, txt);
+          alert('User not found or server error!');
+          return;
+        }
+        const data = await res.json();
+        console.log('--- RAW DATA FROM /api/agent/submission ---');
+        console.log(JSON.stringify(data, null, 2));
+        
+        // Store data globally for plan parsing
+        window.currentSubmissionData = data;
+        
+        // Debug: Log the data to see if Client_Agreed_Plans is included
+        console.log('Client_Agreed_Plans loaded:', !!data.Client_Agreed_Plans);
+        
+        // Store saved plans globally for later use
+        window.savedClientPlans = [];
+        try {
+          if (data.Client_Agreed_Plans) {
+            window.savedClientPlans = JSON.parse(data.Client_Agreed_Plans);
+            console.log('Saved client plans loaded:', window.savedClientPlans);
+          }
+        } catch (e) {
+          console.error('Error parsing Client_Agreed_Plans:', e);
+        }
+
+        // Created date (format: YYYY-MM-DD_HH-MM-SS) and age calculation; also show Created By
+        (function(){
+          // Prefer new fields first_created_at/first_created_by, fall back to legacy
+          const createdRaw = data.first_created_at || data.created_at || '2025-08-21_00-00-00';
+          const createdBy = data.first_created_by || data.created_by || data.agent || 'Unknown';
+          let createdDate = null;
+          if (typeof createdRaw === 'string') {
+            const parts = createdRaw.split('_');
+            if (parts.length === 2) {
+              const datePart = parts[0];
+              const timePart = parts[1].replace(/-/g, ':');
+              const iso = `${datePart}T${timePart}`;
+              const d = new Date(iso);
+              if (!isNaN(d.getTime())) createdDate = d;
+            } else {
+              const d = new Date(createdRaw);
+              if (!isNaN(d.getTime())) createdDate = d;
+            }
+          }
+          if (createdDate) {
+            const now = new Date();
+            const msPerDay = 24 * 60 * 60 * 1000;
+            const age = Math.max(0, Math.floor((now - createdDate) / msPerDay));
+            const createdOnEl = document.getElementById('createdOn');
+            const ageDaysEl = document.getElementById('ageDays');
+            const createdByEl = document.getElementById('createdBy');
+            const meta = document.getElementById('createdMeta');
+            if (createdOnEl) createdOnEl.textContent = createdDate.toLocaleString();
+            if (ageDaysEl) ageDaysEl.textContent = String(age);
+            if (createdByEl) createdByEl.textContent = createdBy;
+            if (meta) meta.style.display = 'block';
+          }
+        })();
+
+        // Final rolled-up status display (Final_Status, Final_comments, Final_modified_by, Final_modified_at)
+        (function(){
+          const supSection = document.getElementById('supervisor-meta');
+          const supSummary = document.getElementById('sup-summary');
+          if (!supSummary) return;
+          const status = data.application_status || 'N/A';
+          const comments = data.application_comments || 'No comments';
+          const modifiedBy = data.application_modified_by || 'N/A';
+          let modifiedAt = 'N/A';
+
+          if (data.application_modified_at) {
+              try {
+                  modifiedAt = new Date(data.application_modified_at.includes('_') ? data.application_modified_at.replace('_', 'T').replace(/-/g, ':') : data.application_modified_at).toLocaleString();
+              } catch (e) {
+                  modifiedAt = data.application_modified_at; // fallback to raw string if parsing fails
+              }
+          }
+
+          const summaryHtml = `<strong>Application Status:</strong> ${status}<br>` +
+                            `<strong>Comments:</strong> ${comments}<br>` +
+                            `<strong>Last Updated by:</strong> ${modifiedBy} <strong>Last Updated at:</strong> ${modifiedAt}`;
+          if (supSection) supSection.style.display = '';
+          supSummary.innerHTML = summaryHtml;
+          // Set global gate: Client Review editable only when application_status is SUP_APPROVED
+          // and close_status is NOT client_reviewed (lock after submission)
+          const finalNorm = (data.application_status || '').toString().trim().toUpperCase();
+          const appStatusNow = (data.close_status || '').toString().trim().toLowerCase();
+          const nextActionActive = (appStatusNow === 'client_reviewed');
+          window.__allowClientReview = (finalNorm === 'SUP_APPROVED') && !nextActionActive;
+        })();
+
+        // Client closure summary rendering
+        (function(){
+          const closureSummary = document.getElementById('clientClosureContent');
+          if (closureSummary && data.close_status === 'Client_closed') {
+            const status = data.close_status;
+            const comments = data.close_comments || 'No comments';
+            closureSummary.innerHTML = `<div class="form-kv"><table><tbody>` +
+              `<tr><td>Closure Status</td><td>${status}</td></tr>` +
+              `<tr><td>Closure Comments</td><td>${comments}</td></tr>` +
+              `</tbody></table></div>`;
+            document.getElementById('clientClosureCollapsible').style.display = 'block';
+          } else if (closureSummary) {
+            document.getElementById('clientClosureCollapsible').style.display = 'none';
+          }
+        })();
+
+        // Policy outcome summary rendering
+        (function(){
+          const policySummary = document.getElementById('policyOutcomeSummaryContent');
+          if (policySummary && data.policy_outcome) {
+            const outcome = data.policy_outcome;
+            const comments = data.policy_outcome_comment || 'No comments';
+            policySummary.innerHTML = `<div class="form-kv"><table><tbody>` +
+              `<tr><td>Policy Outcome</td><td>${outcome}</td></tr>` +
+              `<tr><td>Policy Comments</td><td>${comments}</td></tr>` +
+              `</tbody></table></div>`;
+            document.getElementById('policyOutcomeSummaryContainer').style.display = 'block';
+          } else if (policySummary) {
+            document.getElementById('policyOutcomeSummaryContainer').style.display = 'none';
+          }
+        })();
+
+        // Underwriter summary rendering
+        (function(){
+          const uwSummary = document.getElementById('underwriterSummaryContent');
+          if (uwSummary && data.underwriter_status) {
+            const status = data.underwriter_status;
+            const comments = data.underwriter_comments || 'No comments';
+            uwSummary.innerHTML = `<div class="form-kv"><table><tbody>` +
+              `<tr><td>Underwriter Status</td><td>${status}</td></tr>` +
+              `<tr><td>Underwriter Comments</td><td>${comments}</td></tr>` +
+              `</tbody></table></div>`;
+            document.getElementById('underwriterSummaryContainer').style.display = 'block';
+          } else if (uwSummary) {
+            document.getElementById('underwriterSummaryContainer').style.display = 'none';
+          }
+        })();
+
+        // Client review (checkbox) - reflect state and existing comments
+        (function(){
+          const reviewChkEl = document.getElementById('clientReviewChk');
+          const reviewTxtEl = document.getElementById('clientReviewComment');
+          const reviewSaveEl = document.getElementById('clientReviewSaveBtn');
+          const clientReviewVal = Number(data.client_review || 0) === 1;
+          if (reviewChkEl) reviewChkEl.checked = clientReviewVal;
+          if (reviewTxtEl) {
+            const existing = (data.client_comments || '').toString();
+            reviewTxtEl.value = existing.trim() ? existing : '';
+          }
+          const allow = !!window.__allowClientReview;
+          if (reviewChkEl) reviewChkEl.disabled = !allow;
+          if (reviewTxtEl) reviewTxtEl.disabled = !allow || !clientReviewVal;
+          if (reviewSaveEl) reviewSaveEl.disabled = !allow || !clientReviewVal;
+          if (!allow && reviewSaveEl) reviewSaveEl.title = 'Client Review can be updated only when Final Status is SUP_APPROVED';
+          // Ensure state is synced on init
+          try { window.updateClientReviewActionState(); } catch {}
+          // Ensure checkbox toggling updates control states immediately
+          if (reviewChkEl) {
+            reviewChkEl.addEventListener('change', function(){
+              try { window.updateClientReviewActionState(); } catch {}
+            });
+            reviewChkEl.addEventListener('click', function(){
+              try { window.updateClientReviewActionState(); } catch {}
+            });
+          }
+        })();
+
+        // Enable Next Action only when client_status is client_approved
+        (function(){
+          const nextSec = document.getElementById('nextActionSection');
+          const clientStatus = (data.client_status || '').toString().toLowerCase();
+          if (nextSec) nextSec.style.display = (clientStatus === 'client_approved') ? '' : 'none';
+        })();
+
+        // Form summary rendering
+        (function(){
+          let formObj = tryParseJSON(data.form_summary);
+          if (!formObj && typeof data.form_summary === 'object') formObj = data.form_summary;
+          const container = document.getElementById('formSummary');
+          if (container) {
+            if (formObj) container.innerHTML = renderData(formObj);
+            else container.innerHTML = data.form_summary ? `<pre style="white-space:pre-wrap;">${data.form_summary}</pre>` : '<em>N/A</em>';
+          }
+        })();
+
+        // Supervisor Chosen Plans rendering (grouped) + Matrix toggle (JSON-backed)
+        (async function(){
+          const container = document.getElementById('plansChosen');
+          if (!container) return;
+          // Start with values from analysis payload
+          console.log('--- SUPERVISOR PLANS DEBUG ---');
+          console.log('Raw supervisor_selected_plans from DB:', data.supervisor_selected_plans);
+          let supSel = tryParseJSON(data.supervisor_selected_plans);
+          if (!supSel && Array.isArray(data.supervisor_selected_plans)) supSel = data.supervisor_selected_plans;
+          let agentSel = tryParseJSON(data.plans_chosen);
+          if (!agentSel && typeof data.plans_chosen === 'string' && data.plans_chosen.includes('[')) {
+            try { agentSel = JSON.parse(data.plans_chosen); } catch(e){ agentSel = null; }
+          }
+          let proposed = tryParseJSON(data.proposed_plans) || data.proposed_plans || {};
+          // Fetch from JSON store only if DB field is empty, making DB the source of truth
+          try {
+            const uid = (document.getElementById('uniqueIdInput')?.value || '').trim();
+            if (uid) {
+              const r = await fetch(`/plan_summary/${encodeURIComponent(uid)}`);
+              if (r.ok) {
+                const ps = await r.json();
+                if (ps && typeof ps === 'object'){
+                  if (ps.proposed && Object.keys(ps.proposed).length) proposed = ps.proposed;
+                  // Only use supervisor_selected from JSON file if the DB field is empty
+                  if ((!supSel || supSel.length === 0) && Array.isArray(ps.supervisor_selected)) {
+                    supSel = ps.supervisor_selected;
+                  }
+                  if (Array.isArray(ps.agent_selected)) agentSel = ps.agent_selected;
+                }
+              }
+            }
+          } catch(e) { /* ignore */ }
+          const finalSelArray = Array.isArray(supSel) && supSel.length ? supSel : (Array.isArray(agentSel) ? agentSel : []);
+          const finalSel = new Set(finalSelArray);
+
+          // Render grouped list view (headings + list of selected plans per section)
+          function renderGrouped(){
+            let html = '';
+            const keys = Object.keys(proposed || {});
+            // Ensure Family first
+            if (keys.includes('comprehensive_cover')) {
+              const i = keys.indexOf('comprehensive_cover');
+              if (i > 0) { keys.splice(i,1); keys.unshift('comprehensive_cover'); }
+            }
+            // For each section, print heading and only supervisor-selected plans from that section
+            const supSet = new Set(finalSelArray);
+            keys.forEach(k => {
+              const info = proposed[k] || {};
+              const head = (k === 'comprehensive_cover') ? 'Family' : (info.name || k);
+              const arr = Array.isArray(info.plans) ? info.plans : [];
+              const chosen = arr.filter(p => supSet.has(p));
+              if (chosen.length){
+                html += `<div style="margin:6px 0; font-weight:600;">${head}</div>`;
+                html += chosen.map(p => `<div style=\"margin-left:8px;\">${p}</div>`).join('');
+              }
+            });
+            // Render grouped-only view (no matrix toggle)
+            container.innerHTML = (html || '<em>N/A</em>');
+          }
+
+          renderGrouped();
+          // Build Client Review picker from #plansChosen content (Family + Individuals)
+(function buildClientReviewFromGrouped(){
+  function tryBuild(maxRetries = 10) {
+    const grouped = document.getElementById('plansChosen');
+    if (!grouped || grouped.children.length === 0) {
+      if (maxRetries > 0) return setTimeout(() => tryBuild(maxRetries - 1), 50);
+      return; // give up silently
+    }
+
+    // Prevent later auto-loads from overwriting our rendered picker
+    try { window.__plansLoaded = true; } catch {}
+
+    const familyPlans = [];
+    const individualData = {};
+    let currentSection = null;
+
+    // Parse grouped summary: headings have font-weight:600, rows are simple divs
+    Array.from(grouped.children).forEach(el => {
+      if (!(el instanceof HTMLElement)) return;
+      const txt = (el.textContent || '').trim();
+      if (!txt) return;
+
+      const style = (el.getAttribute('style') || '').toLowerCase();
+      const isHeading = style.includes('font-weight:600');
+      if (isHeading) {
+        currentSection = txt; // e.g., Family, Rohan, Aditi
+        return;
+      }
+      if (!currentSection) return;
+
+      if (currentSection.toLowerCase() === 'family') {
+        familyPlans.push(txt);
+      } else {
+        if (!individualData[currentSection]) individualData[currentSection] = [];
+        individualData[currentSection].push(txt);
+      }
+    });
+
+    // Render Family
+    try {
+      const famSec = document.getElementById('familyFloaterSection');
+      if (famSec) famSec.style.display = 'block';
+      const famList = Array.from(new Set(familyPlans));
+      window.populateFamilyFloaterPlans(famList);
+      const famChk = document.getElementById('familyFloaterChk');
+      const famBox = document.getElementById('familyFloaterPlans');
+      if (famChk && famBox) {
+        famChk.checked = false;
+        famBox.style.display = 'none';
+        famChk.addEventListener('change', function(){
+          famBox.style.display = this.checked ? 'block' : 'none';
+        });
+      }
+    } catch(e){ console.warn('Family render failed:', e); }
+
+    // Render Individuals
+    try {
+      const indSec = document.getElementById('individualSection');
+      if (indSec) indSec.style.display = 'block';
+      const dedup = {};
+      Object.keys(individualData).forEach(k => { dedup[k] = Array.from(new Set(individualData[k])); });
+      window.populateIndividualPlans(dedup);
+      const indChk = document.getElementById('individualChk');
+      const membersDiv = document.getElementById('individualMembers');
+      if (indChk && membersDiv) {
+        indChk.checked = false;
+        membersDiv.style.display = 'none';
+        indChk.addEventListener('change', function(){
+          membersDiv.style.display = this.checked ? 'block' : 'none';
+        });
+      }
+    } catch(e){ console.warn('Individual render failed:', e); }
+  }
+
+  // Start
+  tryBuild();
+})();
+
+          // Build matrix HTML (3 columns)
+          function buildMatrixHTML(){
+            const agentSet = new Set(finalSelArray);
+            const supArr = Array.isArray(supSel) ? supSel : [];
+            const supSet = new Set(supArr);
+            let html = '<div style="overflow:auto;"><table class="styled-table" style="width:100%; border-collapse:collapse;">';
+            html += '<thead><tr>'+
+                    '<th>System proposed plans</th>'+
+                    '<th>Agent proposed plans</th>'+
+                    '<th>Supervisor proposed plans</th>'+
+                    '</tr></thead><tbody>';
+
+            const makeRow = (left, agentCell, supCell) => { html += `<tr><td>${left}</td><td>${agentCell}</td><td>${supCell}</td></tr>`; };
+            const keys = Object.keys(proposed || {});
+            if (keys.length > 0) {
+              if (keys.includes('comprehensive_cover')) { const i = keys.indexOf('comprehensive_cover'); keys.splice(i,1); keys.unshift('comprehensive_cover'); }
+              keys.forEach(k => {
+                const info = proposed[k] || {};
+                const sectionName = (k === 'comprehensive_cover') ? 'Family' : (info.name || k);
+                makeRow(`<div style=\"background:#cff9ff; font-weight:600; padding:4px 6px;\">${sectionName}</div>`, '', '');
+                const plans = Array.isArray(info.plans) ? info.plans : [];
+                if (plans.length){
+                  plans.forEach(p => {
+                    const a = agentSet.has(p) ? '<span style="color:#0a7; font-weight:700;">&#10003;</span>' : '<span style="color:#c33; font-weight:700;">&#10007;</span>';
+                    const s = supSet.has(p) ? '<span style="color:#0a7; font-weight:700;">&#10003;</span>' : '<span style="color:#c33; font-weight:700;">&#10007;</span>';
+                    makeRow(p, a, s);
+                  });
+                } else {
+                  makeRow('<span style="color:#888;">No plans</span>', '<span style="color:#bbb;">—</span>', '<span style="color:#bbb;">—</span>');
+                }
+              });
+            } else {
+              // Fallback when proposed plans not available: show a single section with all selections
+              makeRow('<div style="background:#cff9ff; font-weight:600; padding:4px 6px;">Selected plans</div>', '', '');
+              if (finalSelArray.length) {
+                finalSelArray.forEach(p => {
+                  const a = agentSet.has(p) ? '<span style="color:#0a7; font-weight:700;">&#10003;</span>' : '<span style="color:#c33; font-weight:700;">&#10007;</span>';
+                  const s = supSet.has(p) ? '<span style="color:#0a7; font-weight:700;">&#10003;</span>' : '<span style="color:#c33; font-weight:700;">&#10007;</span>';
+                  makeRow(p, a, s);
+                });
+              } else {
+                makeRow('<span style="color:#888;">No plans</span>', '<span style="color:#bbb;">—</span>', '<span style="color:#bbb;">—</span>');
+              }
+            }
+            html += '</tbody></table></div>';
+            return html;
+          }
+
+          // Populate the plans dropdown from finalSelArray (for client review section)
+          try {
+            const ddSection = document.getElementById('plansDropdownSection');
+            const dd = document.getElementById('plansDropdown');
+            if (ddSection && dd) {
+              let plans = finalSelArray.slice();
+              if (!plans.length) {
+                // fallback: collect from DOM if present
+                plans = Array.from(container.querySelectorAll('ul.plans-list > li')).map(li => (li.textContent||'').trim()).filter(Boolean);
+              }
+              dd.innerHTML = '';
+              const placeholder = document.createElement('option');
+              placeholder.value = '';
+              placeholder.textContent = plans.length ? 'Select a Plan' : 'No plans available';
+              dd.appendChild(placeholder);
+              plans.forEach(p => { const opt = document.createElement('option'); opt.value = p; opt.textContent = p; dd.appendChild(opt); });
+              ddSection.style.display = '';
+
+              const uidNow = (document.getElementById('uniqueIdInput')?.value || '').trim();
+              const savedKey = uidNow ? ('clientSelectedPlan:' + uidNow) : '';
+              let restoredSel = '';
+              if (savedKey) { try { restoredSel = localStorage.getItem(savedKey) || ''; } catch {} }
+              const hasOption = restoredSel && Array.from(dd.options).some(o => o.value === restoredSel);
+              dd.value = hasOption ? restoredSel : '';
+              const cr = document.getElementById('clientReviewSummaryContent');
+              const commentsNow = (document.getElementById('clientReviewComment')?.value || '').trim() || '—';
+              const planDisplay = dd.value || '—';
+              if (cr) {
+                cr.innerHTML = '<div class="form-kv"><table>'+
+                               `<tr><td>Client Agreed Plan(s)</td><td>${planDisplay}</td></tr>`+
+                               `<tr><td>Client comments</td><td>${commentsNow}</td></tr>`+
+                               '</table></div>';
+              }
+
+              dd.addEventListener('change', function(){
+                const sel = dd.value || '—';
+                const comments = sanitizeDisplay(document.getElementById('clientReviewComment')?.value || '');
+                const cr = document.getElementById('clientReviewSummaryContent');
+                if (cr) {
+                  cr.innerHTML = '<div class="form-kv"><table>'+
+                                 `<tr><td>Client Agreed Plan(s)</td><td>${sel}</td></tr>`+
+                                 `<tr><td>Client comments</td><td>${comments}</td></tr>`+
+                                 '</table></div>';
+                }
+                const uid2 = (document.getElementById('uniqueIdInput')?.value || '').trim();
+                if (uid2) { try { localStorage.setItem('clientSelectedPlan:' + uid2, dd.value || ''); } catch {} }
+                updateClientReviewActionState();
+              });
+            }
+          } catch {}
+
+          // Wire toggle for matrix view
+          try {
+            const toggle = document.getElementById('toggleMatrixView');
+            const host = document.getElementById('plansMatrix');
+            if (toggle && host) {
+              toggle.addEventListener('change', function(){
+                if (toggle.checked) {
+                  const agentSet = new Set(finalSelArray);
+                  const supSet = new Set(Array.isArray(supSel) ? supSel : []);
+                  // Normalize proposed: ensure each section has string plan names
+                  let norm = {};
+                  try {
+                    const keys = Object.keys(proposed || {});
+                    keys.forEach(k => {
+                      const info = proposed[k] || {};
+                      const arr = Array.isArray(info.plans) ? info.plans : [];
+                      const names = arr.map(p => {
+                        if (!p) return null;
+                        if (typeof p === 'string') return p;
+                        if (typeof p === 'object') return (p['Plan Name'] || p.plan_name || p.plan || p.name || null);
+                        return String(p);
+                      }).filter(Boolean);
+                      norm[k] = { name: info.name || (k === 'comprehensive_cover' ? 'Comprehensive plans' : k), plans: names };
+                    });
+                    // Fallback: if no sections found, show a single section of all selected plans
+                    if (Object.keys(norm).length === 0) {
+                      norm = { selected: { name: 'Selected plans', plans: finalSelArray.slice() } };
+                    }
+                  } catch { norm = proposed || {}; }
+                  if (!window.renderPlanSelectionSummary) {
+                    host.innerHTML = '<div style="padding:8px; color:#b91c1c;">Plan summary script not loaded. Please refresh.</div>';
+                  } else {
+                    window.renderPlanSelectionSummary(host, {
+                      proposed: norm,
+                      agentSel: agentSet,
+                      supervisorSel: supSet,
+                      mode: 'approvals'
+                    });
+                  }
+                  host.style.display = '';
+                } else {
+                  host.style.display = 'none';
+                  host.innerHTML = '';
+                }
+              });
+              // Ensure hidden by default
+              host.style.display = 'none';
+            }
+          } catch {}
+        })();
+
+        // Initialize Client Review collapsible content on load
+        (function(){
+          const cr = document.getElementById('clientReviewSummaryContent');
+          if (!cr) return;
+          
+          // Debug: Log what we're working with
+          console.log('=== CLIENT REVIEW INITIALIZATION DEBUG ===');
+          console.log('Raw Client_Agreed_Plans:', data.Client_Agreed_Plans);
+          console.log('Type:', typeof data.Client_Agreed_Plans);
+          
+          // Get saved client agreed plans from database
+          let savedPlans = [];
+          try {
+            if (data.Client_Agreed_Plans) {
+              savedPlans = JSON.parse(data.Client_Agreed_Plans);
+              console.log('Parsed savedPlans:', savedPlans);
+            } else {
+              console.log('No Client_Agreed_Plans data found');
+            }
+          } catch (e) {
+            console.error('Error parsing Client_Agreed_Plans:', e);
+          }
+          
+          // Get saved plans for display
+          let displayPlans = [];
+          try {
+            if (data.Client_Agreed_Plans) {
+              displayPlans = JSON.parse(data.Client_Agreed_Plans);
+            }
+          } catch (e) {
+            console.error('Error parsing Client_Agreed_Plans for display:', e);
+          }
+          
+          console.log('--- CLIENT REVIEW DEBUG ---');
+          console.log('Raw Client_Agreed_Plans from DB:', data.Client_Agreed_Plans);
+          console.log('Parsed displayPlans:', displayPlans);
+          const plansList = displayPlans.length > 0 ? displayPlans.join(', ') : '—';
+          const comments = sanitizeDisplay(data.client_comments || '');
+          cr.innerHTML = '<div class="form-kv"><table>'+
+                         `<tr><td>Plan(s) Agreed</td><td>${plansList}</td></tr>`+
+                         `<tr><td>Client comments</td><td>${comments}</td></tr>`+
+                         '</table></div>';
+          
+          // Restore selected checkboxes based on saved plans
+          if (savedPlans.length > 0) {
+            console.log('=== RESTORING CHECKBOXES ===');
+            console.log('Plans to restore:', savedPlans);
+            
+            // First, ensure the Client Review checkbox is checked to show the plans section
+            const clientReviewChk = document.getElementById('clientReviewChk');
+            if (clientReviewChk) {
+              console.log('Setting Client Review checkbox to checked...');
+              clientReviewChk.checked = true;
+              
+              // Force show the plans section regardless of review state for restoration
+              const plansSection = document.getElementById('plansSelectionSection');
+              if (plansSection) {
+                plansSection.style.display = 'block';
+                console.log('Forced plans section to be visible');
+              }
+              
+              // Trigger the change event to show the plans section
+              clientReviewChk.dispatchEvent(new Event('change'));
+              // Also call the update function to ensure plans section is shown
+              if (window.updateClientReviewActionState) {
+                window.updateClientReviewActionState();
+              }
+            }
+            
+            try {
+              // Wait a bit for the plans to be loaded into the hierarchy
+              setTimeout(() => {
+                console.log('Starting checkbox restoration after timeout...');
+                
+                // Check if the plans section is visible
+                const plansSection = document.getElementById('plansSelectionSection');
+                console.log('Plans section exists:', !!plansSection);
+                console.log('Plans section display:', plansSection ? plansSection.style.display : 'N/A');
+                
+                // Force load plans hierarchy if not already loaded
+                if (window.loadPlansIntoHierarchy && !window.__plansLoaded) {
+                  console.log('Force loading plans hierarchy...');
+                  window.loadPlansIntoHierarchy(true);
+                }
+                
+                // Wait a bit more for plans to be fully loaded
+                setTimeout(() => {
+                  console.log('Starting actual checkbox restoration...');
+                  let hasFamilyPlans = false;
+                  let hasIndividualPlans = false;
+                
+                savedPlans.forEach(planName => {
+                  // Check if it's a family floater plan
+                  const planStr = planName.toLowerCase();
+                  if (planStr.includes('family') || planStr.includes('floater') || planStr.includes('cb')) {
+                    hasFamilyPlans = true;
+                  } else {
+                    hasIndividualPlans = true;
+                  }
+                  
+                  // Find and check the corresponding checkbox
+                  const checkboxes = document.querySelectorAll('#plansSelectionSection input[type="checkbox"]');
+                  console.log(`Found ${checkboxes.length} checkboxes for plan: ${planName}`);
+                  
+                  let foundMatch = false;
+                  checkboxes.forEach(checkbox => {
+                    const cbValue = checkbox.value;
+                    
+                    // Skip "on" values (those are category checkboxes)
+                    if (cbValue === "on") return;
+                    
+                    console.log(`Checking checkbox with value: "${cbValue}" against plan: "${planName}"`);
+                    
+                    // Use bidirectional matching: checkbox contains plan OR plan contains checkbox
+                    if (cbValue.includes(planName) || planName.includes(cbValue)) {
+                      console.log(`✅ Match found! Checking checkbox for: ${planName}`);
+                      checkbox.checked = true;
+                      foundMatch = true;
+                      
+                      // If it's a member checkbox, also show the plans container
+                      if (checkbox.classList.contains('member-checkbox')) {
+                        const memberName = checkbox.id.replace('member_', '');
+                        const plansContainer = document.getElementById(`plans_${memberName}`);
+                        if (plansContainer) {
+                          plansContainer.style.display = 'block';
+                        }
+                      }
+                    }
+                  });
+                  
+                  if (!foundMatch) {
+                    console.log(`❌ No checkbox found for plan: ${planName}`);
+                  }
+                });
+                
+                // Check the main category checkboxes if there are plans in those categories
+                if (hasFamilyPlans) {
+                  console.log('Restoring family floater section...');
+                  const familySection = document.getElementById('familyFloaterSection');
+                  const familyChk = document.getElementById('familyFloaterChk');
+                  if (familySection) familySection.style.display = 'block';
+                  if (familyChk) {
+                    familyChk.checked = true;
+                    const familyPlans = document.getElementById('familyFloaterPlans');
+                    if (familyPlans) familyPlans.style.display = 'block';
+                  }
+                }
+                
+                if (hasIndividualPlans) {
+                  console.log('Restoring individual section...');
+                  const individualSection = document.getElementById('individualSection');
+                  const individualChk = document.getElementById('individualChk');
+                  if (individualSection) individualSection.style.display = 'block';
+                  if (individualChk) {
+                    individualChk.checked = true;
+                    const individualMembers = document.getElementById('individualMembers');
+                    if (individualMembers) individualMembers.style.display = 'block';
+                  }
+                }
+                
+                  // Update the summary with restored selections
+                  window.updateClientReviewSummary();
+                }, 500); // Inner timeout for checkbox restoration
+              }, 1500); // Increased timeout to 1.5 seconds
+            } catch (e) {
+              console.error('Error restoring plan selections:', e);
+            }
+          }
+          
+          // Initialize button/text state based on current values
+          updateClientReviewActionState();
+        })();
+
+        // Keep button state in sync with comment typing
+        (function(){
+          const txt = document.getElementById('clientReviewComment');
+          if (txt) txt.addEventListener('input', updateClientReviewActionState);
+        })();
+
+        // Existing renderers
+        document.getElementById('result').style.display = 'block';
+
+        // Initialize Policy Outcome collapsible based on loaded data
+        (function(){
+          try {
+            const poColl = document.getElementById('policyOutcomeCollapsible');
+            const poContent = document.getElementById('policyOutcomeContent');
+            if (!poColl || !poContent) return;
+            // Determine outcome and fields from data
+            const outcome = (data.application_status || data.policy_outcome || '').toString();
+            const normalized = outcome.trim().toUpperCase();
+            if (normalized === 'POLICY_CREATED' || outcome === 'Policy Created') {
+              // Prefer extracting proposer/mobile from the loaded JSON instead of DOM text
+              let proposer = '—';
+              let mobile = '—';
+              try {
+                let formObj = data.form_summary;
+                if (typeof formObj === 'string') {
+                  try { formObj = JSON.parse(formObj); } catch { formObj = null; }
+                }
+                function findFirstByKeys(obj, keys) {
+                  const seen = new Set();
+                  function walk(o) {
+                    if (!o || typeof o !== 'object' || seen.has(o)) return undefined;
+                    seen.add(o);
+                    for (const [k,v] of Object.entries(o)) {
+                      const lk = k.toLowerCase();
+                      if (keys.some(kk => lk.includes(kk))) {
+                        if (typeof v === 'string' || typeof v === 'number') {
+                          const s = String(v).trim();
+                          if (s) return s;
+                        } else if (Array.isArray(v)) {
+                          const first = v.find(x => typeof x === 'string' || typeof x === 'number');
+                          if (first != null) {
+                            const s = String(first).trim();
+                            if (s) return s;
+                          }
+                        }
+                      }
+                    }
+                    for (const v of Object.values(o)) {
+                      const res = walk(v);
+                      if (res !== undefined) return res;
+                    }
+                    return undefined;
+                  }
+                  return walk(obj);
+                }
+                function sanitizeMobile(raw) {
+                  const s = String(raw || '');
+                  const digits = (s.match(/\d+/g) || []).join('');
+                  if (digits.length >= 10 && digits.length <= 15) return digits;
+                  return s.trim();
+                }
+                if (formObj && typeof formObj === 'object') {
+                  proposer = findFirstByKeys(formObj, ['primary_contact_name','applicant_name','policy_holder','holder_name','full_name','name','proposer_name']) || '—';
+                  mobile = sanitizeMobile(findFirstByKeys(formObj, [
+                    'mobile','phone','contact number','mobile no','phone no',
+                    'contact_number','mobile_no','phone_no',
+                    'mobile_number','phone_number','applicant_mobile','applicant_phone',
+                    'primary_contact_mobile','primary_mobile','primary_phone','primary_phone_number'
+                  ]) || '');
+                  if (!mobile) mobile = '—';
+                }
+              } catch {}
+              // Fallbacks: if still missing, use summary extracted from DOM/text
+              try {
+                const summary = buildPolicyCreationSummary();
+                if (proposer === '—' && summary && summary.proposer && summary.proposer !== '—') {
+                  proposer = summary.proposer;
+                }
+                if (mobile === '—' && summary && summary.mobile && summary.mobile !== '—') {
+                  mobile = summary.mobile;
+                }
+              } catch {}
+              const { uid: suid } = buildPolicyCreationSummary();
+              const row = (label, val) => `<tr><td>${label}</td><td>${val || '—'}</td></tr>`;
+              // Pull saved policy details from the submission payload if present
+              const pn = data.policy_number || '';
+              const mn = data.member_number || '';
+              const mname = data.member_name || '';
+              const ps = data.policy_start_date || '';
+              const pe = data.policy_end_date || '';
+              const pp = (data.policy_period_months != null && data.policy_period_months !== '') ? String(data.policy_period_months) : '';
+              const appc = data.close_comments || '';
+
+              // Build base table
+              let html = '<div class="form-kv"><table>'+
+                row('Outcome', 'Policy Created')+
+                row('Unique ID', suid)+
+                row('Proposer Name', proposer)+
+                row('Mobile Number', mobile)+
+                row('Comments', appc)+
+                '</table></div>';
+
+              // If detailed rows exist, render them as label: value lists
+              try {
+                let det = data.policy_details;
+                if (typeof det === 'string' && det.trim()) {
+                  try { det = JSON.parse(det); } catch { det = null; }
+                }
+                const rows = (det && Array.isArray(det.rows)) ? det.rows : null;
+                if (rows && rows.length) {
+                  rows.forEach((r, i) => {
+                    const c = (v) => (v == null || String(v).trim()==='') ? '—' : String(v);
+                    html += `<div class="form-kv" style="margin-top:8px; padding-top:8px; border-top:1px solid #eee;">`;
+                    html += `<strong>Policy #${i+1}</strong><br>`;
+                    html += `Policy Number: ${c(r.policy_number)}<br>`;
+                    html += `Member Number: ${c(r.member_number)}<br>`;
+                    html += `Member Name: ${c(r.member_name)}<br>`;
+                    html += `Plan: ${c(r.plan)}<br>`;
+                    html += `Policy Start Date: ${c(r.policy_start_date)}<br>`;
+                    html += `Policy Period: ${r.policy_period_months ? r.policy_period_months + ' months' : '—'}<br>`;
+                    html += `Policy End Date: ${c(r.policy_end_date)}<br>`;
+                    html += `</div>`;
+                  });
+                }
+              } catch {}
+
+              poContent.innerHTML = html;
+              poColl.style.display = '';
+              try { poContent.style.display = 'block'; } catch {}
+              try { const btn = poColl.querySelector('.collapsible-btn .caret'); if (btn) btn.textContent = '▲'; } catch {}
+              try { poColl.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch {}
+            } else if (normalized === 'POLICY_DENIED' || outcome === 'Policy Denied') {
+              const { uid: suid, proposer, mobile } = buildPolicyCreationSummary();
+              const comments = (data.policy_outcome_comment || data.application_comments || '—');
+              const safe = (str) => String(str || '—').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+              const row = (label, val) => `<tr><td>${label}</td><td>${val}</td></tr>`;
+              poContent.innerHTML = '<div class="form-kv"><table>'+
+                row('Outcome', 'Policy Denied')+                row('Comments', safe(comments))+
+                '</table></div>';
+              poColl.style.display = '';
+            }
+          } catch(e) { /* non-fatal */ }
+        })();
+      } catch (err) {
+        console.error('Fetch failed:', err);
+        alert('Error fetching submission. Check console for details.');
+      }
+    }
+
+    document.getElementById('searchBtn').addEventListener('click', async () => {
+      const uid = document.getElementById('uniqueIdInput').value.trim();
+      if (!uid) return alert('Enter a Unique ID');
+      await fetchAndRender(uid);
+    });
+
+    // --- Client Review / Close handlers ---
+    async function postClientStatus(status, comment) {
+      const uid = document.getElementById('uniqueIdInput').value.trim();
+      if (!uid) { alert('Enter a Unique ID before updating.'); return false; }
+      try {
+        const response = await fetch('/api/agent/update_status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown')
+          },
+          body: JSON.stringify({ unique_id: uid, status, comment, actor: 'client' })
+        });
+        if (!response.ok) {
+          const txt = await response.text().catch(()=> '');
+          console.error('Update failed', response.status, txt);
+          alert('Error updating status');
+          return false;
+        }
+        const disp = statusToDisplay(status);
+        const statusEl = document.getElementById('clientStatus');
+        if (statusEl) {
+          statusEl.textContent = disp;
+          applyStatusClassOn(statusEl, disp);
+        }
+
+        // If client moved out of Open/Sup_Review, underwriter buttons become enabled
+        const rawClientLower = (status || '').toString().toLowerCase();
+        const canUnderwriterAct = rawClientLower && !['open', 'sup_review', ''].includes(rawClientLower);
+        enableUnderwriterButtons(!!canUnderwriterAct);
+        alert('Status updated!');
+        return true;
+      } catch (e) {
+        console.error('Failed to update status:', e);
+        alert('Error updating status');
+        return false;
+      }
+    }
+
+    async function postClientReview(reviewChecked, comment, selectedPlans = [], clientStatus = null) {
+      const uid = document.getElementById('uniqueIdInput').value.trim();
+      if (!uid) { alert('Enter a Unique ID before updating.'); return false; }
+      if (!window.__allowClientReview) { alert('Client Review can be updated only when Final Status is SUP_APPROVED'); return false; }
+      try {
+        const payload = {
+          unique_id: uid,
+          actor: 'client',
+          client_review: !!reviewChecked,
+          status: 'client_reviewed',
+          comment: comment,
+          client_agreed_plans: selectedPlans
+        };
+        if (clientStatus) {
+          payload.client_status = clientStatus;
+        }
+
+        const response = await fetch('/api/agent/update_status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown')
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const txt = await response.text().catch(()=> '');
+          console.error('Update failed', response.status, txt);
+          alert('Error updating review');
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.error('Failed to update review:', e);
+        alert('Error updating review');
+        return false;
+      }
+    }
+
+    // Wire up checkbox enable/disable behavior and save buttons
+    (function(){
+      const reviewChk = document.getElementById('clientReviewChk');
+      const reviewTxt = document.getElementById('clientReviewComment');
+      const reviewSave = document.getElementById('clientReviewSaveBtn');
+
+      if (reviewChk) {
+        reviewChk.addEventListener('change', function(){
+          try { window.updateClientReviewActionState(); } catch {}
+        });
+      }
+      
+      const commentTextarea = document.getElementById('clientReviewComment');
+      if (commentTextarea) {
+        commentTextarea.addEventListener('input', function() {
+          window.updateClientReviewSummary();
+          window.updateClientReviewActionState();
+        });
+      }
+      
+      if (reviewSave) {
+        reviewSave.addEventListener('click', async function(){
+          const comment = (reviewTxt?.value || '').trim();
+          const selectedPlans = window.getSelectedPlans();
+          
+          const ok = await postClientReview(!!reviewChk?.checked, comment, selectedPlans, 'client_approved');
+
+          if (ok) {
+            alert('Client review updated successfully.');
+
+            // 1. Update the Client Review Summary
+            try {
+              const summaryContent = document.getElementById('clientReviewSummaryContent');
+              if (summaryContent) {
+                const plansText = selectedPlans.join(', ');
+                summaryContent.innerHTML = `<div class="form-kv"><table><tbody>` +
+                  `<tr><td>Plan(s) Agreed</td><td>${plansText}</td></tr>` +
+                  `<tr><td>Client comments</td><td>${comment}</td></tr>` +
+                  `</tbody></table></div>`;
+              }
+            } catch (e) {
+              console.error('Failed to update client review summary:', e);
+            }
+
+            // 2. Disable the client review inputs
+            document.getElementById('clientReviewComment').disabled = true;
+            document.getElementById('clientReviewSaveBtn').disabled = true;
+            document.getElementById('clientReviewChk').disabled = true;
+
+            // 3. Disable the entire plan selection section
+            document.getElementById('plansSelectionSection').style.pointerEvents = 'none';
+            document.getElementById('plansSelectionSection').style.opacity = '0.6';
+
+            // 4. Show the Next Action section
+            const nextSec = document.getElementById('nextActionSection');
+            if (nextSec) nextSec.style.display = '';
+
+            // 5. Update the global data object to reflect the change
+            if (window.currentSubmissionData) {
+              window.currentSubmissionData.client_comments = comment;
+              window.currentSubmissionData.Client_Agreed_Plans = JSON.stringify(selectedPlans);
+              window.currentSubmissionData.client_status = 'client_approved';
+            }
+          } else {
+            alert('Failed to update client review.');
+          }
+        });
+      }
+    })();
+
+    // --- Next Action handlers ---
+    (function(){
+      const nextActionSelect = document.getElementById('nextActionSelect');
+      const nextActionCommentBox = document.getElementById('nextActionCommentBox');
+      const nextActionSaveBtn = document.getElementById('nextActionSaveBtn');
+      const openCreateBtn = document.getElementById('openPolicyCreateBtn');
+
+      function updateNextActionVisibility() {
+        const val = (nextActionSelect?.value || '');
+        if (val === 'Policy_Created') {
+          if (nextActionCommentBox) nextActionCommentBox.style.display = 'none';
+          if (document.getElementById('nextActionPolicyCreateBox')) document.getElementById('nextActionPolicyCreateBox').style.display = '';
+        } else {
+          const showComment = !!val;
+          if (nextActionCommentBox) nextActionCommentBox.style.display = showComment ? '' : 'none';
+          if (document.getElementById('nextActionPolicyCreateBox')) document.getElementById('nextActionPolicyCreateBox').style.display = 'none';
+          if (showComment && nextActionCommentBox) {
+            const ph = val ? `Enter comments for ${val.replace(/_/g, ' ')}` : 'Enter comments for this action';
+            const oldTa = nextActionCommentBox.querySelector('#nextActionComment');
+            const newTa = document.createElement('textarea');
+            newTa.id = 'nextActionComment';
+            newTa.rows = 3;
+            newTa.style.width = '100%';
+            newTa.placeholder = ph;
+            newTa.autocomplete = 'off';
+            if (oldTa) {
+              nextActionCommentBox.replaceChild(newTa, oldTa);
+            } else {
+              const saveBtn = nextActionCommentBox.querySelector('#nextActionSaveBtn');
+              if (saveBtn) nextActionCommentBox.insertBefore(newTa, saveBtn); else nextActionCommentBox.appendChild(newTa);
+            }
+          }
+        }
+      }
+
+      if (nextActionSelect) {
+        nextActionSelect.addEventListener('change', updateNextActionVisibility);
+        nextActionSelect.addEventListener('input', updateNextActionVisibility);
+      }
+      updateNextActionVisibility();
+
+      if (nextActionSaveBtn) {
+        nextActionSaveBtn.addEventListener('click', async function(){
+          const val = (nextActionSelect?.value || '');
+          const uid = document.getElementById('uniqueIdInput').value.trim();
+          if (!uid) return alert('Enter a Unique ID');
+          if (!val) return alert('Please select an action');
+          const commentEl = document.getElementById('nextActionComment');
+          const comment = (commentEl?.value || '').trim();
+          try {
+            let ok = false;
+            let errorMsg = '';
+
+            if (val === 'With_UW') {
+              const resp = await fetch('/api/agent/update_status', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown') },
+                body: JSON.stringify({ unique_id: uid, actor: 'underwriter', status: 'with_uw', comment })
+              });
+              ok = resp.ok;
+              if(!ok) errorMsg = await resp.text();
+            } else if (val === 'Client_closed') {
+              const resp = await fetch('/api/agent/update_status', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown') },
+                body: JSON.stringify({ unique_id: uid, actor: 'client', status: 'closed', comment })
+              });
+              ok = resp.ok;
+              if(!ok) errorMsg = await resp.text();
+            } else if (val === 'Policy_Denied') {
+              if (!comment) return alert('Please enter a reason for denial.');
+              const resp = await fetch('/api/agent/policy_outcome', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown') },
+                body: JSON.stringify({ unique_id: uid, outcome: 'Policy Denied', comment })
+              });
+              ok = resp.ok;
+              if(!ok) errorMsg = await resp.text();
+            }
+
+            if (ok) {
+              alert('Saved successfully');
+              await reloadCurrent();
+            } else {
+              alert('Failed to save next action: ' + errorMsg);
+            }
+          } catch (e) {
+            console.error('Failed to save next action', e);
+            alert('Failed to save next action');
+          }
+        });
+      }
+
+      if (openCreateBtn) {
+        openCreateBtn.addEventListener('click', function(){
+          const uid = document.getElementById('uniqueIdInput').value.trim();
+          if (!uid) return alert('Enter a Unique ID');
+          window.location.href = '/html/Policy_Creation.html?uid=' + encodeURIComponent(uid);
+        });
+      }
+    })();
+
+    function openModal(actor, status) {
+      let selectedActor = actor;
+      let selectedStatus = status;
+      const human = statusToDisplay(status);
+      document.getElementById('modalTitle').textContent = `Add comment for: ${human} (${actor === 'client' ? 'Client' : 'Underwriter'})`;
+      document.getElementById('commentInput').value = '';
+      document.getElementById('commentModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('commentModal').style.display = 'none';
+      document.getElementById('commentInput').value = '';
+    }
+
+    document.getElementById('submitCommentBtn').addEventListener('click', async () => {
+      const uid = document.getElementById('uniqueIdInput').value.trim();
+      const comment = document.getElementById('commentInput').value.trim();
+      if (!comment) return alert('Please enter a comment.');
+      
+      // These are global-like variables set by openModal
+      const actor = window.selectedActor;
+      const status = window.selectedStatus;
+
+      if (!actor || !status) return alert('Select an action first.');
+
+      try {
+        const response = await fetch('/api/agent/update_status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown')
+          },
+          body: JSON.stringify({ unique_id: uid, status: status, comment: comment, actor: actor })
+        });
+
+        if (response.ok) {
+          alert('Status updated!');
+          closeModal();
+          await reloadCurrent();
+        } else {
+          const text = await response.text().catch(()=> '');
+          console.error('Server error:', response.status, text);
+          alert('Error updating status');
+        }
+      } catch (err) {
+        console.error('Failed to update status:', err);
+        alert('Error updating status');
+      }
+    });
+
+    enableUnderwriterButtons(false);
+  </script>
+</body>
+</html>

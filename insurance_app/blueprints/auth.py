@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, redirect
 from werkzeug.security import check_password_hash
 from ..database import get_user_db_connection
 
@@ -47,3 +47,11 @@ def login():
     finally:
         if conn:
             conn.close()
+
+
+@auth_bp.route('/logout', methods=['GET'])
+def logout():
+    """Simple logout route that redirects to the root login page.
+    Client-side already clears localStorage; we just send users back to '/'.
+    """
+    return redirect('/')

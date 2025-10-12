@@ -16,3 +16,21 @@
   :root{--brand-logo-size:40px; --top-bar-offset:56px}
   .brand-logo{top:calc(var(--top-bar-offset) + 8px);left:8px}
 }
+
+/*Srihari*/
+@media (max-width: 768px) {
+  .brand-logo {
+    position: absolute;   /* stop fixing it */
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%); /* center logo above form */
+    width: 80px;
+    height: 80px;
+  }
+
+  .login-container {
+    margin-top: 120px; /* push form below logo */
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

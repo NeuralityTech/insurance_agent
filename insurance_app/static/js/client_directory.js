@@ -55,7 +55,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     return list.filter(c => {
       const matchUid = !q || (c.unique_id || '').toLowerCase().includes(q);
-      const matchStatus = !st || normalizeStatus(c.supervisor_status) === st;
+      // Prefer application_status for filtering if present; fallback to supervisor_status
+      const statusForFilter = (c.application_status != null && c.application_status !== '') ? c.application_status : c.supervisor_status;
+      const matchStatus = !st || normalizeStatus(statusForFilter) === st;
       // No supervisor id on clients list; if available via Agent -> Supervisor mapping, extend later
       const matchSup = !sup || (c.agent || '').includes(sup) || (c.supervisor_id === sup);
       return matchUid && matchStatus && matchSup;
@@ -69,11 +71,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       const tr = document.createElement('tr');
       const uid = c.unique_id || '';
       const uidLink = uid ? `<a href="/html/Existing_User_Request_Page.html?uid=${encodeURIComponent(uid)}" class="link">${escapeHtml(uid)}</a>` : '';
+      const statusText = (c.application_status != null && c.application_status !== '') ? c.application_status : (c.supervisor_status || '');
       tr.innerHTML = `
         <td>${escapeHtml(c.name || '')}</td>
         <td>${uidLink}</td>
         <td>${escapeHtml(c.agent || '')}</td>
-        <td>${escapeHtml((c.supervisor_status || '').toString().toUpperCase())}</td>
+        <td>${escapeHtml((statusText || '').toString().toUpperCase())}</td>
       `;
       tbody.appendChild(tr);
     });

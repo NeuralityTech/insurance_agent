@@ -4,6 +4,18 @@ import json
 from datetime import datetime
 import pandas as pd
 
+
+# Helper function to parse plan capacity from Policy_Code
+def get_plan_capacity(policy_code):
+    """Parses a Policy_Code (e.g., 'FLO_2_1') and returns a tuple of (adults, children)."""
+    if pd.isna(policy_code) or not isinstance(policy_code, str):
+        return (1, 0) # Default to 1 adult, 0 children for individual/missing
+    parts = policy_code.strip().upper().split('_')
+    # Check for standard floater format FLO_A_C or MIX_A_C
+    if len(parts) == 3 and parts[0] in ('FLO', 'MIX') and parts[1].isdigit() and parts[2].isdigit():
+        return (int(parts[1]), int(parts[2]))
+    return (1, 0) # Default to individual for non-standard or disease-specific codes
+
 def bundle_plans_by_score(initial_plans: dict, ranked_plans_df: pd.DataFrame, family_structure: dict) -> dict:
     """
     Creates Option 1 and Option 2 bundles based on pre-scored plans.
@@ -15,69 +27,166 @@ def bundle_plans_by_score(initial_plans: dict, ranked_plans_df: pd.DataFrame, fa
     Returns:
         A dictionary containing the structured plan options.
     """
-    plan_sets = {k: set(v['plans']) for k, v in initial_plans.items() if v.get('plans')}
-    names = {k: v.get('name', k) for k, v in initial_plans.items()}
-    all_member_names = sorted(list(names.values()))
+    # --- FINAL, CORRECT LOGIC --- #
+    df = ranked_plans_df.copy()
+    # --- New, more detailed capacity parsing ---
+    capacity_df = df['Policy_Code'].apply(get_plan_capacity)
+    df['Plan_Adults'] = capacity_df.apply(lambda x: x[0])
+    df['Plan_Children'] = capacity_df.apply(lambda x: x[1])
+    df['Plan_Capacity'] = df['Plan_Adults'] + df['Plan_Children']
 
-    # Create a lookup for plan scores
-    score_lookup = ranked_plans_df.set_index('Plan Name')['Score_MemberAware'].to_dict()
-
-    # --- Option 1: Full Family Floater --- #
-    # Use the 'Family Floater' category directly from the ranked plans.
-    # These have already been validated to cover the whole family in the analysis blueprint.
-    family_floater_df = ranked_plans_df[ranked_plans_df['Category'] == 'Family Floater']
+    # 1. Identify Floaters vs. Combination Candidates directly from Policy_Code
+    is_floater = df['Policy_Code'].str.upper().str.startswith(('FLO_', 'MIX_'), na=False)
     
-    # Sort these plans by their score and get the full plan objects
-    sorted_full_family_plans_df = family_floater_df.sort_values(by='Score_MemberAware', ascending=False)
+    # 2. Generate "Best Floater" plans (Option 1) with multi-level sorting
+    family_adults = family_structure.get('adults', 0)
+    family_children = family_structure.get('children', 0)
 
+    best_floaters_df = df[is_floater].copy()
+    # Only consider floaters that can actually fit the family
+    best_floaters_df = best_floaters_df[
+        (best_floaters_df['Plan_Adults'] >= family_adults) & 
+        (best_floaters_df['Plan_Children'] >= family_children)
+    ]
+
+    if not best_floaters_df.empty:
+        best_floaters_df['Adult_Surplus'] = best_floaters_df['Plan_Adults'] - family_adults
+        best_floaters_df['Child_Surplus'] = best_floaters_df['Plan_Children'] - family_children
+        
+        best_floaters_df = best_floaters_df.sort_values(
+            by=['AilmentScore', 'Adult_Surplus', 'Child_Surplus'],
+            ascending=[False, True, True]
+        )
+    # Clean for JSON serialization before converting
+    safe_best_floaters_df = best_floaters_df.where(pd.notnull(best_floaters_df), None)
     option_1_full_family_plans = {
-        "covered_members": all_member_names,
-        "plans": sorted_full_family_plans_df.to_dict(orient='records')
+        "covered_members": ["Entire Family"],
+        "plans": safe_best_floaters_df.to_dict(orient='records')
     }
 
-    # --- Option 2: Best Individual Plan Combination --- #
-    individual_plans_df = ranked_plans_df[ranked_plans_df['Category'] == 'Individual']
-    
-    best_individual_combo = []
-    all_members_covered = True
+    # 3. Generate Hybrid Combination Packages (Option 2)
+    member_ailments = family_structure.get('member_ailments', {})
+    member_ages = family_structure.get('member_ages', {})
+    adult_age_threshold = 25 # This could be moved to a config file
 
-    for key, p_set in plan_sets.items():
-        member_name = names[key]
-        # Find the highest-scoring individual plan recommended for this member
-        member_specific_individual_plans = individual_plans_df[individual_plans_df['Plan Name'].isin(p_set)]
+    high_need_members = {name: ailments for name, ailments in member_ailments.items() if ailments}
+    general_members = [name for name, ailments in member_ailments.items() if not ailments]
+
+    # Part A: Find all suitable individual plans for each high-need member
+    top_plans_for_high_need = {}
+    if high_need_members:
+        individual_plans_df = df[~is_floater].copy()
+        for member_name in high_need_members:
+            score_col = f'Score_{member_name}'
+            if score_col in individual_plans_df.columns:
+                member_specific_plans = individual_plans_df[individual_plans_df[score_col] > 0]
+                if not member_specific_plans.empty:
+                    # Clean for JSON serialization before converting
+                    safe_member_specific_plans = member_specific_plans.where(pd.notnull(member_specific_plans), None)
+                    top_plans_for_high_need[member_name] = safe_member_specific_plans.sort_values(by=score_col, ascending=False).to_dict(orient='records')
+
+    # Part B: Find the single best small floater for the general members group
+    best_floater_for_general = None
+    if general_members:
+        num_general_adults = sum(1 for m in general_members if member_ages.get(m, 0) >= adult_age_threshold)
+        num_general_children = len(general_members) - num_general_adults
         
-        if not member_specific_individual_plans.empty:
-            top_plan = member_specific_individual_plans.sort_values(by='Score_MemberAware', ascending=False).iloc[0]
-            best_individual_combo.append({
-                "member": member_name,
-                "plan": top_plan['Plan Name'],
-                "score": top_plan['Score_MemberAware']
+        if num_general_adults > 0 or num_general_children > 0:
+            general_group_floaters = df[is_floater].copy()
+            fittable_floaters = general_group_floaters[
+                (general_group_floaters['Plan_Adults'] >= num_general_adults) & 
+                (general_group_floaters['Plan_Children'] >= num_general_children)
+            ]
+            if not fittable_floaters.empty:
+                fittable_floaters['Adult_Surplus'] = fittable_floaters['Plan_Adults'] - num_general_adults
+                fittable_floaters['Child_Surplus'] = fittable_floaters['Plan_Children'] - num_general_children
+                # Clean for JSON serialization before converting
+                safe_fittable_floaters = fittable_floaters.where(pd.notnull(fittable_floaters), None)
+                best_floater_for_general = safe_fittable_floaters.sort_values(
+                    by=['Adult_Surplus', 'Child_Surplus', 'AilmentScore'], ascending=[True, True, False]
+                ).iloc[0].to_dict()
+
+    # Part C: Generate and rank all hybrid combinations
+    combination_packages = []
+    # Only proceed if we can cover all high-need members
+    if top_plans_for_high_need and len(top_plans_for_high_need) == len(high_need_members):
+        from itertools import product
+        high_need_plan_lists = list(top_plans_for_high_need.values())
+        high_need_names = list(top_plans_for_high_need.keys())
+        plan_combinations = product(*high_need_plan_lists)
+
+        for i, combo in enumerate(plan_combinations):
+            package_plans = []
+            total_score = 0
+            # Add individual plans for high-need members
+            for j, plan_details in enumerate(combo):
+                member_name = high_need_names[j]
+                score_col = f'Score_{member_name}'
+                package_plans.append({
+                    "members": [member_name],
+                    "plan_name": plan_details['Plan Name'],
+                    "score": plan_details[score_col]
+                })
+                total_score += plan_details[score_col]
+            
+            # Add the floater for the general members, if one was found
+            if best_floater_for_general:
+                package_plans.append({
+                    "members": general_members,
+                    "plan_name": best_floater_for_general['Plan Name'],
+                    "score": best_floater_for_general['AilmentScore']
+                })
+                total_score += best_floater_for_general['AilmentScore']
+            # If there are general members but no floater was found, this package is incomplete
+            elif general_members:
+                continue # Skip this incomplete package
+
+            combination_packages.append({
+                "package_rank": i + 1, # Will be re-ranked by score
+                "plans": package_plans,
+                "total_score": total_score
             })
-        else:
-            # If a member has no suitable individual plan, this combo is not possible
-            all_members_covered = False
-            break  # Exit the loop early
-
-    option_2_best_individual_combo = {}
-    if all_members_covered and best_individual_combo:
-        total_score = sum(p['score'] for p in best_individual_combo)
-        option_2_best_individual_combo = {
-            "plans": best_individual_combo,
-            "total_score": total_score
-        }
-
-    # For providing a browsable list of individual plans per member
-    individual_plans_per_member = {}
-    for key, p_set in plan_sets.items():
-        member_specific_individual_plans = individual_plans_df[individual_plans_df['Plan Name'].isin(p_set)]
-        sorted_plans = member_specific_individual_plans.sort_values(by='Score_MemberAware', ascending=False)['Plan Name'].tolist()
-        individual_plans_per_member[names[key]] = sorted_plans
 
     option_2_combination_plans = {
-        "best_individual_combo": option_2_best_individual_combo,
-        "individual_plans_per_member": individual_plans_per_member,
-        "hybrid_combos": _generate_hybrid_combinations(plan_sets, ranked_plans_df, names)
+        "ranked_packages": sorted(combination_packages, key=lambda x: x['total_score'], reverse=True)
     }
+
+    # --- Terminal Printing for Debugging --- #
+    # Define the column order for printing
+    all_score_cols = sorted([col for col in df.columns if col.startswith('Score_') and col != 'AilmentScore'])
+    member_score_cols = [col for col in all_score_cols if col != 'Score_MemberAware']
+
+    # --- Essential Table (All Scored Plans) --- #
+    print("\n--- Essential Table (Sorted by Ailment Score) ---")
+    total_family_members = family_structure.get('adults', 0) + family_structure.get('children', 0)
+    
+    # Note: Family_Fit is already calculated in the blueprint, so we don't need to recalculate it here.
+    essential_table_df = df.sort_values(by='AilmentScore', ascending=False)
+    
+    # Explicitly define the column order as requested
+    essential_cols = ['Plan Name', 'Family_Fit', 'AilmentScore'] + all_score_cols
+    display_cols = [col for col in essential_cols if col in essential_table_df.columns]
+    print(f"Client Family Size: {total_family_members}")
+    print(essential_table_df[display_cols].to_string())
+    print("--- --- --- ---")
+
+    print("\n--- Best Floater Plans ---")
+    if not best_floaters_df.empty:
+        print(best_floaters_df[['Plan Name', 'AilmentScore']].to_string(index=False))
+    else:
+        print("No suitable floater plans found.")
+    print("--- --- --- ---")
+
+    print("\n--- Best Combination Packages ---")
+    if option_2_combination_plans.get('ranked_packages'):
+        for i, package in enumerate(option_2_combination_plans['ranked_packages']):
+            print(f"\n--- Package #{i+1} (Total Score: {package['total_score']:.2f}) ---")
+            package_df = pd.DataFrame(package['plans'])
+            print(package_df.to_string(index=False))
+    else:
+        print("No combination packages could be generated.")
+    print("--- --- --- ---")
+    # --- End of Final Logic --- #
 
     return {
         "option_1_full_family_plans": option_1_full_family_plans,

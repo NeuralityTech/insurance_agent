@@ -10,71 +10,155 @@
     <link rel="stylesheet" href="../css/health_history.css">
     <link rel="stylesheet" href="../css/members.css">
     <link rel="stylesheet" href="../css/top_bar.css">
+    <style>
+        /* Right-align header actions (Logout, Home) and keep them adjacent */
+        .top-bar { display: flex; align-items: center; gap: 12px; }
+        .top-bar .user-info { margin-right: auto; }
+        .top-bar .right-actions { display: flex; gap: 8px; align-items: center; }
+    </style>
 </head>
 <body>
     <header class="top-bar">
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
+        <link rel="stylesheet" href="/static/css/logo.css">
+        <script defer src="/static/js/logo.js"></script>
         <div class="user-info">
             Logged in as: <span id="logged-in-user" class="user-id"></span>
         </div>
-        <button id="logout-btn" class="btn btn-logout">Logout</button>
+        <div class="right-actions">
+            <button id="logout-btn" class="btn btn-logout">Logout</button>
+            <button id="btn-home" class="btn">Home</button>
+        </div>
     </header>
     <div class="container">
         <header class="page-header">
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
+            <link rel="stylesheet" href="/static/css/logo.css">
+            <script defer src="/static/js/logo.js"></script>
             <h1>New User request Page</h1>
         </header>
         <form id="insurance-form" novalidate>
-
-        <p>Fill this to help your advisor match you with the right policy. All fields marked * are recommended.</p>
-
-        <div id="primary-contact-placeholder" class="section"></div>
-        <div id="Health-History-placeholder" class="section"></div>
-        <div id="members-covered-placeholder" class="section"></div>
-        <div id="cover-cost-placeholder" class="section"></div>
-        <div id="existing-coverage-placeholder" class="section"></div>
-        <div id="claims-service-placeholder" class="section"></div>
-        <div id="Finance-Documentation-placeholder" class="section"></div>
-        <div id="other-notes-placeholder" class="section"></div>
-
-        <div class="form-actions">
-            <button type="submit" id="submit-btn" class="btn">Submit</button>
-            <button type="button" id="preview-btn" class="btn">Preview</button>
-            <button type="reset" id="reset-btn" class="btn btn-secondary">Reset</button>
-        </div>
+            <p>Fill this to help your advisor match you with the right policy. All fields marked * are recommended.</p>
+            <div id="primary-contact-placeholder" class="section"></div>
+            <div id="Health-History-placeholder" class="section"></div>
+            <div id="members-covered-placeholder" class="section"></div>
+            <div id="cover-cost-placeholder" class="section"></div>
+            <div id="existing-coverage-placeholder" class="section"></div>
+            <div id="claims-service-placeholder" class="section"></div>
+            <div id="Finance-Documentation-placeholder" class="section"></div>
+            <div id="comments-noted-placeholder" class="section"></div>
+            <div class="form-actions">
+                <button type="submit" id="submit-btn" class="btn">Submit</button>
+                <button type="button" id="preview-btn" class="btn">Preview</button>
+                <button type="reset" id="reset-btn" class="btn btn-secondary">Reset</button>
+            </div>
         </form>
     </div>
-
     <script src="../js/calculations.js"></script>
     <script src="../js/validation.js"></script>
     <script src="../js/member_management.js"></script>
     <script src="../js/disease_details.js"></script>
-    <script src="../js/other_notes.js"></script>
-
+    <script src="../js/comments_noted.js"></script>
     <!-- Main script to load sections -->
     <script src="../js/script.js" defer></script>
     <script src="../js/data_fetch.js" defer></script>
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const loggedInUserEl = document.getElementById('logged-in-user');
             const logoutBtn = document.getElementById('logout-btn');
-
+            const homeBtn = document.getElementById('btn-home');
+            const form = document.getElementById('insurance-form');
+            const submitBtn = document.getElementById('submit-btn');
+            const previewBtn = document.getElementById('preview-btn');
+            const resetBtn = document.getElementById('reset-btn');
             const userId = localStorage.getItem('loggedInUserId');
             if (userId) {
                 loggedInUserEl.textContent = userId;
             } else {
                 window.location.href = 'Main_login.html';
             }
-
             logoutBtn.addEventListener('click', function() {
                 localStorage.removeItem('loggedInUserId');
                 window.location.href = 'Main_login.html';
             });
+            if (homeBtn) {
+                homeBtn.addEventListener('click', function(){
+                    window.location.href = '/html/Health_Insurance_Proposal_Request.html';
+                });
+            }
+
+            // Deep reset: clears form fields and all dynamic state for New User page
+            function hardResetForm() {
+                try {
+                    // 1) Clear dynamic storage/state
+                    localStorage.removeItem('members');
+                    localStorage.removeItem('formSummary');
+                    localStorage.removeItem('submissionData');
+                    localStorage.removeItem('plans');
+                    localStorage.removeItem('editMemberId');
+                    localStorage.removeItem('comments_noted'); // mirror used by Preview
+                    sessionStorage.removeItem('currentUniqueId');
+
+                    // 2) Reset all form controls to empty/unchecked/default
+                    if (form) {
+                        form.reset();
+                        const ctrls = form.querySelectorAll('input, select, textarea');
+                        ctrls.forEach(el => {
+                            const tag = (el.tagName || '').toLowerCase();
+                            const type = (el.type || '').toLowerCase();
+                            if (tag === 'input') {
+                                if (type === 'checkbox' || type === 'radio') {
+                                    el.checked = false;
+                                } else {
+                                    el.value = '';
+                                }
+                            } else if (tag === 'select') {
+                                el.selectedIndex = 0;
+                            } else if (tag === 'textarea') {
+                                el.value = '';
+                            }
+                        });
+                    }
+
+                    // 3) Clear members UI if present
+                    try {
+                        const membersList = document.getElementById('members-list');
+                        if (membersList) membersList.innerHTML = '';
+                        const summaryContent = document.getElementById('summary-content');
+                        if (summaryContent) summaryContent.innerHTML = '<p class="placeholder-text">Hover over a member to see their details.</p>';
+                        if (window.loadMembersGlobal) window.loadMembersGlobal();
+                        if (window.updatePeopleCounter) window.updatePeopleCounter();
+                    } catch(e) { /* ignore */ }
+
+                    // 4) Clear comments UI and local mirror
+                    try {
+                        if (typeof window.clearCommentsSession === 'function') {
+                            window.clearCommentsSession();
+                        } else {
+                            const tb = document.getElementById('comments-tbody');
+                            if (tb) tb.innerHTML = '';
+                            const tbl = document.getElementById('comments-table');
+                            if (tbl) tbl.style.display = 'none';
+                            const noMsg = document.getElementById('no-comments-message');
+                            if (noMsg) noMsg.style.display = 'block';
+                        }
+                    } catch(e) { /* ignore */ }
+
+                    // 5) Re-enable action buttons
+                    if (submitBtn) submitBtn.disabled = false;
+                    if (previewBtn) previewBtn.disabled = false;
+                    if (resetBtn) resetBtn.disabled = false;
+                } catch (e) {
+                    console.warn('Hard reset (new user) encountered an issue:', e);
+                }
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function(ev){
+                    ev.preventDefault(); // override default so we can deep-clear
+                    hardResetForm();
+                });
+            }
         });
     </script>
+
 </body>
 </html>
-

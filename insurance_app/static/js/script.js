@@ -5,11 +5,35 @@
  * It is used by: Health_Insurance_Requirement_Form.html
  */
 document.addEventListener('DOMContentLoaded', function() {
+        // @Srihari
+    // Reset submit button state on page load
+    const submitBtn = document.getElementById('submit-btn');
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit';
+    }
+    // Also reset on pageshow (for bfcache/back navigation)
+    window.addEventListener('pageshow', function() {
+        const submitBtn = document.getElementById('submit-btn');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit';
+        }
+    });
     // --- Session Management ---
-    // Clear previous members and summary data on form load
-    localStorage.removeItem('members');
-    localStorage.removeItem('formSummary');
-    localStorage.removeItem('editMemberId');
+    // Clear previous members and summary data on fresh form load,
+    // but preserve state when returning from Summary/Preview.
+    try {
+        const returning = sessionStorage.getItem('returningFromSummary') === '1';
+        if (!returning) {
+            localStorage.removeItem('members');
+            localStorage.removeItem('formSummary');
+            localStorage.removeItem('editMemberId');
+        } else {
+            // Clear the one-time flag
+            sessionStorage.removeItem('returningFromSummary');
+        }
+    } catch (e) { /* ignore */ }
     sessionStorage.setItem('formSessionActive', 'true');
 
     // Function to load HTML content into a placeholder and return a promise
@@ -69,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
         { file: 'Existing_Coverage_&_Portability.html', placeholder: 'existing-coverage-placeholder', title: 'Existing Coverage & Portability' },
         { file: 'Claims_&_Service.html', placeholder: 'claims-service-placeholder', title: 'Claims & Service' },
         { file: 'Finance_&_Documentation.html', placeholder: 'Finance-Documentation-placeholder', title: 'Finance & Documentation' },
-        { file: 'Other_Notes.html', placeholder: 'other-notes-placeholder', title: 'Other Notes', init: ['initializeOtherNotes'] }
+        { file: 'Comments_Noted.html', placeholder: 'comments-noted-placeholder', title: 'Comments Noted', init: ['initializeCommentsNoted'] }
     ];
 
     // --- Load all sections ---
@@ -192,16 +216,8 @@ document.addEventListener('DOMContentLoaded', function() {
             existingCoverage: getSectionData('existing-coverage-placeholder'),
             claimsAndService: getSectionData('claims-service-placeholder'),
             financeAndDocumentation: getSectionData('Finance-Documentation-placeholder'),
-            otherNotes: getSectionData('other-notes-placeholder')
+            commentsNoted: window.getCommentsData ? window.getCommentsData() : { comments_noted: [] }
         };
-
-        
-
-        const timestampInfo = document.getElementById('user-timestamp-info');
-        if (timestampInfo) {
-            if (!formData.otherNotes) formData.otherNotes = {};
-            formData.otherNotes.formFilledBy = timestampInfo.textContent;
-        }
 
         const userId = localStorage.getItem('loggedInUserId');
 
@@ -236,9 +252,19 @@ document.addEventListener('DOMContentLoaded', function() {
         'address_proof_details': 'Not Submitted'
     });
 
-    fetch('/submit', {
+    // Disable submit button to prevent double submission
+        const submitBtn = document.getElementById('submit-btn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+        }
+
+        fetch('/submit', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-User-Id': userId || 'Unknown'
+            },
             body: JSON.stringify({ userId, formData }),
         })
         .then(async response => {
@@ -250,18 +276,53 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('formSummary', JSON.stringify(formData));
                 // Store returned plan suggestions
                 localStorage.setItem('plans', JSON.stringify(result.plans));
+                
+                if (submitBtn) {
+                    submitBtn.textContent = 'Submitted Successfully!';
+                    submitBtn.style.backgroundColor = '#28a745';
+                }
+                
                 alert('Form submitted successfully! Submission ID: ' + result.submissionId);
                 // Redirect to summary page
                 window.location.href = `Summary.html?unique_id=${formData.unique_id}`;
             } else {
-                const error = await response.json();
-                console.error('Submission failed:', error);
-                alert(`Submission failed: ${error.error || 'Please try again.'}`);
+                let errorMessage = 'Please check your connection and try again.';
+                try {
+                    const error = await response.json();
+                    errorMessage = error.error || error.message || errorMessage;
+                } catch (e) {
+                    const textError = await response.text().catch(() => '');
+                    errorMessage = textError || `Server error (${response.status})`;
+                }
+                console.error('Submission failed:', errorMessage);
+                alert(`Submission failed: ${errorMessage}`);
+                
+                // Re-enable submit button
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit';
+                    submitBtn.style.backgroundColor = '';
+                }
             }
         })
         .catch(error => {
             console.error('Error submitting form:', error);
-            alert('An unexpected error occurred. Please check your connection and try again.');
+            let errorMessage = 'Please check your connection and try again.';
+            
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                errorMessage = 'Network connection failed. Please check your internet connection.';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            alert(`Connection error: ${errorMessage}`);
+            
+            // Re-enable submit button
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit';
+                submitBtn.style.backgroundColor = '';
+            }
         });
     });
 
@@ -277,20 +338,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 existingCoverage: getSectionData('existing-coverage-placeholder'),
                 claimsAndService: getSectionData('claims-service-placeholder'),
                 financeAndDocumentation: getSectionData('Finance-Documentation-placeholder'),
-                otherNotes: getSectionData('other-notes-placeholder')
+                commentsNoted: window.getCommentsData ? window.getCommentsData() : { comments_noted: [] }
             };
 
-            const timestampInfo = document.getElementById('user-timestamp-info');
-            if (timestampInfo) {
-                if (!summaryData.otherNotes) summaryData.otherNotes = {};
-                summaryData.otherNotes.formFilledBy = timestampInfo.textContent;
-            }
-
                 // Apply default values for preview
-    applyDefaults(summaryData.primaryContact, { hubs: 'Nation wide' });
-    applyDefaults(summaryData.coverAndCost, {
-        'policy-type': 'individual',
-        'policy-term': '1-year',
+            applyDefaults(summaryData.primaryContact, { hubs: 'Nation wide' });
+            applyDefaults(summaryData.coverAndCost, {
+                'policy-type': 'individual',
         'sum-insured': '00',
         'annual-budget': '00',
         'payment-mode': 'annual',
@@ -319,6 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'address_proof_details': 'Not Submitted'
     });
     localStorage.setItem('formSummary', JSON.stringify(summaryData));
+            try { sessionStorage.setItem('previousFormPage', window.location.pathname); } catch(e) {}
             window.open('Preview.html', '_blank');
         });
     }

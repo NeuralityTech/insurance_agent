@@ -39,7 +39,9 @@ function initializePrimaryContactValidation() {
 
     function handleUserTypeChange() {
         if (!uniqueIdInput) return;
-        const isNewUser = form.querySelector('input[name="user_type"]:checked').value === 'new';
+        // Safely handle cases where no user_type radios exist in the Primary Contact section.
+        const selectedUserType = form.querySelector('input[name="user_type"]:checked');
+        const isNewUser = !selectedUserType || selectedUserType.value === 'new';
         if (isNewUser) {
             uniqueIdInput.setAttribute('readonly', true);
             uniqueIdInput.classList.add('readonly-field');
@@ -108,6 +110,7 @@ function initializePrimaryContactValidation() {
     });
 
     const mainForm = document.getElementById('insurance-form');
+    if (!mainForm) return; // When this script is loaded in a standalone partial, skip attaching submit handler
     mainForm.addEventListener('submit', (e) => {
         let isFormValid = true;
         inputsToValidate.forEach(input => {

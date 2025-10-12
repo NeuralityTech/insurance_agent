@@ -1,0 +1,37 @@
+{
+  "hard_filters": [
+    {
+      "feature": "status",
+      "operator": "="
+    },
+    {
+      "feature": "Disease_Code",
+      "operator": "="
+    },
+    {
+      "feature": "age",
+      "type": "range",
+      "min_col": "Adult_Min_Entry_Age",
+      "max_col": "Adult_Max_Entry_Age"
+    }
+  ],
+  "value_filters": [
+    {
+      "feature": "child_age",
+      "type": "range",
+      "min_col": "child_min_entry_age",
+      "max_col": "child_max_entry_age"
+    },
+    {
+      "feature": "gender",
+      "type": "equality"
+    }
+  ],
+  "scoring": {
+    "weights": {
+      "disease_code": 3,
+      "default": 1
+    },
+    "top_n": 5
+  }
+}

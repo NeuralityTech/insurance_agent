@@ -39,18 +39,67 @@
     const container = document.getElementById(containerId);
     if (!container) return;
     Object.entries(values).forEach(([name, val]) => {
-      if (val === undefined || val === null) return;
-      const els = container.querySelectorAll(`[name="${CSS.escape(name)}"]`);
+      if (val === undefined || val === null || val === '') return;
+      
+      // Try multiple selectors to find the field
+      let els = container.querySelectorAll(`[name="${CSS.escape(name)}"]`);
+      
+      // If not found, try common field name variations
+      if (els.length === 0) {
+        const variations = [
+          name.replace(/_/g, '-'),
+          name.replace(/-/g, '_'),
+          name.replace(/([A-Z])/g, '-$1').toLowerCase(),
+          name.toLowerCase()
+        ];
+        
+        for (const variation of variations) {
+          els = container.querySelectorAll(`[name="${CSS.escape(variation)}"]`);
+          if (els.length > 0) break;
+        }
+      }
+      
+      // Also try by ID if name selector didn't work
+      if (els.length === 0) {
+        const byId = container.querySelector(`#${CSS.escape(name)}`);
+        if (byId) els = [byId];
+      }
+      
       els.forEach(el => {
-        if (el.type === 'radio') {
-          if (String(el.value) === String(val)) el.checked = true;
-        } else if (el.type === 'checkbox') {
-          if (Array.isArray(val)) el.checked = val.includes(el.value);
-          else el.checked = Boolean(val) || String(el.value) === String(val);
-          // Ensure dependent UI updates (e.g., disease details visibility)
-          el.dispatchEvent(new Event('change', { bubbles: true }));
-        } else {
-          el.value = val;
+        try {
+          if (el.type === 'radio') {
+            if (String(el.value) === String(val)) {
+              el.checked = true;
+              el.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          } else if (el.type === 'checkbox') {
+            if (Array.isArray(val)) {
+              el.checked = val.includes(el.value);
+            } else {
+              el.checked = Boolean(val) || String(el.value) === String(val);
+            }
+            // Ensure dependent UI updates (e.g., disease details visibility)
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          } else if (el.type === 'date') {
+            // Handle date fields specially
+            let dateValue = val;
+            if (typeof val === 'string' && val.includes('/')) {
+              // Convert DD/MM/YYYY to YYYY-MM-DD
+              const parts = val.split('/');
+              if (parts.length === 3) {
+                dateValue = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+              }
+            }
+            el.value = dateValue;
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          } else {
+            el.value = val;
+            // Trigger change event for calculated fields
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        } catch (e) {
+          console.warn(`Failed to set field ${name}:`, e);
         }
       });
     });
@@ -66,7 +115,10 @@
       setFields('existing-coverage-placeholder', data.existingCoverage || {});
       setFields('claims-service-placeholder', data.claimsAndService || {});
       setFields('Finance-Documentation-placeholder', data.financeAndDocumentation || {});
-      setFields('other-notes-placeholder', data.otherNotes || {});
+      // Load comments for existing user
+      if (window.loadExistingComments && data.unique_id) {
+        window.loadExistingComments(data.unique_id);
+      }
 
       // Explicitly handle disease list to ensure details are revealed and values applied
       if (data.healthHistory) {

@@ -26,3 +26,21 @@ body {
 .form-actions .btn:hover {
     opacity: 0.9;
 }
+
+/* Disabled state after Select Plan is clicked */
+.form-actions.disabled {
+    pointer-events: none; /* Block clicks on all children */
+    opacity: 0.6;        /* Visual feedback */
+}
+
+.form-actions.disabled .btn {
+    cursor: not-allowed;
+    background-color: #cccccc !important; /* Greyed background */
+    border-color: #cccccc !important;     /* Greyed border */
+    color: #666666 !important;            /* Greyed text */
+    box-shadow: none;
+}
+
+.form-actions.disabled .btn:hover {
+    opacity: 1; /* Keep stable on hover when disabled */
+}

@@ -49,7 +49,7 @@ FLO_2_0   : Two adults only
 FLO_2_3   : Two adults and up to three children
 FLO_6_3   : Up to six adults and three children
 FLO_2_gt0 : Two adults and at least one child (no limit)
-MIX_1_1   : One adult or one child option
+MIX_1_1   : One adult and one child option
 MIX_2_4   : Up to two adults and four children
 MIX_2_3   : Up to two adults and three children
 MIX_2_2   : Up to two adults and two children
@@ -265,12 +265,17 @@ output:
     "status": "active",
     "gender": "Female"
   }
+  "num_adults": "2",
+  "num_children": "1"
 }
 
 
 Note: 
-1. The comprehensive cover is the default cover. 
-2. The disease_code is always the "GENERAL" 
+1. The comprehensive_cover disease_code is always the "GENERAL" 
 3. The age in Comprehensive cover is the max age of the members. 
 4. The gender in Comprehensive cover is from member1.
-5. The status is always "active"
+5. The status is always "active" for all members and comprehensive cover.
+6. In case a member have multiple diseases, the disease_code should be lile ("MULTI, <disease_code1>,<disease_code2>...<disease_codeN>").
+7. The num_adults and num_children should be the number of adults and children in the family.
+8. Any member less than equal to 25 years is considered as child.
+9. Ensure always the order of the json list is member1, member2, member3, comprehensive_cover, num_adults, num_children.

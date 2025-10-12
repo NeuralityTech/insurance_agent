@@ -5,94 +5,40 @@
     <script defer src="/static/js/logo.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Form Submission Summary</title>
-    <link rel="stylesheet" href="../css/common.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/top_bar.css') }}">
+    <title>Health Insurance Requirement Summary Preview</title>
+    <link rel="stylesheet" href="/static/css/common.css">
 </head>
 <body>
-    <header class="top-bar">
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
-        <div class="user-info">
-            Logged in as: <span id="logged-in-user" class="user-id"></span>
-        </div>
-        <button id="logout-btn" class="btn btn-logout">Logout</button>
-    </header>
     <div class="container">
         <header class="page-header">
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
-            <h1>Health Insurance Requirement Summary</h1>
+            <link rel="stylesheet" href="/static/css/logo.css">
+            <script defer src="/static/js/logo.js"></script>
+            <h1>Health Insurance Requirement Summary Preview</h1>
         </header>
         <main>
             <div id="summary-container" class="form-container">
                 <!-- Summary content will be injected here -->
             </div>
             <div class="form-actions">
-                <button type="button" id="btn-back" class="btn btn-secondary" style="display:none;">Back</button>
-                <button type="button" id="btn-print" class="btn" style="display:none;">Print Summary</button>
-                <button type="button" id="btn-home" class="btn" style="display:none;">Home</button>
-                <button type="button" id="proposed-plans-btn" class="btn" disabled style="display:none;">Proposed Plans</button>
+                <button type="button" id="btn-back" class="btn btn-secondary">Previous</button>
+                <button type="button" id="btn-next" class="btn" disabled>Next</button>
+            <!--     <button type="button" id="btn-print" class="btn">Print Summary</button> 
+                     <button type="button" id="btn-home" class="btn">Home</button>  -->
+                <button type="button" id="proposed-plans-btn" class="btn" style="display:none;">Proposed Plans</button>
+                <!-- @Srihari -->
+                <!-- @Srihari -->
             </div>
         </main>
     </div>
-    <script src="../js/summary.js"></script>
+    <script src="/static/js/summary.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const loggedInUserEl = document.getElementById('logged-in-user');
-            const logoutBtn = document.getElementById('logout-btn');
-            const userId = localStorage.getItem('loggedInUserId');
-            if (userId) {
-                loggedInUserEl.textContent = userId;
-            } else {
-                window.location.href = 'Main_login.html';
+            const backBtn = document.getElementById('btn-back');
+            if (backBtn) {
+                backBtn.style.display = 'inline-block';
+                backBtn.addEventListener('click', () => window.close());
             }
-            logoutBtn.addEventListener('click', function() {
-                localStorage.removeItem('loggedInUserId');
-                window.location.href = 'Main_login.html';
-            });
         });
-    </script>
-    <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const hasPlans = !!localStorage.getItem('plans');
-    const backBtn = document.getElementById('btn-back');
-    const printBtn = document.getElementById('btn-print');
-    const homeBtn = document.getElementById('btn-home');
-    const proposedBtn = document.getElementById('proposed-plans-btn');
-    if (hasPlans) {
-        // Submit flow
-        if (backBtn) backBtn.style.display = 'none';
-        if (printBtn) {
-            printBtn.style.display = 'inline-block';
-            printBtn.addEventListener('click', () => window.print());
-        }
-        if (homeBtn) {
-            homeBtn.style.display = 'inline-block';
-            homeBtn.addEventListener('click', () => window.location.href = 'Health_Insurance_Proposal_Request.html');
-        }
-        if (proposedBtn) {
-            proposedBtn.style.display = 'inline-block';
-            proposedBtn.disabled = false;
-            proposedBtn.addEventListener('click', () => {
-                const urlParams = new URLSearchParams(window.location.search);
-                const uniqueId = urlParams.get('unique_id');
-                if (uniqueId) {
-                    window.location.href = `Proposed_Plans.html?unique_id=${uniqueId}`;
-                } else {
-                    alert('Could not find unique_id to show plans.');
-                }
-            });
-        }
-    } else {
-        // Preview flow
-        if (backBtn) {
-            backBtn.style.display = 'inline-block';
-            backBtn.addEventListener('click', () => window.close());
-        }
-    }
-});
     </script>
 </body>
 </html>
-
