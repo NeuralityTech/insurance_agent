@@ -85,3 +85,15 @@ This application has been configured for deployment on platforms that support Py
     ```
     web: gunicorn run:app
     ```
+---
+
+## Deployment on Ubuntu Server
+
+### Gunicorn Service
+The app is managed by `systemd` using a unit file at `/etc/systemd/system/insurance.service`.
+
+Start/stop/restart:
+```bash
+sudo systemctl start insurance
+sudo systemctl stop insurance
+sudo systemctl restart insurance

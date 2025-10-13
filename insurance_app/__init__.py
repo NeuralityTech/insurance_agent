@@ -3,14 +3,23 @@ import logging
 import base64
 from flask import Flask, send_from_directory, render_template, Response, request, redirect, url_for, abort
 from flask_cors import CORS
+from dotenv import load_dotenv
+
+# --- Logging Setup (early, so debug shows in Gunicorn logs) ---
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# --- Load environment variables ---
+load_dotenv()
+key = os.environ.get("GEMINI_API_KEY")
+masked = key[:4] + "..." + key[-4:] if key else "NOT SET"
+logging.info(">>> DEBUG: GEMINI_API_KEY loaded: %s", masked)
 
 def create_app():
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
     CORS(app)
 
-    # --- Configuration --- 
-    # Ensure the instance folder exists
+    # --- Configuration ---
     try:
         os.makedirs(app.instance_path)
     except OSError:
@@ -26,9 +35,8 @@ def create_app():
     # New: append-only audit DB for Final_* changes
     app.config['APPLICATION_STATUS_DB_PATH'] = os.path.join(app.instance_path, 'Application_Status.db')
 
-    # --- Logging Setup ---
+    # --- Logging for app ---
     app.logger.setLevel(logging.INFO)
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
     # --- Database Initialization ---
     from . import database
@@ -65,8 +73,6 @@ def create_app():
         # Render templates so Jinja (e.g., url_for) is processed
         return render_template(filename)
 
-    # Note: Static files are usually served automatically by Flask if the static_folder is set.
-    # These routes are kept for explicit pathing but could be removed if not strictly needed.
     @app.route('/js/<path:filename>')
     def serve_js(filename):
         return send_from_directory(os.path.join(app.static_folder, 'js'), filename)
@@ -106,3 +112,4 @@ def create_app():
         return Response(png_bytes, mimetype='image/png')
 
     return app
+
