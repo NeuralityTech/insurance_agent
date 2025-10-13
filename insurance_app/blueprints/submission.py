@@ -177,6 +177,22 @@ def submit_form():
         derived = clean_and_parse(derived_text)
         plans = fetch_plans(derived, form_data)
         current_app.logger.info("Computed plans: %s", plans)
+
+        # Insert proposed plans into the new table
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                'INSERT OR REPLACE INTO Proposed_Selected_Plans (unique_id, system_plans_before_ailment_score) VALUES (?, ?)',
+                (unique_id, json.dumps(plans))
+            )
+            conn.commit()
+        except Exception as db_error:
+            current_app.logger.error(f"Database error for Proposed_Selected_Plans {unique_id}: {db_error}")
+        finally:
+            if conn:
+                conn.close()
+
         return jsonify({'submissionId': unique_id, 'message': message, 'plans': plans}), status_code
     except Exception as e:
         current_app.logger.error(f"Analysis pipeline failed for {unique_id}: {e}")

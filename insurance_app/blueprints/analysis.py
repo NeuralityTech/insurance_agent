@@ -273,6 +273,32 @@ def _run_full_analysis(client_data, derived_features, current_app):
     with open(report_path, 'w') as f:
         json.dump(final_report, f, indent=4)
 
+    # --- Combine analysis results with the final report ---
+    # This ensures Option 1 and Option 2 are saved alongside the AI justification.
+    if isinstance(final_report, dict):
+        final_report['option_1_full_family_plans'] = analysis_results.get('option_1_full_family_plans', {})
+        final_report['option_2_combination_plans'] = analysis_results.get('option_2_combination_plans', {})
+
+    # --- Update the database with the combined report ---
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        unique_id = client_data.get('unique_id')
+        if unique_id:
+            cursor.execute(
+                '''UPDATE Proposed_Selected_Plans 
+                   SET system_plans_after_ailment_score = ? 
+                   WHERE unique_id = ?''',
+                (json.dumps(final_report), unique_id)
+            )
+            conn.commit()
+            current_app.logger.info(f"Updated Proposed_Selected_Plans for {unique_id} with combined ailment score report.")
+    except Exception as e:
+        current_app.logger.error(f"Failed to update Proposed_Selected_Plans for {unique_id}: {e}")
+    finally:
+        if conn:
+            conn.close()
+
     print("\n--- Plan Selection Justification Report ---")
     print(f"(Report also saved to {report_path})")
     print(json.dumps(final_report, indent=4))

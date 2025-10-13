@@ -388,6 +388,22 @@ def init_db():
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_comments_noted_uid ON comments_noted(unique_id)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_comments_noted_timestamp ON comments_noted(timestamp DESC)')
 
+    # Create Proposed_Selected_Plans table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Proposed_Selected_Plans (
+            unique_id TEXT PRIMARY KEY,
+            system_plans_before_ailment_score TEXT,
+            system_plans_after_ailment_score TEXT,
+            agent_selected_plans TEXT,
+            agent_selection_timestamp TEXT,
+            supervisor_selected_plans TEXT,
+            supervisor_selection_timestamp TEXT,
+            client_agreed_plans TEXT,
+            client_agreement_timestamp TEXT,
+            FOREIGN KEY (unique_id) REFERENCES submissions (unique_id)
+        )
+    ''')
+
     conn.commit()
     conn.close()
 
