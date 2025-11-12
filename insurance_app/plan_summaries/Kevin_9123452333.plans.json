@@ -1,0 +1,25 @@
+{
+  "unique_id": "Kevin_9123452333",
+  "proposed": {
+    "comprehensive_cover": {
+      "name": "Family",
+      "plans": [
+        "Star Micro Rural and Farmers Care",
+        "Smart Health Pro"
+      ]
+    },
+    "member1": {
+      "name": "Liam",
+      "plans": [
+        "Star Cardiac Care Gold",
+        "Platinum Sec 2 (Cardiac Ailments)"
+      ]
+    }
+  },
+  "agent_selected": [
+    "Star Cardiac Care Gold",
+    "Platinum Sec 2 (Cardiac Ailments)"
+  ],
+  "supervisor_selected": [],
+  "client_agreed": []
+}

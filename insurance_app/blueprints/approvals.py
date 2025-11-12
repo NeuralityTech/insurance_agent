@@ -2,6 +2,7 @@
 # File: (replace the file that currently contains approvals_bp, e.g. app/api/approvals.py)
 from flask import Blueprint, request, jsonify, current_app
 from datetime import datetime
+import pytz
 import json
 from ..database import get_db_connection, get_application_status_db_connection, insert_application_status_log_entry
 # Temporarily commented out to avoid import issues
@@ -172,7 +173,8 @@ def update_status():
         if actor == "client":
             # Determine if this is a review-only update or a status change to Client_reviewed/Client_closed
             incoming_status = (status or '').strip().lower() if status else ''
-            modified_at = datetime.utcnow().isoformat()
+            ist = pytz.timezone('Asia/Kolkata')
+            modified_at = datetime.now(ist).isoformat()
             modified_by = request.headers.get('X-User-Id') or 'Unknown'
 
             # If client_review flag provided, persist it (independent of status)
@@ -248,7 +250,8 @@ def update_status():
                 db_status = status
 
             # Audit columns
-            modified_at = datetime.utcnow().isoformat()
+            ist = pytz.timezone('Asia/Kolkata')
+            modified_at = datetime.now(ist).isoformat()
             modified_by = request.headers.get('X-User-Id') or 'Unknown'
 
             cursor.execute(
@@ -424,7 +427,8 @@ def set_policy_outcome():
 
     conn = get_db_connection()
     cur = conn.cursor()
-    modified_at = datetime.utcnow().isoformat()
+    ist = pytz.timezone('Asia/Kolkata')
+    modified_at = datetime.now(ist).isoformat()
     modified_by = request.headers.get('X-User-Id') or 'Unknown'
     try:
         # Map to canonical underscore values for storage
@@ -494,7 +498,8 @@ def set_policy_details():
 
     conn = get_db_connection()
     cur = conn.cursor()
-    modified_at = datetime.utcnow().isoformat()
+    ist = pytz.timezone('Asia/Kolkata')
+    modified_at = datetime.now(ist).isoformat()
     modified_by = request.headers.get('X-User-Id') or 'Unknown'
     try:
         cur.execute(

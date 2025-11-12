@@ -5,7 +5,7 @@
  * It is used by: Health_Insurance_Requirement_Form.html
  */
 document.addEventListener('DOMContentLoaded', function() {
-        // @Srihari
+    // @Srihari
     // Reset submit button state on page load
     const submitBtn = document.getElementById('submit-btn');
     if (submitBtn) {
@@ -20,9 +20,8 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.textContent = 'Submit';
         }
     });
-    // --- Session Management ---
-    // Clear previous members and summary data on fresh form load,
-    // but preserve state when returning from Summary/Preview.
+    
+    // Session Management 
     try {
         const returning = sessionStorage.getItem('returningFromSummary') === '1';
         if (!returning) {
@@ -30,95 +29,424 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.removeItem('formSummary');
             localStorage.removeItem('editMemberId');
         } else {
-            // Clear the one-time flag
             sessionStorage.removeItem('returningFromSummary');
         }
     } catch (e) { /* ignore */ }
     sessionStorage.setItem('formSessionActive', 'true');
 
-    // Function to load HTML content into a placeholder and return a promise
-        /**
-     * Fetches and loads the content of an HTML file into a specified placeholder.
-     * It wraps the content in a collapsible <details> element.
-     * @param {string} file - The HTML file to load.
-     * @param {string} placeholderId - The ID of the element to load the content into.
-     * @param {string} title - The title for the collapsible section.
-     * @param {number} index - The index of the section, used to keep the first section open by default.
-     */
-    function loadHTML(file, placeholderId, title, index) {
-        // Load from /html directory explicitly
+    // Section Definitions 
+    const sections = [
+        { file: 'Primary_contact.html', id: 'primary-contact', title: 'Applicant Details', init: ['initializePrimaryContactValidation', 'initializeDataFetch', 'initializeOccupationDropdown'] },
+        { file: 'Health_History.html', id: 'health-history', title: 'Health History', init: ['initializeSelfDetailsValidation', 'initializeDiseaseDetails'] },
+        { file: 'Members_to_be_Covered.html', id: 'members-covered', title: 'Members Covered', init: ['initializeMemberManagement'] },
+        { file: 'Cover_&_Cost_Preferences.html', id: 'cover-cost', title: 'Cover & Cost' },
+        { file: 'Existing_Coverage_&_Portability.html', id: 'existing-coverage', title: 'Existing Coverage' },
+        { file: 'Claims_&_Service.html', id: 'claims-service', title: 'Claims & Service' },
+        { file: 'Finance_&_Documentation.html', id: 'finance-documentation', title: 'Finance & Docs' },
+        { file: 'Comments_Noted.html', id: 'comments-noted', title: 'Comments', init: ['initializeCommentsNoted'] }
+    ];
 
-        return fetch(file)
+    // Dynamic sections that can be added conditionally
+    const dynamicSections = [
+        {
+            id: 'plans-selection',
+            title: 'Plans',
+            condition: (data) => {
+                // Only show if status is SUP_APPROVED
+                const status = (data.final_status || data.supervisor_approval_status || '').toUpperCase();
+                return status === 'SUP_APPROVED';
+            },
+            render: async (contentDiv, uniqueId) => {
+                // This will render the plans selection interface
+                if (typeof window.renderPlansTab === 'function') {
+                    await window.renderPlansTab(contentDiv, uniqueId);
+                }
+            }
+        }
+    ];
+
+    // Global variable to track which dynamic sections are currently active
+    window.activeDynamicSections = [];
+
+    let currentTabIndex = 0;
+
+    // Create tab structure
+    function createTabStructure() {
+        const form = document.getElementById('insurance-form');
+        if (!form) return;
+
+        // Remove old placeholder divs
+        const oldPlaceholders = form.querySelectorAll('.section');
+        oldPlaceholders.forEach(el => el.remove());
+
+        // Create tab container 
+        const tabContainer = document.createElement('div');
+        tabContainer.className = 'tab-container';
+
+        // Create tab navigation 
+        const tabNav = document.createElement('ul');
+        tabNav.className = 'tab-navigation';
+        tabNav.setAttribute('role', 'tablist');
+
+        sections.forEach((section, index) => {
+            const li = document.createElement('li');
+            li.setAttribute('role', 'presentation');
+            
+            const button = document.createElement('button');
+            button.className = 'tab-button';
+            button.setAttribute('role', 'tab');
+            button.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+            button.setAttribute('aria-controls', `tab-panel-${section.id}`);
+            button.setAttribute('id', `tab-${section.id}`);
+            button.setAttribute('type', 'button');
+            button.textContent = section.title;
+            button.dataset.index = index;
+            
+            if (index === 0) {
+                button.classList.add('active');
+            }
+
+            button.addEventListener('click', () => switchTab(index));
+            
+            li.appendChild(button);
+            tabNav.appendChild(li);
+        });
+
+        // Create content container 
+        const contentContainer = document.createElement('div');
+        contentContainer.className = 'tab-content-container';
+
+        // Create tab content wrappers
+        sections.forEach((section, index) => {
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'tab-content-wrapper';
+            contentWrapper.setAttribute('role', 'tabpanel');
+            contentWrapper.setAttribute('id', `tab-panel-${section.id}`);
+            contentWrapper.setAttribute('aria-labelledby', `tab-${section.id}`);
+            contentWrapper.dataset.index = index;
+            
+            if (index === 0) {
+                contentWrapper.classList.add('active');
+            }
+
+            // Create content div for loaded HTML
+            const contentDiv = document.createElement('div');
+            contentDiv.id = `${section.id}-content`;
+            contentWrapper.appendChild(contentDiv);
+
+            // Create navigation buttons
+            const navButtons = document.createElement('div');
+            navButtons.className = 'tab-navigation-buttons';
+
+            const backBtn = document.createElement('button');
+            backBtn.type = 'button';
+            backBtn.className = 'btn tab-nav-btn btn-back';
+            backBtn.textContent = 'Back';
+            backBtn.addEventListener('click', () => switchTab(index - 1));
+            if (index === 0) {
+                backBtn.style.visibility = 'hidden';
+            }
+
+            const nextBtn = document.createElement('button');
+            nextBtn.type = 'button';
+            nextBtn.className = 'btn tab-nav-btn btn-next';
+            nextBtn.textContent = index === sections.length - 1 ? 'Continue' : 'Next';
+            nextBtn.addEventListener('click', () => {
+                if (index < sections.length - 1) {
+                    switchTab(index + 1);
+                }
+            });
+
+            navButtons.appendChild(backBtn);
+            navButtons.appendChild(nextBtn);
+            contentWrapper.appendChild(navButtons);
+
+            contentContainer.appendChild(contentWrapper);
+        });
+
+        tabContainer.appendChild(tabNav);
+        tabContainer.appendChild(contentContainer);
+
+        // Insert tab container at the beginning of the form
+        const firstChild = form.firstChild;
+        form.insertBefore(tabContainer, firstChild);
+    }
+
+    // Switch to a specific tab
+    function switchTab(index) {
+        if (index < 0 || index >= sections.length) return;
+
+        currentTabIndex = index;
+
+        // Update tab buttons
+        document.querySelectorAll('.tab-button').forEach((btn, i) => {
+            if (i === index) {
+                btn.classList.add('active');
+                btn.setAttribute('aria-selected', 'true');
+            } else {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            }
+        });
+
+        // Update tab content
+        document.querySelectorAll('.tab-content-wrapper').forEach((wrapper, i) => {
+            if (i === index) {
+                wrapper.classList.add('active');
+            } else {
+                wrapper.classList.remove('active');
+            }
+        });
+
+        // Scroll to top of form
+        document.querySelector('.tab-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Load HTML into tab content
+    function loadTabContent(section, index) {
+        return fetch(section.file)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Network response was not ok for ' + file);
+                    throw new Error('Network response was not ok for ' + section.file);
                 }
                 return response.text();
             })
             .then(data => {
-                const placeholder = document.getElementById(placeholderId);
-                if (placeholder) {
-                    // Create details and summary elements for collapsible sections
-                    const details = document.createElement('details');
-                    const summary = document.createElement('summary');
-                    
-                    // The first section ('Primary Contact') will be open by default
-                    if (index === 0) {
-                        details.open = true;
-                    }
-
-                    summary.textContent = title;
-
-                    // Create a div to hold the fetched content
-                    const contentDiv = document.createElement('div');
+                const contentDiv = document.getElementById(`${section.id}-content`);
+                if (contentDiv) {
                     contentDiv.innerHTML = data;
-
-                    // Assemble the structure
-                    details.appendChild(summary);
-                    details.appendChild(contentDiv);
-
-                    // Clear the placeholder and append the new structure
-                    placeholder.innerHTML = '';
-                    placeholder.appendChild(details);
-                }
-            });
-    }
-
-    // --- Section Definitions ---
-    const sections = [
-        { file: 'Primary_contact.html', placeholder: 'primary-contact-placeholder', title: 'Primary Contact', init: ['initializePrimaryContactValidation', 'initializeDataFetch'] },
-        { file: 'Health_History.html', placeholder: 'Health-History-placeholder', title: 'Personal Details & Health History', init: ['initializeSelfDetailsValidation', 'initializeDiseaseDetails'] },
-        { file: 'Members_to_be_Covered.html', placeholder: 'members-covered-placeholder', title: 'Members to be Covered', init: ['initializeMemberManagement'] },
-        { file: 'Cover_&_Cost_Preferences.html', placeholder: 'cover-cost-placeholder', title: 'Cover & Cost Preferences' },
-        { file: 'Existing_Coverage_&_Portability.html', placeholder: 'existing-coverage-placeholder', title: 'Existing Coverage & Portability' },
-        { file: 'Claims_&_Service.html', placeholder: 'claims-service-placeholder', title: 'Claims & Service' },
-        { file: 'Finance_&_Documentation.html', placeholder: 'Finance-Documentation-placeholder', title: 'Finance & Documentation' },
-        { file: 'Comments_Noted.html', placeholder: 'comments-noted-placeholder', title: 'Comments Noted', init: ['initializeCommentsNoted'] }
-    ];
-
-    // --- Load all sections ---
-    sections.forEach((section, index) => {
-        loadHTML(section.file, section.placeholder, section.title, index)
-            .then(() => {
-                if (section.init) {
-                    section.init.forEach(funcName => {
-                        if (typeof window[funcName] === 'function') {
-                            window[funcName]();
-                        }
-                    });
+                    
+                    // Initialize section-specific JavaScript
+                    if (section.init) {
+                        section.init.forEach(funcName => {
+                            if (typeof window[funcName] === 'function') {
+                                window[funcName]();
+                            }
+                        });
+                    }
                 }
             })
             .catch(error => console.error(`Error loading ${section.title}:`, error));
-    });
+    }
 
-    // --- Helper function to get data from a section ---
-        /**
-     * Extracts all form data from a given section based on its placeholder ID.
-     * @param {string} placeholderId - The ID of the section's placeholder element.
-     * @returns {object|null} An object containing the form data, or null if the container is not found.
-     */
-    const getSectionData = (placeholderId) => {
-        const container = document.getElementById(placeholderId);
+    // Initialize tabs and load content
+    createTabStructure();
+    
+    // Load all sections
+    Promise.all(sections.map((section, index) => loadTabContent(section, index)))
+        .then(() => {
+            console.log('All sections loaded');
+            
+            // Only run setupContinueButton on new applicant form
+            if (!window.location.pathname.includes('Existing_Applicant_Request_Form.html')) {
+                setupContinueButton();
+            }
+            
+            // Set up validation
+            setupFormValidation();
+        });
+
+    // Function to set up continue button
+    function setupContinueButton() {
+        const lastTabButtons = document.querySelector('.tab-content-wrapper:last-of-type .tab-navigation-buttons');
+        if (!lastTabButtons) return;
+        
+        const continueBtn = lastTabButtons.querySelector('.btn-next');
+        if (!continueBtn) return;
+        
+        // Remove it from the tab navigation
+        continueBtn.remove();
+        
+        // Create a new Continue button 
+        const formActions = document.querySelector('.form-actions');
+        if (!formActions) return;
+        
+        const newContinueBtn = document.createElement('button');
+        newContinueBtn.type = 'button';
+        newContinueBtn.id = 'continue-btn';
+        newContinueBtn.className = 'btn';
+        newContinueBtn.textContent = 'Submit';
+        newContinueBtn.disabled = true; // Start disabled
+        
+        // Insert before Save button
+        const saveBtn = document.getElementById('save-btn');
+        if (saveBtn) {
+            formActions.insertBefore(newContinueBtn, saveBtn);
+        } else {
+            formActions.insertBefore(newContinueBtn, formActions.firstChild);
+        }
+        
+        // Add click handler
+        newContinueBtn.addEventListener('click', handleContinueClick);
+    }
+
+    // Function to validate all required fields
+    function validateRequiredFields() {
+        const errors = [];
+        
+        // Validate Primary Contact required fields
+        const primaryContactData = getSectionData('primary-contact');
+        
+        if (!primaryContactData['applicant_name'] || !primaryContactData['applicant_name'].trim()) {
+            errors.push('Full Name is required');
+        }
+        
+        if (!primaryContactData['gender'] || primaryContactData['gender'] === 'Select' || primaryContactData['gender'] === '') {
+            errors.push('Gender is required');
+        }
+        
+        if (!primaryContactData['email'] || !primaryContactData['email'].trim()) {
+            errors.push('Email is required');
+        } else {
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(primaryContactData['email'])) {
+                errors.push('Email must be valid');
+            }
+        }
+        
+        if (!primaryContactData['phone'] || !primaryContactData['phone'].trim()) {
+            errors.push('Phone is required');
+        } else {
+            const phonePattern = /^[6-9][0-9]{9}$/;
+            if (!phonePattern.test(primaryContactData['phone'])) {
+                errors.push('Phone must be valid');
+            }
+        }
+        
+        if (!primaryContactData['address'] || !primaryContactData['address'].trim()) {
+            errors.push('Address is required');
+        }
+        
+        // Validate Health Vitals
+        if (!primaryContactData['self-dob'] || !primaryContactData['self-dob'].trim()) {
+            errors.push('Date of Birth is required');
+        }
+        
+        if (!primaryContactData['self-height'] || !primaryContactData['self-height'].trim()) {
+            errors.push('Height is required');
+        } else {
+            const height = parseFloat(primaryContactData['self-height']);
+            if (isNaN(height) || height <= 0) {
+                errors.push('Height must be valid');
+            }
+        }
+        
+        if (!primaryContactData['self-weight'] || !primaryContactData['self-weight'].trim()) {
+            errors.push('Weight is required');
+        } else {
+            const weight = parseFloat(primaryContactData['self-weight']);
+            if (isNaN(weight) || weight <= 0) {
+                errors.push('Weight must be valid');
+            }
+        }
+        
+        // Validate Cover & Cost numeric fields
+        const sumEl = document.querySelector('#cover-cost-content input[name="sum-insured"]');
+        if (sumEl && sumEl.value.trim() && !sumEl.value.trim().match(/^[0-9]+$/)) {
+            errors.push('Sum Insured must be numeric');
+        }
+        
+        const budgetEl = document.querySelector('#cover-cost-content input[name="annual-budget"]');
+        if (budgetEl && budgetEl.value.trim() && !budgetEl.value.trim().match(/^[0-9]+$/)) {
+            errors.push('Annual Budget must be numeric');
+        }
+        
+        return errors;
+    }
+
+    // Function to update Continue button state
+    function updateContinueButtonState() {
+        const continueBtn = document.getElementById('continue-btn');
+        if (!continueBtn) return;
+        
+        const errors = validateRequiredFields();
+        
+        if (errors.length > 0) {
+            continueBtn.disabled = true;
+            continueBtn.title = 'Please complete all required fields:\n• ' + errors.join('\n• ');
+        } else {
+            continueBtn.disabled = false;
+            continueBtn.title = 'Continue to preview your application';
+        }
+    }
+
+    // Function to setup validation
+    function setupFormValidation() {
+        const form = document.getElementById('insurance-form');
+        if (!form) return;
+        
+        // Listen for any input changes
+        form.addEventListener('input', updateContinueButtonState, true);
+        form.addEventListener('change', updateContinueButtonState, true);
+        
+        // Initial validation check
+        setTimeout(updateContinueButtonState, 500);
+    }
+
+    // Handle Continue button click
+    function handleContinueClick() {
+        const errors = validateRequiredFields();
+        
+        if (errors.length > 0) {
+            // This shouldn't happen since button is disabled, but just in case
+            alert('Please complete all required fields:\n\n• ' + errors.join('\n• '));
+            return;
+        }
+        
+        // Validation passed - proceed with preview
+        const summaryData = {
+            primaryContact: getSectionData('primary-contact'),
+            healthHistory: getSectionData('health-history'),
+            members: JSON.parse(localStorage.getItem('members')) || [],
+            coverAndCost: getSectionData('cover-cost'),
+            existingCoverage: getSectionData('existing-coverage'),
+            claimsAndService: getSectionData('claims-service'),
+            financeAndDocumentation: getSectionData('finance-documentation'),
+            commentsNoted: window.getCommentsData ? window.getCommentsData() : { comments_noted: [] }
+        };
+
+        // Apply default values for preview
+        applyDefaults(summaryData.primaryContact, { hubs: 'Nation wide' });
+        applyDefaults(summaryData.coverAndCost, {
+            'policy-type': 'individual',
+            'sum-insured': '00',
+            'annual-budget': '00',
+            'payment-mode': 'annual',
+            'room-preference': 'any',
+            'co-pay': 'no',
+            'ncb-importance': 'high',
+            'maternity-cover': 'no',
+            'opd-cover': 'no',
+            'top-up': 'no'
+        });
+        applyDefaults(summaryData.existingCoverage, {
+            'existing-policies': 'None',
+            'port-policy': 'No',
+            'critical-illness': 'None',
+            'worldwide-cover': 'No'
+        });
+        applyDefaults(summaryData.claimsAndService, {
+            'past-claims': 'None',
+            'claim-issues': 'None',
+            'service-expectations': 'None',
+            'network-hospitals': 'None'
+        });
+        applyDefaults(summaryData.financeAndDocumentation, {
+            'tax-benefit': 'yes',
+            'address_proof_details': 'Not Submitted'
+        });
+        
+        localStorage.setItem('formSummary', JSON.stringify(summaryData));
+        try { sessionStorage.setItem('previousFormPage', window.location.pathname); } catch(e) {}
+        window.open('Preview.html', '_blank');
+    }
+
+    // Make switchTab globally available
+    window.switchToTab = switchTab;
+
+    // Function to get data from a section ---
+    const getSectionData = (sectionId) => {
+        const container = document.getElementById(`${sectionId}-content`);
         if (!container) return null;
         const data = {};
         container.querySelectorAll('input, select, textarea').forEach(el => {
@@ -136,9 +464,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return data;
     };
 
-        /**
-     * Utility to apply default values for empty or 'Select' fields
-     */
+    // Utility to apply default values for empty or 'Select' fields
     function applyDefaults(target, defaults) {
         for (const key in defaults) {
             if (!target[key] || target[key] === 'Select' || target[key].toString().trim() === '') {
@@ -147,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- Update People Counter ---
+    // Update People Counter 
     window.updatePeopleCounter = function() {
         const ageInput = document.getElementById('self-age');
         const adultCountEl = document.getElementById('adult-count');
@@ -170,211 +496,174 @@ document.addEventListener('DOMContentLoaded', function() {
         if (childCountEl) childCountEl.textContent = children;
     };
 
-// --- Main Form Logic ---
+    // Main Form Logic 
     const form = document.getElementById('insurance-form');
     if (!form) return;
 
-    // --- Submit Functionality ---
-    form.addEventListener('submit', function(event) {
-        event.preventDefault(); // Prevent default form submission
-
-        // Custom per-field validation
-        const errors = [];
-        // 1) Desired Sum Insured must be numeric
-        const sumEl = document.querySelector('#cover-cost-placeholder input[name="sum-insured"]');
-        if (sumEl.value.trim() && !sumEl.value.trim().match(/^[0-9]+$/)) {
-            errors.push({ el: sumEl, msg: 'Desired Sum Insured must be numeric.' });
-        }
-        // 2) Annual Budget must be numeric
-        const budgetEl = document.querySelector('#cover-cost-placeholder input[name="annual-budget"]');
-        if (budgetEl.value.trim() && !budgetEl.value.trim().match(/^[0-9]+$/)) {
-            errors.push({ el: budgetEl, msg: 'Annual Budget must be numeric.' });
-        }
-
-        
-        if (errors.length) {
-            const firstError = errors[0];
-            const sec = firstError.el.closest('details');
-            if (sec && !sec.open) sec.open = true;
-            firstError.el.focus();
-            alert(firstError.msg);
-            return; // Stop before fetch
-        }
-
-        const primaryContactData = getSectionData('primary-contact-placeholder');
-
-        const formData = {
-            // Lift key fields to the top level for the server
-            unique_id: primaryContactData ? primaryContactData.unique_id : null,
-            applicant_name: primaryContactData ? primaryContactData.applicant_name : null,
-            
-            // Keep the nested structure for full data preservation
-            primaryContact: primaryContactData,
-            healthHistory: getSectionData('Health-History-placeholder'),
-            members: JSON.parse(localStorage.getItem('members')) || [],
-            coverAndCost: getSectionData('cover-cost-placeholder'),
-            existingCoverage: getSectionData('existing-coverage-placeholder'),
-            claimsAndService: getSectionData('claims-service-placeholder'),
-            financeAndDocumentation: getSectionData('Finance-Documentation-placeholder'),
-            commentsNoted: window.getCommentsData ? window.getCommentsData() : { comments_noted: [] }
-        };
-
-        const userId = localStorage.getItem('loggedInUserId');
-
-            // Apply default values to unset fields
-    applyDefaults(formData.primaryContact, { hubs: 'Nation wide' });
-    applyDefaults(formData.coverAndCost, {
-        'policy-type': 'individual',
-        'policy-term': '1-year',
-        'payment-mode': 'annual',
-        'room-preference': 'any',
-        'co-pay': 'no',
-        'ncb-importance': 'high',
-        'maternity-cover': 'no',
-        'opd-cover': 'no',
-        'top-up': 'no'
-    });
-
-        applyDefaults(formData.existingCoverage, {
-        'existing-policies': 'None',
-        'port-policy': 'No',
-        'critical-illness': 'None',
-        'worldwide-cover': 'No'
-    });
-    applyDefaults(formData.claimsAndService, {
-        'past-claims': 'None',
-        'claim-issues': 'None',
-        'service-expectations': 'None',
-        'network-hospitals': 'None'
-    });
-    applyDefaults(formData.financeAndDocumentation, {
-        'tax-benefit': 'yes',
-        'address_proof_details': 'Not Submitted'
-    });
-
-    // Disable submit button to prevent double submission
-        const submitBtn = document.getElementById('submit-btn');
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Submitting...';
-        }
-
-        fetch('/submit', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'X-User-Id': userId || 'Unknown'
-            },
-            body: JSON.stringify({ userId, formData }),
-        })
-        .then(async response => {
-            if (response.ok) {
-                const result = await response.json();
-                // Store the full form data for the summary page
-                localStorage.setItem('submissionData', JSON.stringify(formData));
-                // Also store it under formSummary for the summary script
-                localStorage.setItem('formSummary', JSON.stringify(formData));
-                // Store returned plan suggestions
-                localStorage.setItem('plans', JSON.stringify(result.plans));
-                
-                if (submitBtn) {
-                    submitBtn.textContent = 'Submitted Successfully!';
-                    submitBtn.style.backgroundColor = '#28a745';
-                }
-                
-                alert('Form submitted successfully! Submission ID: ' + result.submissionId);
-                // Redirect to summary page
-                window.location.href = `Summary.html?unique_id=${formData.unique_id}`;
-            } else {
-                let errorMessage = 'Please check your connection and try again.';
-                try {
-                    const error = await response.json();
-                    errorMessage = error.error || error.message || errorMessage;
-                } catch (e) {
-                    const textError = await response.text().catch(() => '');
-                    errorMessage = textError || `Server error (${response.status})`;
-                }
-                console.error('Submission failed:', errorMessage);
-                alert(`Submission failed: ${errorMessage}`);
-                
-                // Re-enable submit button
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Submit';
-                    submitBtn.style.backgroundColor = '';
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error submitting form:', error);
-            let errorMessage = 'Please check your connection and try again.';
-            
-            if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                errorMessage = 'Network connection failed. Please check your internet connection.';
-            } else if (error.message) {
-                errorMessage = error.message;
-            }
-            
-            alert(`Connection error: ${errorMessage}`);
-            
-            // Re-enable submit button
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit';
-                submitBtn.style.backgroundColor = '';
-            }
-        });
-    });
-
-    // --- Preview Functionality ---
+    // Preview Functionality 
     const previewBtn = document.getElementById('preview-btn');
     if (previewBtn) {
         previewBtn.addEventListener('click', function() {
+            // Validate all required fields before allowing preview
+            const validationErrors = [];
+            
+            // Validate Primary Contact required fields
+            const primaryContactData = getSectionData('primary-contact');
+            
+            if (!primaryContactData['applicant_name'] || !primaryContactData['applicant_name'].trim()) {
+                validationErrors.push('Full Name is required');
+            }
+            
+            if (!primaryContactData['gender'] || primaryContactData['gender'] === 'Select') {
+                validationErrors.push('Gender is required');
+            }
+            
+            if (!primaryContactData['email'] || !primaryContactData['email'].trim()) {
+                validationErrors.push('Email is required');
+            } else {
+                // Basic email format validation
+                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailPattern.test(primaryContactData['email'])) {
+                    validationErrors.push('Email must be a valid email address');
+                }
+            }
+            
+            if (!primaryContactData['phone'] || !primaryContactData['phone'].trim()) {
+                validationErrors.push('Phone is required');
+            } else {
+                // Phone pattern validation (10 digits starting with 6-9)
+                const phonePattern = /^[6-9][0-9]{9}$/;
+                if (!phonePattern.test(primaryContactData['phone'])) {
+                    validationErrors.push('Phone must be a valid 10-digit Indian phone number');
+                }
+            }
+            
+            if (!primaryContactData['address'] || !primaryContactData['address'].trim()) {
+                validationErrors.push('Address is required');
+            }
+            
+            // Validate Health Vitals (now in Primary Contact)
+            if (!primaryContactData['self-dob'] || !primaryContactData['self-dob'].trim()) {
+                validationErrors.push('Date of Birth is required');
+            }
+            
+            if (!primaryContactData['self-height'] || !primaryContactData['self-height'].trim()) {
+                validationErrors.push('Height is required');
+            } else {
+                // Validate height is numeric
+                const height = parseFloat(primaryContactData['self-height']);
+                if (isNaN(height) || height <= 0) {
+                    validationErrors.push('Height must be a valid number greater than 0');
+                }
+            }
+            
+            if (!primaryContactData['self-weight'] || !primaryContactData['self-weight'].trim()) {
+                validationErrors.push('Weight is required');
+            } else {
+                // Validate weight is numeric
+                const weight = parseFloat(primaryContactData['self-weight']);
+                if (isNaN(weight) || weight <= 0) {
+                    validationErrors.push('Weight must be a valid number greater than 0');
+                }
+            }
+            
+            // Validate Cover & Cost numeric fields
+            const coverCostData = getSectionData('cover-cost');
+            const sumEl = document.querySelector('#cover-cost-content input[name="sum-insured"]');
+            if (sumEl && sumEl.value.trim() && !sumEl.value.trim().match(/^[0-9]+$/)) {
+                validationErrors.push('Desired Sum Insured must be numeric');
+            }
+            const budgetEl = document.querySelector('#cover-cost-content input[name="annual-budget"]');
+            if (budgetEl && budgetEl.value.trim() && !budgetEl.value.trim().match(/^[0-9]+$/)) {
+                validationErrors.push('Annual Budget must be numeric');
+            }
+
+            // If there are validation errors, show them and stop
+            if (validationErrors.length > 0) {
+                // Find which tab has the first error and switch to it
+                let errorTab = 0; // Default to Primary Contact tab
+                
+                if (validationErrors.some(err => 
+                    err.includes('Full Name') || 
+                    err.includes('Gender') || 
+                    err.includes('Email') || 
+                    err.includes('Phone') || 
+                    err.includes('Address') ||
+                    err.includes('Date of Birth') ||
+                    err.includes('Height') ||
+                    err.includes('Weight')
+                )) {
+                    errorTab = 0; // Primary Contact tab
+                } else if (validationErrors.some(err => err.includes('Sum Insured') || err.includes('Budget'))) {
+                    errorTab = 3; // Cover & Cost tab
+                }
+                
+                // Switch to the tab with errors
+                if (typeof switchTab === 'function') {
+                    switchTab(errorTab);
+                }
+                
+                // Show all errors in alert
+                alert('Please fix the following errors before proceeding:\n\n• ' + validationErrors.join('\n• '));
+                
+                // Focus on the first error field if possible
+                setTimeout(() => {
+                    const firstErrorField = document.querySelector('#primary-contact-content input.input-error, #primary-contact-content select.input-error');
+                    if (firstErrorField) {
+                        firstErrorField.focus();
+                    }
+                }, 300);
+                
+                return; // Stop preview
+            }
+
+            // All validation passed - proceed with preview
             const summaryData = {
-                primaryContact: getSectionData('primary-contact-placeholder'),
-                healthHistory: getSectionData('Health-History-placeholder'),
+                primaryContact: primaryContactData,
+                healthHistory: getSectionData('health-history'),
                 members: JSON.parse(localStorage.getItem('members')) || [],
-                coverAndCost: getSectionData('cover-cost-placeholder'),
-                existingCoverage: getSectionData('existing-coverage-placeholder'),
-                claimsAndService: getSectionData('claims-service-placeholder'),
-                financeAndDocumentation: getSectionData('Finance-Documentation-placeholder'),
+                coverAndCost: getSectionData('cover-cost'),
+                existingCoverage: getSectionData('existing-coverage'),
+                claimsAndService: getSectionData('claims-service'),
+                financeAndDocumentation: getSectionData('finance-documentation'),
                 commentsNoted: window.getCommentsData ? window.getCommentsData() : { comments_noted: [] }
             };
 
-                // Apply default values for preview
+            // Apply default values for preview
             applyDefaults(summaryData.primaryContact, { hubs: 'Nation wide' });
             applyDefaults(summaryData.coverAndCost, {
                 'policy-type': 'individual',
-        'sum-insured': '00',
-        'annual-budget': '00',
-        'payment-mode': 'annual',
-        'room-preference': 'any',
-        'co-pay': 'no',
-        'ncb-importance': 'high',
-        'maternity-cover': 'no',
-        'opd-cover': 'no',
-        'top-up': 'no'
-    });
-        // Apply default values for preview on remaining sections
-    applyDefaults(summaryData.existingCoverage, {
-        'existing-policies': 'None',
-        'port-policy': 'No',
-        'critical-illness': 'None',
-        'worldwide-cover': 'No'
-    });
-    applyDefaults(summaryData.claimsAndService, {
-        'past-claims': 'None',
-        'claim-issues': 'None',
-        'service-expectations': 'None',
-        'network-hospitals': 'None'
-    });
-    applyDefaults(summaryData.financeAndDocumentation, {
-        'tax-benefit': 'yes',
-        'address_proof_details': 'Not Submitted'
-    });
-    localStorage.setItem('formSummary', JSON.stringify(summaryData));
+                'sum-insured': '00',
+                'annual-budget': '00',
+                'payment-mode': 'annual',
+                'room-preference': 'any',
+                'co-pay': 'no',
+                'ncb-importance': 'high',
+                'maternity-cover': 'no',
+                'opd-cover': 'no',
+                'top-up': 'no'
+            });
+            applyDefaults(summaryData.existingCoverage, {
+                'existing-policies': 'None',
+                'port-policy': 'No',
+                'critical-illness': 'None',
+                'worldwide-cover': 'No'
+            });
+            applyDefaults(summaryData.claimsAndService, {
+                'past-claims': 'None',
+                'claim-issues': 'None',
+                'service-expectations': 'None',
+                'network-hospitals': 'None'
+            });
+            applyDefaults(summaryData.financeAndDocumentation, {
+                'tax-benefit': 'yes',
+                'address_proof_details': 'Not Submitted'
+            });
+            
+            localStorage.setItem('formSummary', JSON.stringify(summaryData));
             try { sessionStorage.setItem('previousFormPage', window.location.pathname); } catch(e) {}
             window.open('Preview.html', '_blank');
         });
     }
+
 });

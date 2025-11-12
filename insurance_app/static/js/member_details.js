@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return response.text();
             })
             .then(data => {
-                document.getElementById('Health-History-placeholder').innerHTML = data;
+                document.getElementById('health-history-content').innerHTML = data;
             });
     }
 
@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * Initializes disease checkbox behavior using centralized initializer.
      */
     function wireDiseaseDetailsCentralized() {
-        const container = document.getElementById('Health-History-placeholder');
+        const container = document.getElementById('health-history-content');
         if (!container) return;
         if (window.initializeDiseaseDetails) {
             window.initializeDiseaseDetails(container);

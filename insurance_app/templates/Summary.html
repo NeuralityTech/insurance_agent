@@ -2,38 +2,44 @@
 <html lang="en">
 <head>
     <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Health Insurance Requirement Summary Preview</title>
-    <link rel="stylesheet" href="/static/css/common.css">
+
+    <!-- Use the same relative CSS includes used by Existing_Applicant_Request_Form.html -->
+    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
+<body data-sidebar="existing-applicant">
     <div class="container">
         <header class="page-header">
             <link rel="stylesheet" href="/static/css/logo.css">
-            <script defer src="/static/js/logo.js"></script>
             <h1>Health Insurance Requirement Summary Preview</h1>
         </header>
+
         <main>
             <div id="summary-container" class="form-container">
-                <!-- Summary content will be injected here -->
+                <!-- Summary content will be injected here by /static/js/summary.js -->
             </div>
-            <div class="form-actions">
+
+            <div class="form-actions" style="margin-top: 1rem;">
                 <button type="button" id="btn-back" class="btn btn-secondary">Previous</button>
-                <button type="button" id="btn-next" class="btn" disabled>Next</button>
-            <!--     <button type="button" id="btn-print" class="btn">Print Summary</button> 
-                     <button type="button" id="btn-home" class="btn">Home</button>  -->
                 <button type="button" id="proposed-plans-btn" class="btn" style="display:none;">Proposed Plans</button>
-                <!-- @Srihari -->
-                <!-- @Srihari -->
             </div>
         </main>
     </div>
+
+    <!-- Sidebar script must be loaded so the site-wide sidebar is injected the same way as Existing_Applicant_Request_Form.html -->
+    <script src="../js/sidebar.js"></script>
+
+    <!-- Keep the summary logic -->
     <script src="/static/js/summary.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const backBtn = document.getElementById('btn-back');
+            // Back button: close the preview window
             if (backBtn) {
                 backBtn.style.display = 'inline-block';
                 backBtn.addEventListener('click', () => window.close());

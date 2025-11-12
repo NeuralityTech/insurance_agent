@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
     <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Health Insurance Proposal Request</title>
   <link rel="stylesheet" href="../css/common.css" />
+  <link rel="stylesheet" href="../css/choices.css" />
   <link rel="stylesheet" href="../css/top_bar.css" />
   <style>
     .choice-card { border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; background: #fff; }
@@ -16,45 +16,46 @@
 <body>
   <header class="top-bar">
     <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
-    <div class="user-info">Logged in as: <span id="logged-in-user" class="user-id"></span></div>
+    <div class="user-info">Hi, <span id="logged-in-user" class="user-id"></span></div>
     <button id="logout-btn" class="btn btn-logout">Logout</button>
   </header>
   <div class="container">
-    <h1>Health Insurance Proposal Request</h1>
-    <p>Select whether you want to create a new request or open an existing one.</p>
-
-    <div class="choice-card">
-      <h2>New User</h2>
-      <p>Create a new proposal request for a new user.</p>
-      <div class="choice-actions">
-        <button id="btn-new" class="btn">Proceed to New User</button>
-      </div>
-    </div>
-
-    <div class="choice-card">
-      <h2>Existing User</h2>
-      <p>Open and edit an existing proposal by Unique ID.</p>
-      <div class="choice-actions">
-        <button id="btn-existing" class="btn btn-secondary">Proceed to Existing User</button>
-      </div>
-    </div>
-
-    <div class="choice-card">
-      <h2>Client Directory</h2>
-      <p>View all client details with filters for Supervisor, Status, Unique ID, etc.</p>
-      <div class="choice-actions">
-        <button id="btn-directory" class="btn btn-secondary">Open Client Directory</button>
-      </div>
-    </div>
-  <!--@Srihari-->
-    <div class="choice-card">                                                                      
-          <h2>Approvals</h2>
-          <p>Agent update the client and UnderWriter Status (Approve / Reject / Suggest Changes).</p>
-          <div class="choice-actions">
-              <button id="btn-approvals" class="btn btn-secondary">Open Approvals</button>
-          </div>
+    <h1 class="title-header">Health Insurance Proposal Request</h1>
+    <p style="text-align: center; margin-bottom: 5em; opacity: 0.9;">Select whether you want to create a new request or open an existing one.</p>
+    
+    <div class="choice-container">
+      <div class="choice-card">
+        <h2>New Applicant</h2>
+        <p>Create a new proposal request for a new applicant.</p>
+        <div class="choice-actions">
+          <button id="btn-new" class="btn">Proceed to New Applicant</button>
         </div>
+      </div>
+
+      <div class="choice-card">
+        <h2>Existing Applicant</h2>
+        <p>Open and edit an existing proposal by Unique ID.</p>
+        <div class="choice-actions">
+          <button id="btn-existing" class="btn btn-secondary">Proceed to Existing Applicant</button>
+        </div>
+      </div>
+
+      <div class="choice-card">
+        <h2>Client Directory</h2>
+        <p>View all client details with filters for Supervisor, Status, Unique ID, etc.</p>
+        <div class="choice-actions">
+          <button id="btn-directory" class="btn btn-secondary">Open Client Directory</button>
+        </div>
+      </div>
+    <!--@Srihari-->
+      <div class="choice-card">                                                                      
+        <h2>Approvals</h2>
+        <p>Agent update the client and UnderWriter Status (Approve / Reject / Suggest Changes).</p>
+        <div class="choice-actions">
+            <button id="btn-approvals" class="btn btn-secondary">Open Approvals</button>
+        </div>
+      </div>
+    </div>
   </div>
   <!--END-->
   <script>
@@ -67,10 +68,10 @@
         window.location.href = 'Main_login.html';
       });
       document.getElementById('btn-new').addEventListener('click', function(){
-        window.location.href = '/html/New_User_Request_Page.html';
+        window.location.href = '/html/New_Applicant_Request_Form.html';
       });
       document.getElementById('btn-existing').addEventListener('click', function(){
-        window.location.href = '/html/Existing_User_Request_Page.html';
+        window.location.href = '/html/Existing_Applicant_Request_Form.html';
       });
       document.getElementById('btn-directory').addEventListener('click', function(){
         window.location.href = '/html/Client_Directory.html';

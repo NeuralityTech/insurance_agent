@@ -1,0 +1,38 @@
+{
+    "detailed_justification": [
+        {
+            "plan_name": "Young Star Silver Plan",
+            "policy_code": "MIX_1_1",
+            "proposed_for": [
+                "SarahD"
+            ],
+            "reason_for_proposal": "Proposed for members with needs: GENERAL",
+            "family_fit_check_result": "Passed",
+            "ailment_score": 1.0,
+            "member_specific_scores": {
+                "SarahD": 1.0
+            },
+            "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
+            "ai_reasoning": "SarahD has a perfect match for their general health needs, and the plan passed the family fit check, indicating strong alignment."
+        },
+        {
+            "plan_name": "Young Star Gold Plan",
+            "policy_code": "MIX_1_1",
+            "proposed_for": [
+                "SarahD"
+            ],
+            "reason_for_proposal": "Proposed for members with needs: GENERAL",
+            "family_fit_check_result": "Passed",
+            "ailment_score": 1.0,
+            "member_specific_scores": {
+                "SarahD": 1.0
+            },
+            "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
+            "ai_reasoning": "SarahD has a perfect match for their general health needs, and this plan also passed the family fit check, confirming its suitability."
+        }
+    ],
+    "family_composition": {
+        "num_adults": 1,
+        "num_children": 0
+    }
+}

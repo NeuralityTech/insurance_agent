@@ -12,8 +12,8 @@
  */
 function initializeDiseaseDetails(root) {
     const container = root || document.getElementById('disease-list')
-        || document.getElementById('Health-History-placeholder')
-        || document.getElementById('health-history-placeholder');
+        || document.getElementById('health-history-content')
+        || document.getElementById('health-history-content');
     if (!container) return;
 
     function setEntryState(entry, checked) {

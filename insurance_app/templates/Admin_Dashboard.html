@@ -1,101 +1,364 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Plan Management</title>
-    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/sidebar.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 1000px; margin: 2rem auto; padding: 2rem; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        h1 { color: #0056b3; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
-        th, td { padding: 12px 15px; border: 1px solid #ddd; text-align: left; }
-        th { background-color: #0056b3; color: white; }
-        tr:nth-child(even) { background-color: #f2f2f2; }
-        select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; width: 100px; }
-        .message { padding: 1rem; margin-top: 1rem; border-radius: 4px; display: none; }
-        .success { background-color: #d4edda; color: #155724; }
-        .error { background-color: #f8d7da; color: #721c24; }
+        /* Additional styles specific to admin dashboard */
+        .plan-management-section {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+        }
+
+        .plans-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .plans-table thead {
+            background-color: #f9fafb;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .plans-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .plans-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.875rem;
+            color: #4b5563;
+        }
+
+        .plans-table tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .status-select {
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            color: #374151;
+            background-color: white;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .status-select:hover {
+            border-color: #9ca3af;
+        }
+
+        .status-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .save-button-container {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .btn-save {
+            background-color: #3b82f6;
+            color: white;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-save:hover:not(:disabled) {
+            background-color: #2563eb;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-save:disabled {
+            background-color: #e5e7eb;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-save.enabled {
+            background-color: #10b981;
+        }
+
+        .btn-save.enabled:hover {
+            background-color: #059669;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .notification.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .notification.info {
+            background-color: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
     </style>
 </head>
-<body>
-    <!-- Top bar header with login details and logout button -->
-    <header class="top-bar">
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
-        <div class="user-info">
-            Logged in as: <span id="logged-in-user" class="user-id"></span>
-        </div>
-        <button id="logout-btn" class="btn btn-logout">Logout</button>
-    </header>
+<body data-sidebar="admin-dashboard">
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Header Section -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div>
+                    <h1 class="page-title">Plan Management</h1>
+                    <p class="page-subtitle">Manage insurance plans and view statistics</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="user-badge">
+                    <i class="fas fa-user-shield"></i>
+                    <span id="loggedInUser">Admin</span>
+                </div>
+            </div>
+        </header>
 
-    <div class="container">
-        <h1>Plan Management Dashboard</h1>
-        {% if error %}
-            <div class="message error" style="display: block;">{{ error }}</div>
-        {% endif %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Plan Name</th>
-                    <th>Status</th>
-                    <th>Created On</th>
-                    <th>Last Modified Date</th>
-                    <th>Last Modified By</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for plan in plans %}
-                <tr>
-                    <td>{{ plan['Plan Name'] }}</td>
-                    <td>
-                        <select class="status-select" data-plan-name="{{ plan['Plan Name'] }}">
-                            <option value="Active" {% if plan.Status|lower == 'active' %}selected{% endif %}>Active</option>
-                            <option value="Inactive" {% if plan.Status|lower == 'inactive' %}selected{% endif %}>Inactive</option>
-                        </select>
-                    </td>
-                    <!-- Created/Modified info with requested defaults -->
-                    <td>{{ plan.get('Created On', '16-08-2025') }}</td>
-                    <td>{{ plan.get('Last Modified Date', '16-08-2025') }}</td>
-                    <td>{{ plan.get('Last Modified By', 'admin') }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5">No plans found.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <button id="save-changes-btn" class="btn" disabled>Save Changes</button>
-        <div id="notification" class="notification"></div>
-    </div>
+        <!-- Statistics Cards -->
+        <section class="stats-section">
+            <div class="stat-card" style="background: white;">
+                <div class="stat-icon">
+                    <i class="fas fa-list"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="total-plans">0</h3>
+                    <p class="stat-label">Total Plans</p>
+                </div>
+            </div>
+            
+            <div class="stat-card" style="background: white;">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="active-plans">0</h3>
+                    <p class="stat-label">Active Plans</p>
+                </div>
+            </div>
+            
+            <div class="stat-card" style="background: white;">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="in-use-plans">0</h3>
+                    <p class="stat-label">Plans In Use</p>
+                </div>
+            </div>
+        </section>
 
+        <!-- Plan Management Table -->
+        <section class="plan-management-section">
+            <h2 class="section-title">
+                <i class="fas fa-cog" style="margin-right: 0.5rem; color: #3b82f6;"></i>
+                Manage Plan Status
+            </h2>
+            
+            {% if error %}
+                <div class="notification error" style="display: block; position: relative;">
+                    <i class="fas fa-exclamation-circle" style="margin-right: 0.5rem;"></i>
+                    {{ error }}
+                </div>
+            {% endif %}
+            
+            <div class="table-container">
+                <table class="plans-table">
+                    <thead>
+                        <tr>
+                            <th>Plan Name</th>
+                            <th>Status</th>
+                            <th>Created On</th>
+                            <th>Last Modified Date</th>
+                            <th>Last Modified By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for plan in plans %}
+                        <tr>
+                            <td>
+                                <strong>{{ plan['Plan Name'] }}</strong>
+                            </td>
+                            <td>
+                                <select class="status-select" data-plan-name="{{ plan['Plan Name'] }}">
+                                    <option value="Active" {% if plan.Status|lower == 'active' %}selected{% endif %}>Active</option>
+                                    <option value="Inactive" {% if plan.Status|lower == 'inactive' %}selected{% endif %}>Inactive</option>
+                                </select>
+                            </td>
+                            <td>{{ plan.get('Created On', '16-08-2025') }}</td>
+                            <td>{{ plan.get('Last Modified Date', '16-08-2025') }}</td>
+                            <td>{{ plan.get('Last Modified By', 'admin') }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <i class="fas fa-inbox"></i>
+                                    <p>No plans found.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="save-button-container">
+                <button id="save-changes-btn" class="btn-save" disabled>
+                    <i class="fas fa-save"></i>
+                    Save Changes
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="notification"></div>
+
+    <!-- Load sidebar component -->
+    <script src="/static/js/sidebar.js"></script>
+    
     <script>
-        // Header: show logged-in user and wire logout
+        // Initialize sidebar
         document.addEventListener('DOMContentLoaded', () => {
-            const uid = localStorage.getItem('loggedInUserId') || '';
-            const userSpan = document.getElementById('logged-in-user');
-            if (userSpan) userSpan.textContent = uid || 'Unknown';
-            const logoutBtn = document.getElementById('logout-btn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    localStorage.removeItem('loggedInUserId');
-                    window.location.href = '/';
-                });
+            if (window.initializeSidebar) {
+                window.initializeSidebar('admin-dashboard');
             }
+
+            // Header: show logged-in user
+            const uid = localStorage.getItem('loggedInUserId') || '';
+            const userSpan = document.getElementById('loggedInUser');
+            if (userSpan) userSpan.textContent = uid || 'Admin';
+            
+            // Calculate and display stats
+            calculateStats();
         });
 
-        // Simple notification helper used below
+        function calculateStats() {
+            const statusDropdowns = document.querySelectorAll('.status-select');
+            let totalPlans = statusDropdowns.length;
+            let activePlans = 0;
+            
+            // Count active plans
+            statusDropdowns.forEach(dropdown => {
+                if (dropdown.value.toLowerCase() === 'active') {
+                    activePlans++;
+                }
+            });
+            
+            // Update total and active counts
+            document.getElementById('total-plans').textContent = totalPlans;
+            document.getElementById('active-plans').textContent = activePlans;
+            
+            // Fetch plans in use from backend
+            fetchPlansInUse();
+        }
+        
+        async function fetchPlansInUse() {
+            try {
+                const response = await fetch('/api/admin/plans_in_use');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch plans in use');
+                }
+                const data = await response.json();
+                document.getElementById('in-use-plans').textContent = data.count || 0;
+            } catch (error) {
+                console.error('Error fetching plans in use:', error);
+                document.getElementById('in-use-plans').textContent = '—';
+            }
+        }
+
+        // Notification helper
         function showNotification(message, type) {
             const n = document.getElementById('notification');
             if (!n) return;
-            n.textContent = message;
+            
+            const icon = type === 'success' ? 'check-circle' : 
+                        type === 'error' ? 'exclamation-circle' : 
+                        'info-circle';
+            
+            n.innerHTML = `<i class="fas fa-${icon}" style="margin-right: 0.5rem;"></i>${message}`;
             n.className = `notification ${type || ''}`;
             n.style.display = 'block';
+            
             setTimeout(() => {
                 n.style.display = 'none';
             }, 3000);
@@ -103,7 +366,7 @@
 
         const statusDropdowns = document.querySelectorAll('.status-select');
         let changes = {};
-        let meta = {}; // { planName: { lastModifiedOn, lastModifiedBy } }
+        let meta = {};
 
         statusDropdowns.forEach(dropdown => {
             dropdown.addEventListener('change', function() {
@@ -111,13 +374,12 @@
                 const newStatus = this.value;
                 changes[planName] = newStatus;
 
-                // Prepare meta but DO NOT update UI yet; only on successful save
                 const uid = localStorage.getItem('loggedInUserId') || '';
                 const d = new Date();
                 const dd = String(d.getDate()).padStart(2, '0');
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
                 const yyyy = d.getFullYear();
-                const today = `${dd}-${mm}-${yyyy}`; // DD-MM-YYYY
+                const today = `${dd}-${mm}-${yyyy}`;
                 meta[planName] = { lastModifiedOn: today, lastModifiedBy: uid };
 
                 const saveBtn = document.getElementById('save-changes-btn');
@@ -132,6 +394,11 @@
                 return;
             }
 
+            const saveBtn = this;
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            saveBtn.disabled = true;
+
             fetch('/admin/update_plan_status', {
                 method: 'POST',
                 headers: {
@@ -143,8 +410,8 @@
             .then(data => {
                 if (data.success) {
                     showNotification('All changes saved successfully!', 'success');
-                    alert('All changes saved successfully!');
-                    // Now update the UI for the rows that were saved
+                    
+                    // Update the table cells
                     Object.keys(changes).forEach((planName) => {
                         const sel = document.querySelector(`select.status-select[data-plan-name="${CSS.escape(planName)}"]`);
                         if (!sel) return;
@@ -155,23 +422,29 @@
                         if (lastModDateCell && info.lastModifiedOn) lastModDateCell.textContent = info.lastModifiedOn;
                         if (lastModByCell && info.lastModifiedBy) lastModByCell.textContent = info.lastModifiedBy;
                     });
-                    changes = {}; // Reset changes
+                    
+                    changes = {};
                     meta = {};
-                    document.getElementById('save-changes-btn').disabled = true;
-                    document.getElementById('save-changes-btn').classList.remove('enabled');
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = true;
+                    saveBtn.classList.remove('enabled');
+                    
+                    // Recalculate stats after save
+                    calculateStats();
                 } else {
-                    const msg = 'Error saving changes: ' + (data.error || 'Unknown error');
-                    showNotification(msg, 'error');
-                    alert(msg);
+                    const msg = data.error || 'Unknown error';
+                    showNotification('Error saving changes: ' + msg, 'error');
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
                 showNotification('An unexpected error occurred while saving.', 'error');
-                alert('An unexpected error occurred while saving.');
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
             });
         });
     </script>
 </body>
 </html>
-

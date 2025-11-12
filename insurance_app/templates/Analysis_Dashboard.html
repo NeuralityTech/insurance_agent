@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/analysis_dashboard.css') }}">
     <script defer src="{{ url_for('static', filename='js/plan_selection_summary_v2.js') }}"></script>
     <style>
-        /* Match status box styling used in Existing_User_Request_Page.html */
+        /* Match status box styling used in Existing_Applicant_Request_Form.html */
         .comment-box { border:1px solid #ccc; padding:8px; min-height:40px; background:#fff; }
     </style>
 </head>
@@ -165,7 +165,7 @@
                 }
             })();
 
-            // Show supervisor status summary (mirroring Existing_User_Request_Page.html)
+            // Show supervisor status summary (mirroring Existing_Applicant_Request_Form.html)
             (function(){
                 const supSection = document.getElementById('supervisor-meta');
                 const supSummary = document.getElementById('sup-summary');
@@ -595,6 +595,110 @@
             });
         }
     })();
+    </script>
+
+    <script>
+    // Fix for loading personal information when client_data is incomplete
+    document.addEventListener('DOMContentLoaded', async function() {
+        const personalInfoSection = document.getElementById('personalInfo');
+        if (!personalInfoSection) return;
+        
+        // Get unique_id from the page title or URL
+        const titleMatch = document.title.match(/- (.+)$/);
+        const uniqueId = titleMatch ? titleMatch[1] : null;
+        
+        if (!uniqueId) {
+            console.warn('Could not determine unique_id for personal info');
+            return;
+        }
+        
+        try {
+            // Fetch the full submission data
+            const resp = await fetch(`/api/agent/submission/${encodeURIComponent(uniqueId)}`);
+            if (!resp.ok) {
+                console.error('Failed to fetch submission data');
+                return;
+            }
+            
+            const data = await resp.json();
+            console.log('Fetched submission data:', data);
+            
+            // Parse form_summary or use raw data
+            let formData = null;
+            try {
+                if (typeof data.form_summary === 'string') {
+                    formData = JSON.parse(data.form_summary);
+                } else if (data.form_summary && typeof data.form_summary === 'object') {
+                    formData = data.form_summary;
+                }
+            } catch (e) {
+                console.error('Failed to parse form_summary:', e);
+            }
+            
+            // CRITICAL: If form_summary is incomplete, use raw data
+            if (!formData || Object.keys(formData).length < 5) {
+                console.warn('form_summary incomplete, using raw API data');
+                formData = data;
+            }
+            
+            // Extract personal info from both nested and flat structures
+            const getName = () => {
+                return formData.applicant_name || 
+                    formData.primaryContact?.applicant_name ||
+                    formData['full_name'] ||
+                    data.applicant_name ||
+                    '—';
+            };
+            
+            const getAge = () => {
+                return formData['self-age'] ||
+                    formData.primaryContact?.['self-age'] ||
+                    data['self-age'] ||
+                    '—';
+            };
+            
+            const getBMI = () => {
+                return formData['self-bmi'] ||
+                    formData.primaryContact?.['self-bmi'] ||
+                    data['self-bmi'] ||
+                    '—';
+            };
+            
+            const getGender = () => {
+                const gender = formData.gender ||
+                            formData.primaryContact?.gender ||
+                            data.gender ||
+                            '—';
+                // Capitalize first letter
+                return gender === '—' ? gender : gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase();
+            };
+            
+            // Update the personal info section
+            personalInfoSection.innerHTML = `
+                <h2>Personal Information</h2>
+                <ul>
+                    <li><strong>Name:</strong> ${getName()}</li>
+                    <li><strong>Age:</strong> ${getAge()}</li>
+                    <li><strong>BMI:</strong> ${getBMI()}</li>
+                    <li><strong>Gender:</strong> ${getGender()}</li>
+                </ul>
+            `;
+            
+            console.log('Personal info updated:', {
+                name: getName(),
+                age: getAge(),
+                bmi: getBMI(),
+                gender: getGender()
+            });
+            
+        } catch (error) {
+            console.error('Error loading personal information:', error);
+            personalInfoSection.innerHTML = `
+                <h2>Personal Information</h2>
+                <p class="error">Failed to load personal information.</p>
+            `;
+        }
+    });
     </script>
 </body>
 </html>

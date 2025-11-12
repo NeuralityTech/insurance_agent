@@ -1,33 +1,39 @@
 /* This CSS file contains styles specifically for the supervisor dashboard page. 
    It is used by: Supervisor_Form.html */
 
-/* Base font */
 body {
+    margin: 0;
+    background:#f4f4f9;
     font-family: Arial, sans-serif;
+    margin-left: 0.5em;
 }
 
 /* Supervisor Dashboard Container */
 .supervisor-dashboard {
-    max-width: 900px; /* Wider than login for more content */
-    padding: 2rem;
-    text-align: left;
+    width: 100%;
+    max-width: 1000px;
+    margin: 0em auto;
+    padding: 3em;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 /* Header within the card */
 .supervisor-dashboard .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #007bff; /* Blue background */
-    color: #ffffff; /* White text */
+    background-color: #007bff;
+    color: #ffffff;
+    padding: 0.5rem 1.25rem;
     border-radius: 16px;
-    padding: 1rem 1.25rem; /* 1rem top/bottom, 1.25rem left/right */
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 .supervisor-dashboard .page-header h1 {
-    font-size: 1.75rem;
+    color: #ffffff;
+    font-size: 2rem;
     margin: 0;
+    text-transform: uppercase;
+     text-align: center;
 }
 
 .supervisor-dashboard .header-actions {
@@ -40,6 +46,24 @@ body {
     font-size: 0.9rem;
     color: #ffffff;
 }
+
+.sidebar {
+  z-index: 1000;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-footer {
+  position: absolute;
+  bottom: 1rem;
+  width: 100%;
+}
+
+.login-container.supervisor-dashboard {
+  margin-left: 260px; 
+}
+
 
 /* Main content layout */
 .dashboard-main {
@@ -140,16 +164,6 @@ body {
     pointer-events: none; /* ensure not accessible when disabled */
 }
 
-/* Improve contrast for header logout button on blue header */
-.btn-logout {
-    background-color: transparent;
-    border-color: #ffffff;
-    color: #ffffff;
-}
-
-.btn-logout:hover {
-    background-color: rgba(255, 255, 255, 0.15);
-}
 
 .btn-approve {
     background-color: #007bff;

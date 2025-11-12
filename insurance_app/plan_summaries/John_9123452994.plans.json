@@ -1,0 +1,24 @@
+{
+  "unique_id": "John_9123452994",
+  "proposed": {
+    "comprehensive_cover": {
+      "name": "Family",
+      "plans": [
+        "Young Star Silver Plan",
+        "Young Star Gold Plan"
+      ]
+    },
+    "member1": {
+      "name": "Ryan",
+      "plans": [
+        "Star Cardiac Care Gold",
+        "Platinum Sec 2 (Cardiac Ailments)"
+      ]
+    }
+  },
+  "agent_selected": [
+    "Star Cardiac Care Gold"
+  ],
+  "supervisor_selected": [],
+  "client_agreed": []
+}

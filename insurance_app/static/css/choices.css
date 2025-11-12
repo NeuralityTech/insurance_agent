@@ -1,0 +1,52 @@
+/* --- Choice Section Layout --- */
+  .choice-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    justify-content: left;
+    margin-top: 2rem;
+  }
+
+  .choice-card {
+    flex: 1 1 250px;
+    max-width: 225px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 1.5rem;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .choice-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .choice-card h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+    color: #007bff;
+    text-align: center;
+  }
+
+  .choice-card p {
+    font-size: 0.95rem;
+    color: #555;
+    margin-bottom: 1rem;
+  }
+
+  .choice-actions {
+    display: flex;
+    justify-content: center;
+  }
+
+  @media (max-width: 768px) {
+    .choice-container {
+      flex-direction: column;
+      align-items: center;
+    }
+    .choice-card {
+      max-width: 100%;
+    }
+  }

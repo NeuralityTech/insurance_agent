@@ -68,6 +68,7 @@ def list_clients():
                 unique_id,
                 agent,
                 supervisor_approval_status,
+                supervisor_modified_by,
                 application_status
             FROM submissions
             ORDER BY timestamp DESC
@@ -78,6 +79,7 @@ def list_clients():
             'unique_id': r['unique_id'],
             'agent': r['agent'],
             'supervisor_status': (r['supervisor_approval_status'] or '').lower(),
+            'supervisor_modified_by': r['supervisor_modified_by'],
             'application_status': r['application_status']
         } for r in rows]
         return jsonify(result), 200
@@ -245,3 +247,59 @@ def plan_analysis_dashboard():
     }
 
     return render_template('Plan_Analysis_Dashboard.html', data=dashboard_data, supervisor_status=None) # Pass a default value
+
+@dashboard_bp.route('/api/admin/plans_in_use', methods=['GET'])
+def get_plans_in_use():
+    """Get count of unique plans that have been used in created policies."""
+    try:
+        conn = get_db_connection()
+        
+        # Query to find all unique plan names from policy_details (created policies only)
+        query = """
+        SELECT DISTINCT plan_name FROM (
+            -- From policy_details JSON (actual created policies)
+            SELECT json_extract(json_each.value, '$.plan') as plan_name
+            FROM submissions, json_each(json_extract(policy_details, '$.rows'))
+            WHERE policy_details IS NOT NULL 
+            AND policy_details != ''
+            AND close_status = 'Policy_Created'
+            
+            UNION
+            
+            -- From policy_name column (legacy/simple policies)
+            SELECT policy_name as plan_name
+            FROM submissions
+            WHERE policy_name IS NOT NULL 
+            AND policy_name != ''
+            AND close_status = 'Policy_Created'
+        ) WHERE plan_name IS NOT NULL AND plan_name != ''
+        """
+        
+        cursor = conn.cursor()
+        cursor.execute(query)
+        results = cursor.fetchall()
+        
+        # Count unique plans
+        unique_plans = set()
+        for row in results:
+            plan_name = row[0]
+            if plan_name:
+                # Handle cases where plan names might include member prefixes like "John - Plan Name"
+                # Extract just the plan name part
+                if ' - ' in plan_name:
+                    plan_name = plan_name.split(' - ', 1)[1]
+                unique_plans.add(plan_name.strip())
+        
+        conn.close()
+        
+        return jsonify({
+            'count': len(unique_plans),
+            'plans': sorted(list(unique_plans))
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Error fetching plans in use: {e}")
+        return jsonify({
+            'count': 0,
+            'error': str(e)
+        }), 500

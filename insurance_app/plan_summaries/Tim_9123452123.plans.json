@@ -1,0 +1,32 @@
+{
+  "unique_id": "Tim_9123452123",
+  "proposed": {
+    "comprehensive_cover": {
+      "name": "Family",
+      "plans": [
+        "Young Star Silver Plan",
+        "Young Star Gold Plan",
+        "Star Micro Rural and Farmers Care",
+        "Smart Health Pro"
+      ]
+    },
+    "member1": {
+      "name": "Tim",
+      "plans": [
+        "Young Star Silver Plan",
+        "Young Star Gold Plan",
+        "Star Micro Rural and Farmers Care",
+        "Smart Health Pro",
+        "Accident Care Individual Insurance Policy"
+      ]
+    }
+  },
+  "agent_selected": [
+    "Young Star Gold Plan",
+    "Smart Health Pro"
+  ],
+  "supervisor_selected": [
+    "Star Micro Rural and Farmers Care"
+  ],
+  "client_agreed": []
+}

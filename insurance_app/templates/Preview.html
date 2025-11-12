@@ -2,38 +2,164 @@
 <html lang="en">
 <head>
     <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Health Insurance Requirement Summary Preview</title>
-    <link rel="stylesheet" href="/static/css/common.css">
+
+    <!-- Match the same relative CSS includes used by Existing_Applicant_Request_Form.html -->
+    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link rel="stylesheet" href="../css/health_history.css">
+    <link rel="stylesheet" href="../css/members.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
+<body data-sidebar="existing-applicant">
     <div class="container">
         <header class="page-header">
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
+            <link rel="stylesheet" href="/static/css/logo.css">
             <h1>Health Insurance Requirement Summary Preview</h1>
         </header>
+
+        <p id="page-description" style="margin: 1.5em 0; text-align: center;">
+            Preview the summary below. Use Back to close this preview or Submit to save the record.
+        </p>
+
         <main>
             <div id="summary-container" class="form-container">
-                <!-- Summary content will be injected here -->
+                <!-- Summary content will be injected here by /static/js/summary.js -->
             </div>
-            <div class="form-actions">
+
+            <div class="form-actions" style="margin-top: 1rem;">
                 <button type="button" id="btn-back" class="btn btn-secondary">Back</button>
+                <button type="button" id="submit-btn" class="btn">Submit</button>
             </div>
         </main>
     </div>
+
+    <!-- Sidebar script must be loaded so the site-wide sidebar is injected the same way as Existing_Applicant_Request_Form.html -->
+    <script src="../js/sidebar.js"></script>
+
+    <!-- Keep your summary logic -->
     <script src="/static/js/summary.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const backBtn = document.getElementById('btn-back');
+            const submitBtn = document.getElementById('submit-btn');
+
+            // Back button functionality
             if (backBtn) {
                 backBtn.style.display = 'inline-block';
                 backBtn.addEventListener('click', () => window.close());
+            }
+
+            // Submit button functionality
+            if (submitBtn) {
+                submitBtn.addEventListener('click', async function() {
+                    // Prevent double submission
+                    if (submitBtn.disabled) return;
+
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Submitting...';
+
+                    try {
+                        // Get the form data from localStorage (saved by Preview button)
+                        const summaryDataStr = localStorage.getItem('formSummary');
+                        if (!summaryDataStr) {
+                            throw new Error('No form data found. Please go back and preview again.');
+                        }
+
+                        const summaryData = JSON.parse(summaryDataStr);
+
+                        // Build formData object matching the structure expected by server
+                        const formData = {
+                            unique_id: summaryData.primaryContact?.unique_id || null,
+                            applicant_name: summaryData.primaryContact?.applicant_name || null,
+
+                            primaryContact: summaryData.primaryContact || {},
+                            healthHistory: summaryData.healthHistory || {},
+                            members: summaryData.members || [],
+                            coverAndCost: summaryData.coverAndCost || {},
+                            existingCoverage: summaryData.existingCoverage || {},
+                            claimsAndService: summaryData.claimsAndService || {},
+                            financeAndDocumentation: summaryData.financeAndDocumentation || {},
+                            commentsNoted: summaryData.commentsNoted || { comments_noted: [] }
+                        };
+
+                        // Validate required fields
+                        if (!formData.unique_id || !formData.applicant_name) {
+                            throw new Error('Missing required fields: Unique ID and Applicant Name.');
+                        }
+
+                        // Get logged in user
+                        const userId = localStorage.getItem('loggedInUserId');
+                        if (!userId) {
+                            throw new Error('User not logged in. Please log in and try again.');
+                        }
+
+                        // Submit to server
+                        const response = await fetch('/submit', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-User-Id': userId
+                            },
+                            body: JSON.stringify({ userId, formData }),
+                        });
+
+                        if (!response.ok) {
+                            let errorMessage = 'Please check your connection and try again.';
+                            try {
+                                const error = await response.json();
+                                errorMessage = error.error || error.message || errorMessage;
+                            } catch (e) {
+                                const textError = await response.text().catch(() => '');
+                                errorMessage = textError || `Server error (${response.status})`;
+                            }
+                            throw new Error(errorMessage);
+                        }
+
+                        const result = await response.json();
+
+                        // Store submission data and plans
+                        localStorage.setItem('submissionData', JSON.stringify(formData));
+                        localStorage.setItem('plans', JSON.stringify(result.plans || []));
+
+                        // Clear saved draft since form was successfully submitted
+                        try {
+                            localStorage.removeItem('insuranceFormDraft');
+                            localStorage.removeItem('insuranceFormDraftTimestamp');
+                        } catch (e) { /* ignore */ }
+
+                        // Update button to show success
+                        submitBtn.textContent = 'Submitted Successfully!';
+                        submitBtn.style.backgroundColor = '#28a745';
+
+                        // Show success message
+                        alert('Form submitted successfully! Submission ID: ' + result.submissionId);
+
+                        // Redirect to summary page
+                        window.location.href = `Summary.html?unique_id=${formData.unique_id}`;
+
+                    } catch (error) {
+                        console.error('Submission error:', error);
+
+                        let errorMessage = error.message || 'Failed to submit. Please try again.';
+
+                        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                            errorMessage = 'Network connection failed. Please check your internet connection.';
+                        }
+
+                        alert(`Submission failed: ${errorMessage}`);
+
+                        // Re-enable submit button
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Submit';
+                        submitBtn.style.backgroundColor = '';
+                    }
+                });
             }
         });
     </script>
 </body>
 </html>
-

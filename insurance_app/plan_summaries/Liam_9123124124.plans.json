@@ -1,0 +1,35 @@
+{
+  "unique_id": "Liam_9123124124",
+  "proposed": {
+    "comprehensive_cover": {
+      "name": "comprehensive_cover",
+      "plans": [
+        "Young Star Silver Plan",
+        "Young Star Gold Plan",
+        "Medi Classic Standard Plan",
+        "Medi Classic Gold Plan",
+        "Arogya Sanjeevani Policy"
+      ]
+    },
+    "member1": {
+      "name": "Liam",
+      "plans": [
+        "Young Star Silver Plan",
+        "Young Star Gold Plan",
+        "Medi Classic Standard Plan",
+        "Medi Classic Gold Plan",
+        "Arogya Sanjeevani Policy"
+      ]
+    }
+  },
+  "agent_selected": [
+    "Young Star Silver Plan",
+    "Young Star Gold Plan"
+  ],
+  "supervisor_selected": [
+    "Young Star Silver Plan"
+  ],
+  "client_agreed": [
+    "Medi Classic Standard Plan"
+  ]
+}

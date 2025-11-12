@@ -45,14 +45,6 @@ body {
     z-index: 1;
 }
 
-header h1 {
-    font-family: 'Lora', serif;
-    color: #1c3a5e; /* Dark Slate Blue */
-    font-size: 2.5rem;
-    margin-top: 0;
-    margin-bottom: 2rem;
-}
-
 /* Form Styling */
 #login-form {
     text-align: left;

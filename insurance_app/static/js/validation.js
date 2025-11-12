@@ -5,11 +5,12 @@
  */
 
 /**
- * Initializes real-time and on-submit validation for the 'Primary Contact' section.
+ * Initializes real-time and on-submit validation for the 'Applicant Details' section.
  * It checks for required fields and pattern mismatches.
  */
+
 function initializePrimaryContactValidation() {
-    const form = document.getElementById('primary-contact-placeholder');
+    const form = document.getElementById('primary-contact-content');
     if (!form) return;
 
     // --- UniqueID Generation Logic ---
@@ -39,7 +40,6 @@ function initializePrimaryContactValidation() {
 
     function handleUserTypeChange() {
         if (!uniqueIdInput) return;
-        // Safely handle cases where no user_type radios exist in the Primary Contact section.
         const selectedUserType = form.querySelector('input[name="user_type"]:checked');
         const isNewUser = !selectedUserType || selectedUserType.value === 'new';
         if (isNewUser) {
@@ -63,8 +63,48 @@ function initializePrimaryContactValidation() {
     handleUserTypeChange();
     // --- End of UniqueID Logic ---
 
-            // This is a critical fix. A faulty email pattern was causing a script-blocking error.
-    // We will forcefully remove the pattern attribute from the email field before any validation runs.
+    // --- Health Vitals Calculations (All fields now in Primary Contact) ---
+    const dobInput = form.querySelector('#self-dob');
+    const ageInput = form.querySelector('#self-age');
+    const heightInput = form.querySelector('#self-height');
+    const weightInput = form.querySelector('#self-weight');
+    const bmiInput = form.querySelector('#self-bmi');
+
+    if (dobInput && ageInput) {
+        dobInput.addEventListener('change', () => {
+            // Convert from dd/mm/yyyy input to yyyy-mm-dd for calculation
+            const inputValue = dobInput.value;
+            let dateForCalculation = inputValue;
+            
+            // If the input is in dd/mm/yyyy format, convert it
+            if (inputValue.includes('/')) {
+                const parts = inputValue.split('/');
+                if (parts.length === 3) {
+                    dateForCalculation = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+            }
+            
+            const age = calculateAge(dateForCalculation);
+            if (age !== null) {
+                ageInput.value = age;
+                if (window.updatePeopleCounter) window.updatePeopleCounter();
+            }
+        });
+    }
+
+    if (heightInput && weightInput && bmiInput) {
+        const updateBmi = () => {
+            const bmi = calculateBmi(heightInput.value, weightInput.value);
+            if (bmi !== null) {
+                bmiInput.value = bmi;
+            }
+        };
+        heightInput.addEventListener('input', updateBmi);
+        weightInput.addEventListener('input', updateBmi);
+    }
+    // --- End of Health Vitals Calculations ---
+
+    // This is a critical fix. A faulty email pattern was causing a script-blocking error.
     const emailInput = form.querySelector('#email');
     if (emailInput) {
         emailInput.removeAttribute('pattern');
@@ -78,7 +118,6 @@ function initializePrimaryContactValidation() {
         let isValid = true;
         let message = '';
 
-        // If no error message container exists, do not proceed.
         if (!errorElement) return true;
 
         // Check for validity
@@ -110,7 +149,7 @@ function initializePrimaryContactValidation() {
     });
 
     const mainForm = document.getElementById('insurance-form');
-    if (!mainForm) return; // When this script is loaded in a standalone partial, skip attaching submit handler
+    if (!mainForm) return;
     mainForm.addEventListener('submit', (e) => {
         let isFormValid = true;
         inputsToValidate.forEach(input => {
@@ -127,40 +166,4 @@ function initializePrimaryContactValidation() {
             }
         }
     });
-}
-
-/**
- * Initializes the logic for the 'Health History' section.
- * It automatically calculates and updates the Age and BMI fields based on user input.
- */
-function initializeSelfDetailsValidation() {
-    const container = document.getElementById('Health-History-placeholder');
-    if (!container) return;
-
-    const dobInput = container.querySelector('#self-dob');
-    const ageInput = container.querySelector('#self-age');
-    const heightInput = container.querySelector('#self-height');
-    const weightInput = container.querySelector('#self-weight');
-    const bmiInput = container.querySelector('#self-bmi');
-
-    if (dobInput && ageInput) {
-        dobInput.addEventListener('change', () => {
-            const age = calculateAge(dobInput.value);
-            if (age !== null) {
-                ageInput.value = age;
-                if (window.updatePeopleCounter) window.updatePeopleCounter();
-                const errorDiv = container.querySelector('#self-age-error');
-                const sec = ageInput.closest('details');
-            }
-        });
-    }
-
-    if (heightInput && weightInput && bmiInput) {
-        const updateBmi = () => {
-            const bmi = calculateBmi(heightInput.value, weightInput.value);
-            if (bmi !== null) bmiInput.value = bmi;
-        };
-        heightInput.addEventListener('input', updateBmi);
-        weightInput.addEventListener('input', updateBmi);
-    }
 }

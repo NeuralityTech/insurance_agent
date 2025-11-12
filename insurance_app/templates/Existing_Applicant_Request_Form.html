@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="/static/css/logo.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Existing Applicant Request Form</title>
+    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link rel="stylesheet" href="../css/health_history.css">
+    <link rel="stylesheet" href="../css/members.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script defer src="{{ url_for('static', filename='js/plan_selection_summary_v2.js') }}"></script>
+    <style>
+        .loader-bar { display:flex; gap:.5rem; align-items:center; margin: 3rem 0;}
+        .loader-bar input { max-width: 240px; }
+        .supervisor-meta .loader-bar label { min-width: 160px; }
+        #sup-status-input { max-width: 280px; }
+        .comment-box { border:1px solid #ccc; padding:8px; min-height:40px; background:#fff; }
+        .form-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .last-modified-inline { margin-left: auto; }
+    </style>
+</head>
+<body data-sidebar="existing-applicant">
+    
+    <div class="container">
+        <header class="page-header">
+            <link rel="stylesheet" href="/static/css/logo.css">
+            <h1>Existing Applicant Request Form</h1>
+        </header>
+        <p id="page-description" style="margin: 2em 0; text-align: center;">Please enter a Unique ID below and select "Load." This will instantly retrieve the saved details, allowing you to review the policy request.</p>
+
+        <div class="loader-bar" id="member-load">
+            <label for="load-unique-id"><strong>Unique ID</strong></label>
+            <input id="load-unique-id" type="text" placeholder="Enter Unique ID" />
+            <button id="btn-load" class="btn btn-secondary" type="button">Load</button>
+        </div>
+        <form id="insurance-form" novalidate>
+
+            <p id="load-status" class="muted"></p>
+
+            <section id="supervisor-meta" class="section supervisor-meta" style="display:none;">
+                <div class="form-group" style="margin-top:8px;">
+                    <div><strong>Status</strong></div>
+                    <div id="sup-summary" class="comment-box" role="textbox" aria-readonly="true" style="white-space:normal; font-family: inherit; font-size: inherit; line-height:1.2; min-height: 48px; padding:0; margin:0;"></div>
+                </div>
+            </section>
+
+            <div id="primary-contact-placeholder" class="section"></div>
+            <div id="Health-History-placeholder" class="section"></div>
+            <div id="members-covered-placeholder" class="section"></div>
+            <div id="cover-cost-placeholder" class="section"></div>
+            <div id="existing-coverage-placeholder" class="section"></div>
+            <div id="claims-service-placeholder" class="section"></div>
+            <div id="Finance-Documentation-placeholder" class="section"></div>
+            <div id="comments-noted-placeholder" class="section"></div>
+
+            <div class="form-actions">
+                <button type="button" id="preview-btn" class="btn">Submit</button>
+                <button type="button" id="create-policy-btn" class="btn" style="display: none; background-color: #10b981;">
+                    <i class="fas fa-file-contract" style="margin-right: 6px;"></i>
+                    Create Policy
+                </button>
+                <button type="button" id="view-policy-summary-btn" class="btn" style="display: none; background-color: #10b981;">
+                    <i class="fas fa-file-alt" style="margin-right: 6px;"></i>
+                    View Policy Summary
+                </button>
+                <div id="last-modified-container" class="last-modified-inline"></div>
+            </div>
+        </form>
+    </div>
+
+    <script src="../js/sidebar.js"></script>
+    <script src="../js/calculations.js"></script>
+    <script src="../js/validation.js"></script>
+    <script src="../js/member_management.js"></script>
+    <script src="../js/disease_details.js"></script>
+    <script src="../js/comments_noted.js"></script>
+    <script src="../js/occupation_data.js"></script>
+    <script src="../js/occupation_dropdown.js"></script>
+    <script src="../js/progress_bar.js" defer></script>
+    <script src="../js/existing_prefill.js"></script>
+    <script src="../js/script.js" defer></script>
+    <script src="../js/data_fetch.js" defer></script>
+
+    <script>
+        function formatTimestampForDisplay(timestampStr) {
+            if (!timestampStr) return '—';
+            
+            try {
+                let dt = null;
+                
+                try {
+                    dt = new Date(timestampStr.replace('Z', ''));
+                    if (isNaN(dt.getTime())) dt = null;
+                } catch (e) {}
+                
+                if (!dt && timestampStr.includes('_')) {
+                    try {
+                        const parts = timestampStr.split('_');
+                        if (parts.length === 2) {
+                            const datePart = parts[0];
+                            const timePart = parts[1].replace(/-/g, ':');
+                            dt = new Date(`${datePart}T${timePart}`);
+                        }
+                    } catch (e) {}
+                }
+                
+                if (dt) {
+                    return dt.toLocaleString('en-IN', {
+                        year: 'numeric', month: '2-digit', day: '2-digit',
+                        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
+                        timeZone: 'Asia/Kolkata'
+                    });
+                }
+                
+                return timestampStr;
+            } catch (e) {
+                console.warn('Error formatting timestamp:', e);
+                return timestampStr;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusEl = document.getElementById('load-status');
+            const loadBtn = document.getElementById('btn-load');
+            const idInput = document.getElementById('load-unique-id');
+            const form = document.getElementById('insurance-form');
+            const previewBtn = document.getElementById('preview-btn');
+
+            function setActionButtonsEnabled(enabled) {
+                if (previewBtn) previewBtn.disabled = !enabled;
+                if (resetBtn) resetBtn.disabled = !enabled;
+            }
+
+            const userId = localStorage.getItem('loggedInUserId');
+
+            if (!userId) {
+                window.location.href = 'Main_login.html';
+            }
+
+            async function addPlansTab(uniqueId) {
+                const tabNav = document.querySelector('.tab-navigation');
+                const tabContentContainer = document.querySelector('.tab-content-container');
+                
+                if (!tabNav || !tabContentContainer) return;
+                if (document.getElementById('tab-plans-selection')) return;
+                
+                const tabIndex = 8;
+                
+                const li = document.createElement('li');
+                li.setAttribute('role', 'presentation');
+                
+                const button = document.createElement('button');
+                button.className = 'tab-button';
+                button.setAttribute('role', 'tab');
+                button.setAttribute('aria-selected', 'false');
+                button.setAttribute('aria-controls', 'tab-panel-plans-selection');
+                button.setAttribute('id', 'tab-plans-selection');
+                button.setAttribute('type', 'button');
+                button.textContent = 'Plans';
+                button.dataset.index = tabIndex;
+                
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-button').forEach((btn, i) => {
+                        btn.classList.remove('active');
+                        btn.setAttribute('aria-selected', 'false');
+                    });
+                    button.classList.add('active');
+                    button.setAttribute('aria-selected', 'true');
+                    
+                    document.querySelectorAll('.tab-content-wrapper').forEach(wrapper => {
+                        wrapper.classList.remove('active');
+                    });
+                    const plansWrapper = document.getElementById('tab-panel-plans-selection');
+                    if (plansWrapper) plansWrapper.classList.add('active');
+                });
+                
+                li.appendChild(button);
+                tabNav.appendChild(li);
+                
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'tab-content-wrapper';
+                contentWrapper.setAttribute('role', 'tabpanel');
+                contentWrapper.setAttribute('id', 'tab-panel-plans-selection');
+                contentWrapper.setAttribute('aria-labelledby', 'tab-plans-selection');
+                contentWrapper.dataset.index = tabIndex;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.id = 'plans-selection-content';
+                contentWrapper.appendChild(contentDiv);
+                
+                const navButtons = document.createElement('div');
+                navButtons.className = 'tab-navigation-buttons';
+                
+                const backBtn = document.createElement('button');
+                backBtn.type = 'button';
+                backBtn.className = 'btn tab-nav-btn btn-back';
+                backBtn.textContent = 'Back';
+                backBtn.addEventListener('click', () => {
+                    const commentsTab = document.getElementById('tab-comments-noted');
+                    if (commentsTab) commentsTab.click();
+                });
+                
+                navButtons.appendChild(backBtn);
+                contentWrapper.appendChild(navButtons);
+                
+                tabContentContainer.appendChild(contentWrapper);
+                
+                if (typeof window.renderPlansTab === 'function') {
+                    await window.renderPlansTab(contentDiv, uniqueId);
+                }
+            }
+
+            const userRole = localStorage.getItem('userRole');
+            applyRoleRestrictions(userRole);
+
+            function hardResetForm() {
+                try {
+                    localStorage.removeItem('members');
+                    localStorage.removeItem('formSummary');
+                    localStorage.removeItem('submissionData');
+                    localStorage.removeItem('plans');
+                    localStorage.removeItem('editMemberId');
+                    localStorage.removeItem('comments_noted');
+                    sessionStorage.removeItem('currentUniqueId');
+
+                    if (form) {
+                        form.reset();
+                        const ctrls = form.querySelectorAll('input, select, textarea');
+                        ctrls.forEach(el => {
+                            const tag = (el.tagName || '').toLowerCase();
+                            const type = (el.type || '').toLowerCase();
+                            if (tag === 'input') {
+                                if (type === 'checkbox' || type === 'radio') {
+                                    el.checked = false;
+                                } else {
+                                    el.value = '';
+                                }
+                            } else if (tag === 'select') {
+                                el.selectedIndex = 0;
+                            } else if (tag === 'textarea') {
+                                el.value = '';
+                            }
+                        });
+                    }
+
+                    try {
+                        const membersList = document.getElementById('members-list');
+                        if (membersList) membersList.innerHTML = '';
+                        const summaryContent = document.getElementById('summary-content');
+                        if (summaryContent) summaryContent.innerHTML = '<p class="placeholder-text">Hover over a member to see their details.</p>';
+                        if (window.loadMembersGlobal) window.loadMembersGlobal();
+                        if (window.updatePeopleCounter) window.updatePeopleCounter();
+                    } catch(e) { }
+
+                    try {
+                        if (typeof window.clearCommentsSession === 'function') {
+                            window.clearCommentsSession();
+                        } else {
+                            const tb = document.getElementById('comments-tbody');
+                            if (tb) tb.innerHTML = '';
+                            const tbl = document.getElementById('comments-table');
+                            if (tbl) tbl.style.display = 'none';
+                            const noMsg = document.getElementById('no-comments-message');
+                            if (noMsg) noMsg.style.display = 'block';
+                        }
+                    } catch(e) { }
+
+                    statusEl.textContent = '';
+                    const supSummary = document.getElementById('sup-summary');
+                    if (supSummary) supSummary.textContent = '';
+                    const lastMod = document.getElementById('last-modified-footer');
+                    if (lastMod) lastMod.style.display = 'none';
+
+                    setActionButtonsEnabled(true);
+                } catch (e) {
+                    console.warn('Hard reset encountered an issue:', e);
+                }
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function(ev){
+                    ev.preventDefault();
+                    hardResetForm();
+                });
+            }
+
+            function attachOrCreateLastModifiedFooter() {
+                const host = document.getElementById('last-modified-container');
+                if (!host) return;
+                let footer = document.getElementById('last-modified-footer');
+                if (!footer) {
+                    footer = document.createElement('div');
+                    footer.id = 'last-modified-footer';
+                    footer.className = 'last-modified-footer';
+                    footer.style.display = 'none';
+                    footer.innerHTML = 'Last Modified by <span id="last-modified-by">—</span> on <span id="last-modified-date">—</span>';
+                } else if (footer.parentElement !== host) {
+                    footer.parentElement.removeChild(footer);
+                }
+                host.appendChild(footer);
+            }
+
+            function updateMainLastModified(data) {
+                attachOrCreateLastModifiedFooter();
+                const footer = document.getElementById('last-modified-footer');
+                const lastModifiedBy = document.getElementById('last-modified-by');
+                const lastModifiedDate = document.getElementById('last-modified-date');
+                if (!footer || !lastModifiedBy || !lastModifiedDate) return;
+
+                let modifiedBy = '—';
+                let modifiedAt = null;
+
+                const timestampSources = [
+                    { by: data.application_modified_by, at: data.application_modified_at, source: 'final' },
+                    { by: data.underwriter_modified_by, at: data.underwriter_modified_at, source: 'underwriter' },
+                    { by: data.supervisor_modified_by, at: data.supervisor_modified_at, source: 'supervisor' },
+                    { by: data.policy_outcome_modified_by, at: data.policy_outcome_modified_at, source: 'policy' },
+                    { by: data.close_status_modified_by, at: data.close_status_modified_at, source: 'application' },
+                    { by: data.first_created_by, at: data.first_created_at, source: 'created' }
+                ];
+                
+                const validTimestamps = timestampSources
+                    .filter(ts => ts.by && ts.at)
+                    .sort((a, b) => {
+                        try {
+                            const dateA = new Date(a.at.includes('_') ? a.at.replace('_', 'T').replace(/-/g, ':') : a.at);
+                            const dateB = new Date(b.at.includes('_') ? b.at.replace('_', 'T').replace(/-/g, ':') : b.at);
+                            return dateB - dateA;
+                        } catch (e) {
+                            return 0;
+                        }
+                    });
+                
+                if (validTimestamps.length > 0) {
+                    const latest = validTimestamps[0];
+                    modifiedBy = latest.by;
+                    modifiedAt = latest.at;
+                }
+
+                let formattedDate = '—';
+                if (modifiedAt) {
+                    formattedDate = formatTimestampForDisplay(modifiedAt);
+                }
+
+                lastModifiedBy.textContent = modifiedBy;
+                lastModifiedDate.textContent = formattedDate;
+                footer.style.display = 'block';
+            }
+
+            const createPolicyBtn = document.getElementById('create-policy-btn');
+            if (createPolicyBtn) {
+                createPolicyBtn.addEventListener('click', function() {
+                    const uniqueId = (idInput?.value || '').trim();
+                    if (!uniqueId) {
+                        alert('No Unique ID found. Please load an application first.');
+                        return;
+                    }
+                    window.location.href = `/html/Policy_Creation.html?uid=${encodeURIComponent(uniqueId)}`;
+                });
+            }
+
+            const viewSummaryBtn = document.getElementById('view-policy-summary-btn');
+            if (viewSummaryBtn) {
+                viewSummaryBtn.addEventListener('click', function() {
+                    const uniqueId = (idInput?.value || '').trim();
+                    if (!uniqueId) {
+                        alert('No Unique ID found. Please load an application first.');
+                        return;
+                    }
+                    window.location.href = `/html/Policy_Creation.html?uid=${encodeURIComponent(uniqueId)}&view=summary`;
+                });
+            }
+
+            function updateWorkflowButtons(applicationStatus, userRole) {
+                const createPolicyBtn = document.getElementById('create-policy-btn');
+                const viewSummaryBtn = document.getElementById('view-policy-summary-btn');
+                
+                if (!createPolicyBtn) return;
+                
+                const normalizedStatus = (applicationStatus || '').toUpperCase().trim();
+                
+                // Show based only on application status, not user role
+                const showCreateButton = normalizedStatus === 'WITH_UW';
+                const showViewSummaryButton = normalizedStatus === 'POLICY_CREATED';
+                
+                createPolicyBtn.style.display = showCreateButton ? 'inline-block' : 'none';
+                if (viewSummaryBtn) {
+                    viewSummaryBtn.style.display = showViewSummaryButton ? 'inline-block' : 'none';
+                }
+            }
+
+
+            function applyRoleRestrictions(role) {
+                if (!role) return;
+
+                const userRole = role.toLowerCase();
+                
+                if (userRole === 'agent') {
+                    disableFormEditing();
+                }
+            }
+
+            function disableFormEditing() {
+                const allControls = document.querySelectorAll('input, select, textarea, button, a');
+                const plansTabContent = document.getElementById('tab-panel-plans-selection');
+
+                allControls.forEach(el => {
+                    const id = el.id?.toLowerCase();
+                    const exemptIds = ['primary-contact','btn-load', 'load-unique-id','create-policy-btn', 'view-policy-summary-btn'];
+                    
+                    if (plansTabContent && plansTabContent.contains(el)) {
+                        return; 
+                    }
+                    
+                    if (exemptIds.includes(id) || el.classList.contains('tab-button') || 
+                        el.classList.contains('btn-next') || el.classList.contains('btn-back')) return;
+                    
+                    if (['reset-btn', 'preview-btn'].includes(id)) return;
+
+                    if (el.closest('.sidebar') || el.classList.contains('mobile-menu-btn')) return;
+
+                    const tag = el.tagName.toLowerCase();
+                    if (tag === 'input' || tag === 'textarea') {
+                        el.setAttribute('readonly', 'readonly');
+                        el.style.cursor = 'not-allowed';
+                        el.style.opacity = '0.6';
+                        el.style.backgroundColor = '#f5f5f5';
+                    } else if (tag === 'select') {
+                        el.disabled = true;
+                        el.style.cursor = 'not-allowed';
+                        el.style.opacity = '0.6';
+                    } else if (tag === 'button' || tag === 'a') {
+                        el.disabled = true;
+                        el.style.cursor = 'not-allowed';
+                        el.style.opacity = '0.6';
+                    }
+                });
+
+                ['reset-btn', 'preview-btn'].forEach(btnId => {
+                    const btn = document.getElementById(btnId);
+                    if (btn) btn.classList.add('hidden');
+                });
+            }
+
+            async function loadById(uniqueId) {
+                const uid = (uniqueId || '').trim();
+                statusEl.textContent = '';
+                if (!uid) { statusEl.textContent = 'Please enter Unique ID.'; return; }
+                
+                const allControls = document.querySelectorAll('input, select, textarea');
+                allControls.forEach(el => {
+                    el.removeAttribute('readonly');
+                    el.disabled = false;
+                    el.style.cursor = '';
+                    el.style.opacity = '';
+                    el.style.backgroundColor = '';
+                });
+                
+                try {
+                    const resp = await fetch(`/api/agent/submission/${encodeURIComponent(uid)}`);
+                    if (!resp.ok) { statusEl.textContent = 'Submission not found.'; return; }
+                    const data = await resp.json();
+                    console.log('Raw data from API:', data);
+                    let formPayload = null;
+                    try {
+                        if (typeof data.form_summary === 'string') {
+                            formPayload = JSON.parse(data.form_summary);
+                        } else if (data.form_summary && typeof data.form_summary === 'object') {
+                            formPayload = data.form_summary;
+                        }
+                    } catch (e) { formPayload = null; }
+                    console.log('Parsed formPayload:', formPayload)
+                    if (!formPayload) {
+                        try {
+                            const legacy = await fetch(`/submission/${encodeURIComponent(uid)}`);
+                            if (legacy.ok) {
+                                formPayload = await legacy.json();
+                            }
+                        } catch (e) { }
+                    }
+                    
+                    if (!formPayload) formPayload = data;
+                    console.log('Final formPayload being sent to prefill:', formPayload);
+                    if (window.prefillExistingForm) {
+                        await window.prefillExistingForm(formPayload);
+                        statusEl.textContent = 'Data loaded. You can edit and save.';
+                    } else {
+                        statusEl.textContent = 'Prefill function not available.';
+                    }
+
+                    localStorage.setItem('currentUniqueId', uid);
+                    if (window.initializeCommentsNoted) {
+                        window.initializeCommentsNoted();
+                    }
+                    if (window.loadExistingComments) {
+                        window.loadExistingComments(uid);
+                    }
+
+                    updateMainLastModified(data);
+
+                    const supSection = document.getElementById('supervisor-meta');
+                    const supSummary = document.getElementById('sup-summary');
+                    if (supSection) supSection.style.display = '';
+                    if (supSummary) supSummary.textContent = 'Loading status...';
+
+                    setTimeout(() => {
+                        const statusDisp = (data.final_status && String(data.final_status).trim())
+                            ? data.final_status
+                            : (data.supervisor_approval_status || 'Open');
+
+                        console.log("DEBUGGING: About to update progress bar with", statusDisp);
+
+                        if (window.updateProgressBar) {
+                            window.updateProgressBar(data.application_status);
+                        } else {
+                            console.warn("DEBUGGING: updateProgressBar not found");
+                        }
+
+                        const comments = (data.application_comments && String(data.application_comments).trim()) ? data.application_comments : 'No comments';
+                        let tsStr = '—';
+                        let by = '—';
+                        const timestampSources = [
+                            { by: data.application_modified_by, at: data.application_modified_at },
+                            { by: data.underwriter_modified_by, at: data.underwriter_modified_at },
+                            { by: data.supervisor_modified_by, at: data.supervisor_modified_at },
+                            { by: data.policy_outcome_modified_by, at: data.policy_outcome_modified_at },
+                            { by: data.close_status_modified_by, at: data.close_status_modified_at },
+                            { by: data.agent, at: data.timestamp },
+                            { by: data.first_created_by, at: data.first_created_at }
+                        ];
+
+                        const validTimestamps = timestampSources
+                            .filter(ts => ts.by && ts.at)
+                            .sort((a, b) => {
+                                try {
+                                    const dateA = new Date(a.at.includes('_') ? a.at.replace('_', 'T').replace(/-/g, ':') : a.at);
+                                    const dateB = new Date(b.at.includes('_') ? b.at.replace('_', 'T').replace(/-/g, ':') : b.at);
+                                    return dateB - dateA;
+                                } catch (e) {
+                                    return 0;
+                                }
+                            });
+
+                        if (validTimestamps.length > 0) {
+                            const latest = validTimestamps[0];
+                            by = latest.by;
+                            tsStr = formatTimestampForDisplay(latest.at);
+                        }
+
+                        const summaryHtml = `<strong>Application Status:</strong> ${statusDisp}<br>
+                                            <strong>Comments:</strong> ${comments}<br>
+                                            <strong>Last Updated by:</strong> ${by} <strong>Last Updated at:</strong> ${tsStr}`;
+                        if (supSummary) supSummary.innerHTML = summaryHtml;
+
+                    }, 1000);
+
+                    if (!data.final_status) {
+                        try {
+                            const metaResp = await fetch(`/submission/${encodeURIComponent(uid)}/meta`);
+                            if (metaResp.ok) {
+                                const meta = await metaResp.json();
+                                if (supSummary) {
+                                    const raw = (meta.supervisor_status || '').toString();
+                                    const normalized = raw.trim().toUpperCase();
+                                    const statusDisp = normalized === 'OPEN' ? 'Open' : (raw || 'Open');
+                                    const comments = (meta.supervisor_comments && String(meta.supervisor_comments).trim()) ? meta.supervisor_comments : 'No comments';
+                                    let tsStr = '—';
+                                    if (meta.supervisor_modified_at) {
+                                        tsStr = formatTimestampForDisplay(meta.supervisor_modified_at);
+                                    }
+                                    const by = meta.supervisor_modified_by || '—';
+                                    const summaryHtml = '<strong>Application Status:</strong> ' + statusDisp + '<br>' +
+                                                    '<strong>Comments:</strong> ' + comments + '<br>' +
+                                                    '<strong>Last Updated by:</strong> ' + by + ' <strong>Last Updated at:</strong> ' + tsStr;
+                                    supSummary.innerHTML = summaryHtml;
+
+                                    const norm = String(statusDisp || '').trim().toUpperCase();
+                                    const allowed = (norm === 'OPEN' || norm === 'SUP_REJECTED');
+                                    setActionButtonsEnabled(allowed);
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Failed to fetch supervisor meta', e);
+                        }
+                    }
+                    
+                    const statusForTab = (data.final_status || data.supervisor_approval_status || '').toUpperCase();
+                    if (statusForTab === 'SUP_APPROVED') {
+                        await addPlansTab(uid);
+                    }
+
+                    const userRole = localStorage.getItem('userRole');
+                    updateWorkflowButtons(data.application_status, userRole);
+                    if (userRole) {
+                        applyRoleRestrictions(userRole);
+                    }
+                    
+                } catch (e) {
+                    console.error(e);
+                    statusEl.textContent = 'Failed to load data.';
+                }
+            }
+
+            loadBtn.addEventListener('click', async function(){
+                await loadById(idInput.value);
+            });
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                if (previewBtn) {
+                    previewBtn.disabled = true;
+                    previewBtn.textContent = "Submitting...";
+                }
+                if (resetBtn) resetBtn.disabled = true;
+
+                try {
+                    const uniqueId = (idInput?.value || '').trim();
+                    
+                    const formObj = {};
+                    const allInputs = form.querySelectorAll('input, select, textarea');
+                    
+                    allInputs.forEach(el => {
+                        if (!el.name) return;
+                        
+                        const k = el.name;
+                        const v = el.value;
+                        
+                        if (el.type === 'radio') {
+                            if (el.checked) formObj[k] = v;
+                        } else if (el.type === 'checkbox') {
+                            if (!formObj[k]) formObj[k] = [];
+                            if (el.checked) formObj[k].push(v);
+                        } else {
+                            if (k in formObj) {
+                                const cur = formObj[k];
+                                if (Array.isArray(cur)) cur.push(v); 
+                                else formObj[k] = [cur, v];
+                            } else {
+                                formObj[k] = v;
+                            }
+                        }
+                    });
+
+                    if (!formObj.unique_id) {
+                        if (uniqueId) formObj.unique_id = uniqueId;
+                    }
+
+                    if (!formObj.applicant_name) {
+                        let foundName = '';
+                        const trySelectors = [
+                            '[name="applicant_name"]', '#applicant_name',
+                            '[name$="applicant_name"]', '[name*="applicant"][name*="name"]',
+                            'input[placeholder*="Full Name" i]'
+                        ];
+                        for (const sel of trySelectors) {
+                            const el = form.querySelector(sel);
+                            if (el && el.value && String(el.value).trim()) { 
+                                foundName = String(el.value).trim(); 
+                                break; 
+                            }
+                        }
+                        if (foundName) formObj.applicant_name = foundName;
+                    }
+
+                    if (!formObj.unique_id || !formObj.applicant_name) {
+                        throw new Error('Missing required fields: Unique ID and Applicant Name.');
+                    }
+
+                    try {
+                        if (typeof window.getCommentsData === 'function') {
+                            const c = window.getCommentsData();
+                            if (c && typeof c === 'object') formObj.comments_noted = c.comments_noted;
+                        }
+                    } catch {}
+
+                    const userId = localStorage.getItem('loggedInUserId');
+                    if (!userId) {
+                        throw new Error('User not logged in. Please log in and try again.');
+                    }
+
+                    const payload = {
+                        userId: userId,
+                        formData: formObj
+                    };
+
+                    const resp = await fetch('/submit', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-User-Id': userId
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!resp.ok) {
+                        let errorMessage = 'Please check your connection and try again.';
+                        try {
+                            const errorData = await resp.json();
+                            errorMessage = errorData.error || errorData.message || errorMessage;
+                        } catch (e) {
+                            const txt = await resp.text().catch(() => '');
+                            errorMessage = txt || `Server error (${resp.status})`;
+                        }
+                        throw new Error(errorMessage);
+                    }
+
+                    const result = await resp.json().catch(() => ({}));
+
+                    const summaryData = {
+                        primaryContact: {},
+                        healthHistory: {},
+                        members: JSON.parse(localStorage.getItem('members')) || [],
+                        coverAndCost: {},
+                        existingCoverage: {},
+                        claimsAndService: {},
+                        financeAndDocumentation: {},
+                        commentsNoted: window.getCommentsData ? window.getCommentsData() : { comments_noted: [] }
+                    };
+
+                    summaryData.primaryContact['unique_id'] = formObj.unique_id;
+
+                    Object.keys(formObj).forEach(key => {
+                        const value = formObj[key];
+                        
+                        if (key === 'unique_id') return;
+                        
+                        if (['applicant_name', 'gender', 'email', 'phone', 'address', 'self-dob', 'self-height', 'self-weight', 'self-age', 'occupation', 'city', 'hubs'].includes(key)) {
+                            summaryData.primaryContact[key] = value;
+                        }
+                        else if (key.startsWith('medical-') || key.startsWith('disease-') || key === 'self-details') {
+                            summaryData.healthHistory[key] = value;
+                        }
+                        else if (['policy-type', 'sum-insured', 'annual-budget', 'payment-mode', 'room-preference', 'co-pay', 'ncb-importance', 'maternity-cover', 'opd-cover', 'top-up'].includes(key)) {
+                            summaryData.coverAndCost[key] = value;
+                        }
+                        else if (['existing-policies', 'port-policy', 'critical-illness', 'worldwide-cover'].includes(key)) {
+                            summaryData.existingCoverage[key] = value;
+                        }
+                        else if (['past-claims', 'claim-issues', 'service-expectations', 'network-hospitals'].includes(key)) {
+                            summaryData.claimsAndService[key] = value;
+                        }
+                        else if (['tax-benefit', 'address_proof_details'].includes(key)) {
+                            summaryData.financeAndDocumentation[key] = value;
+                        }
+                    });
+
+                    localStorage.setItem('formSummary', JSON.stringify(summaryData));
+                    localStorage.setItem('submissionData', JSON.stringify(formObj));
+                    if (result.plans) {
+                        localStorage.setItem('plans', JSON.stringify(result.plans));
+                    }
+
+                    if (previewBtn) {
+                        previewBtn.textContent = 'Submitted Successfully!';
+                        previewBtn.style.backgroundColor = '#28a745';
+                    }
+
+                    alert('Form submitted successfully!\n\nSubmission ID: ' + (result.submissionId || formObj.unique_id));
+                    
+                    window.location.href = `Summary.html?unique_id=${encodeURIComponent(formObj.unique_id)}`;
+
+                } catch (err) {
+                    console.error(err);
+                    let errorMessage = err.message || 'Failed to submit. Please review required fields.';
+                    
+                    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+                        errorMessage = 'Network connection failed. Please check your internet connection.';
+                    }
+                    
+                    alert(`Submission failed: ${errorMessage}`);
+                    
+                    statusEl.textContent = `Submission failed: ${errorMessage}`;
+                    statusEl.style.color = 'red';
+                    if (previewBtn) {
+                        previewBtn.textContent = "Submit";
+                        previewBtn.style.backgroundColor = '';
+                        previewBtn.disabled = false;
+                    }
+                    if (resetBtn) resetBtn.disabled = false;
+                }
+            });
+
+            setTimeout(() => {
+                if (window.initializeCommentsNoted) {
+                    window.initializeCommentsNoted();
+                }
+                attachOrCreateLastModifiedFooter();
+            }, 1500);
+
+            const urlUid = new URLSearchParams(window.location.search).get('uid');
+            const storedUid = localStorage.getItem('selectedUniqueId');
+            const incomingUid = urlUid || storedUid;
+            if (incomingUid) {
+                idInput.value = incomingUid;
+                try { localStorage.removeItem('selectedUniqueId'); } catch {}
+                loadById(incomingUid);
+            }
+        });
+
+        window.renderPlansTab = async function(container, uniqueId) {
+            if (!container || !uniqueId) return;
+
+            container.innerHTML = '<p>Loading plans...</p>';
+
+            try {
+                let planSummaryData = null;
+                try {
+                    const resp = await fetch(`/plan_summary/${encodeURIComponent(uniqueId)}`);
+                    if (resp.ok) planSummaryData = await resp.json();
+                } catch (e) {
+                    console.warn('Could not load from plan_summary endpoint:', e);
+                }
+
+                if (!planSummaryData || !planSummaryData.proposed || Object.keys(planSummaryData.proposed).length === 0) {
+                    try {
+                        const submissionResp = await fetch(`/api/agent/submission/${encodeURIComponent(uniqueId)}`);
+                        if (submissionResp.ok) {
+                            const submissionData = await submissionResp.json();
+                            let proposedPlans = submissionData.proposed_plans;
+                            if (proposedPlans && typeof proposedPlans === 'string') {
+                                proposedPlans = JSON.parse(proposedPlans);
+                            }
+                            if (proposedPlans && Object.keys(proposedPlans).length > 0) {
+                                await fetch(`/plan_summary/${encodeURIComponent(uniqueId)}/init_or_update`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ proposed: proposedPlans })
+                                });
+                                const resp2 = await fetch(`/plan_summary/${encodeURIComponent(uniqueId)}`);
+                                if (resp2.ok) planSummaryData = await resp2.json();
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error initializing plan_summary from submission:', e);
+                    }
+                }
+
+                let agentSelected = [];
+                if (planSummaryData?.agent_selected) {
+                    agentSelected = Array.isArray(planSummaryData.agent_selected) ? planSummaryData.agent_selected : [];
+                }
+                if (agentSelected.length === 0) {
+                    try {
+                        const submissionResp = await fetch(`/api/agent/submission/${encodeURIComponent(uniqueId)}`);
+                        if (submissionResp.ok) {
+                            const submissionData = await submissionResp.json();
+                            const possibleFields = ['agent_selected_plans', 'Agent_Selected_Plans', 'chosen_plans', 'plans_chosen'];
+                            for (const field of possibleFields) {
+                                if (submissionData[field]) {
+                                    try {
+                                        const parsed = typeof submissionData[field] === 'string'
+                                            ? JSON.parse(submissionData[field])
+                                            : submissionData[field];
+                                        if (Array.isArray(parsed) && parsed.length > 0) {
+                                            agentSelected = parsed;
+                                            break;
+                                        }
+                                    } catch (e) {}
+                                }
+                            }
+                            if (agentSelected.length > 0) {
+                                try {
+                                    await fetch(`/plan_summary/${encodeURIComponent(uniqueId)}/agent`, {
+                                        method: 'PATCH',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ agent_selected: agentSelected })
+                                    });
+                                } catch (e) {
+                                    console.error('Failed to sync agent selections:', e);
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error loading agent selections from submission:', e);
+                    }
+                }
+
+                const proposed = planSummaryData?.proposed || {};
+                const agentSel = new Set(agentSelected);
+                const supervisorSel = new Set(planSummaryData?.supervisor_selected || []);
+                const clientSel = new Set(planSummaryData?.client_agreed || []);
+
+                let submissionData = {};
+                try {
+                    const submissionResp = await fetch(`/api/agent/submission/${encodeURIComponent(uniqueId)}`);
+                    if (submissionResp.ok) submissionData = await submissionResp.json();
+                } catch (e) {
+                    console.warn('Could not load submission data for status check:', e);
+                }
+
+                const clientStatus = (submissionData.client_status || '').toLowerCase();
+                const underwriterStatus = (submissionData.underwriter_status || '').toLowerCase();
+                const showUnderwriterSection = clientStatus === 'client_approved';
+
+                container.innerHTML = `
+                    <div style="padding: 1rem;">
+                        <h2>Plan Selection</h2>
+                        <p>Review the plans selected by the agent and supervisor, then select the plans you agree to.</p>
+                        <div id="plans-selection-matrix" style="margin-top: 1rem;"></div>
+                        <div style="margin-top: 1rem;">
+                            <textarea id="client-plans-comment" rows="3" style="width: 100%; margin-bottom: 0.5rem;" placeholder="Add your comments about the selected plans"></textarea>
+                        </div>
+                        <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+                            <button type="button" id="save-client-plans" class="btn">Save Client Selection</button>
+                            <span id="client-plans-status" style="margin-left: 1rem;"></span>
+                        </div>
+
+                        <div id="underwriter-section" style="display: ${showUnderwriterSection ? 'block' : 'none'}; border-top: 2px solid #eee; padding-top: 1.5rem;">
+                            <h3 style="margin-bottom: 0.5rem;">Underwriter Submission Review</h3>
+                            <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
+                                Review the client's agreed plans and submit to underwriter.
+                            </p>
+
+                            <div style="background: #f9f9f9; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                                <strong style="display: block; margin-bottom: 0.5rem;">Client Agreed Plans:</strong>
+                                <div id="client-agreed-display" style="margin-left: 1rem;">
+                                    ${Array.from(clientSel).length > 0 
+                                        ? Array.from(clientSel).map(p => `<div style="margin-bottom: 0.25rem;">• ${p}</div>`).join('')
+                                        : '<em style="color: #888;">No plans selected by client yet</em>'
+                                    }
+                                </div>
+                                ${submissionData.client_comments ? `
+                                    <div style="margin-top: 0.75rem;">
+                                        <strong style="display: block; margin-bottom: 0.25rem;">Client Comments:</strong>
+                                        <div style="margin-left: 1rem; color: #555;">${submissionData.client_comments}</div>
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            <div style="margin-top: 1rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                        <input type="checkbox" id="underwriter-approve" checked>
+                                        <span style="color: #007bff; font-weight: 600;">Submit to Underwriter</span>
+                                    </label>
+                                </div>
+
+                                <label for="underwriter-comment" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                                    Comments
+                                </label>
+                                <textarea id="underwriter-comment" rows="3" 
+                                        style="width: 100%; margin-bottom: 0.5rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;" 
+                                        placeholder="Enter your underwriter comments and decision rationale">${submissionData.underwriter_comments || ''}</textarea>
+
+                                <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+                                    <button type="button" id="save-underwriter-decision" class="btn">Submit</button>
+                                    <span id="underwriter-decision-status" style="margin-left: 1rem;"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const matrixHost = container.querySelector('#plans-selection-matrix');
+                const commentEl = container.querySelector('#client-plans-comment');
+                const saveBtn = container.querySelector('#save-client-plans');
+                const statusEl = container.querySelector('#client-plans-status');
+
+                if (typeof window.renderPlanSelectionSummary === 'function') {
+                    window.renderPlanSelectionSummary(matrixHost, {
+                        proposed,
+                        agentSel,
+                        supervisorSel,
+                        clientSel,
+                        mode: 'approvals',
+                        onClientToggle: async (planName, checked) => {
+                            if (checked) clientSel.add(planName);
+                            else clientSel.delete(planName);
+
+                            try {
+                                await fetch(`/plan_summary/${encodeURIComponent(uniqueId)}/client`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ client_agreed: Array.from(clientSel) })
+                                });
+                            } catch (e) {
+                                console.error('Failed to save client selection:', e);
+                            }
+                        }
+                    });
+                }
+
+                // Pre-fill saved client selections if they exist
+                try {
+                    const submissionResp = await fetch(`/api/agent/submission/${encodeURIComponent(uniqueId)}`);
+                    if (submissionResp.ok) {
+                        const submissionData = await submissionResp.json();
+                        
+                        if (submissionData.client_comments) {
+                            commentEl.value = submissionData.client_comments;
+                        }
+
+                        if (submissionData.Client_Agreed_Plans) {
+                            try {
+                                const savedPlans = JSON.parse(submissionData.Client_Agreed_Plans);
+                                if (Array.isArray(savedPlans) && savedPlans.length > 0) {
+                                    savedPlans.forEach(planName => {
+                                        clientSel.add(planName);
+                                        const checkbox = matrixHost.querySelector(`input.pss-client[data-plan-name="${planName}"]`);
+                                        if (checkbox) checkbox.checked = true;
+                                    });
+                                }
+                            } catch (e) { 
+                                console.error('Error parsing saved plans:', e); 
+                            }
+                        }
+                    }
+                } catch (e) { 
+                    console.error('Error loading existing selections:', e); 
+                }
+
+                // Client save handler - never lock, always allow re-doing
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', async () => {
+                        const selected = Array.from(clientSel);
+                        const comment = (commentEl?.value || '').trim();
+
+                        if (selected.length === 0) {
+                            statusEl.textContent = 'Please select at least one plan.';
+                            statusEl.style.color = 'red';
+                            return;
+                        }
+
+                        saveBtn.disabled = true;
+                        saveBtn.textContent = 'Saving...';
+                        statusEl.textContent = '';
+
+                        try {
+                            const resp = await fetch('/api/agent/update_status', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown')
+                                },
+                                body: JSON.stringify({
+                                    unique_id: uniqueId,
+                                    actor: 'client',
+                                    client_review: true,
+                                    status: 'client_reviewed',
+                                    comment: comment || 'Client agreed to selected plans',
+                                    client_agreed_plans: selected,
+                                    client_status: 'client_approved'
+                                })
+                            });
+
+                            if (!resp.ok) {
+                                const errorText = await resp.text().catch(() => '');
+                                throw new Error(errorText || 'Save failed');
+                            }
+
+                            statusEl.textContent = 'Saved successfully! Reloading...';
+                            statusEl.style.color = 'green';
+
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
+
+                        } catch (err) {
+                            console.error(err);
+                            statusEl.textContent = 'Failed to save: ' + (err.message || 'Unknown error');
+                            statusEl.style.color = 'red';
+                            saveBtn.disabled = false;
+                            saveBtn.textContent = 'Save Client Selection';
+                        }
+                    });
+                }
+
+                // Underwriter save handler - never lock, always allow re-doing
+                const saveUnderwriterBtn = container.querySelector('#save-underwriter-decision');
+                const underwriterStatusEl = container.querySelector('#underwriter-decision-status');
+                const underwriterCommentEl = container.querySelector('#underwriter-comment');
+
+                if (saveUnderwriterBtn) {
+                    saveUnderwriterBtn.addEventListener('click', async () => {
+                        const approveCheckbox = container.querySelector('#underwriter-approve');
+                        const comment = (underwriterCommentEl?.value || '').trim();
+
+                        if (!comment) {
+                            underwriterStatusEl.textContent = 'Please provide comments for the underwriter.';
+                            underwriterStatusEl.style.color = 'red';
+                            return;
+                        }
+
+                        const decision = approveCheckbox.checked ? 'uw_approved' : null;
+
+                        if (!decision) {
+                            underwriterStatusEl.textContent = 'Please check the checkbox to submit to underwriter.';
+                            underwriterStatusEl.style.color = 'red';
+                            return;
+                        }
+
+                        saveUnderwriterBtn.disabled = true;
+                        saveUnderwriterBtn.textContent = 'Submitting...';
+                        underwriterStatusEl.textContent = '';
+
+                        try {
+                            const resp = await fetch('/api/agent/update_status', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown')
+                                },
+                                body: JSON.stringify({
+                                    unique_id: uniqueId,
+                                    actor: 'underwriter',
+                                    status: decision,
+                                    comment: comment,
+                                })
+                            });
+
+                            if (!resp.ok) {
+                                const errorText = await resp.text().catch(() => '');
+                                throw new Error(errorText || 'Submission failed');
+                            }
+                            
+                            underwriterStatusEl.textContent = 'Submitted successfully! Reloading...';
+                            underwriterStatusEl.style.color = 'green';
+
+                            setTimeout(() => {
+                                window.location.reload();
+                            });
+
+                        } catch (err) {
+                            console.error(err);
+                            underwriterStatusEl.textContent = 'Failed to submit: ' + (err.message || 'Unknown error');
+                            underwriterStatusEl.style.color = 'red';
+                            saveUnderwriterBtn.disabled = false;
+                            saveUnderwriterBtn.textContent = 'Submit';
+                        }
+                    });
+                }
+
+            } catch (err) {
+                console.error('Error rendering plans tab:', err);
+                container.innerHTML = '<p style="color: red;">Failed to load plans. Please try again.</p>';
+            }
+        };
+    </script>
+</body>
+</html>

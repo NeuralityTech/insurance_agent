@@ -1,31 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proposed Plans</title>
+
+    <!-- keep existing CSS includes -->
     <link rel="stylesheet" href="../static/css/common.css">
     <link rel="stylesheet" href="../static/css/top_bar.css">
     <link rel="stylesheet" href="/static/css/proposed_plans.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- sidebar styling (inserted to match Existing_Applicant_Request_Form.html) -->
+    <link rel="stylesheet" href="../css/sidebar.css">
 </head>
-<body>
-    <header class="top-bar">
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
-        <div class="user-info">
-            Logged in as: <span id="logged-in-user" class="user-id"></span>
-        </div>
-        <div class="top-actions">
-            <button type="button" id="btn-home" class="btn">Home</button>
-            <button id="logout-btn" class="btn btn-logout">Logout</button>
-        </div>
-    </header>
+<body data-sidebar="existing-applicant">
     <div class="container">
         <header class="page-header">
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
             <h1>Proposed Plans</h1>
         </header>
         <main>
@@ -34,11 +25,14 @@
             </div>
             <div class="form-actions">
                 <button type="button" id="btn-previous" class="btn btn-secondary">Previous</button>
-                <button type="button" id="btn-next" class="btn" disabled>Next</button>
                 <button type="button" id="analysis-btn" class="btn btn-info">Select Plan</button>
                 </div>
         </main>
     </div>
+
+    <!-- Insert sidebar injector -->
+    <script src="../js/sidebar.js"></script>
+
     <script src="../static/js/proposed_plans_v2.js" defer></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {

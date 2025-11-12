@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Neurality Insurance</title>
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <link rel="stylesheet" href="../css/sidebar.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Main Content -->
+  <main class="main-content" id="mainContent">
+    <!-- Header Section -->
+    <header class="dashboard-header">
+      <div class="header-left">
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div>
+          <h1 class="page-title">Insurance Proposals</h1>
+          <p class="page-subtitle">Manage your insurance proposals</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="user-badge">
+          <i class="fas fa-user"></i>
+          <span id="loggedInUser">Agent</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Statistics Cards -->
+    <section class="stats-section" id="statsSection">
+      <!-- Stats will be dynamically generated based on available statuses -->
+    </section>
+
+    <!-- Proposals Table -->
+    <section class="proposals-section">
+      <div class="section-header">
+        <h2 class="section-title">All Proposals</h2>
+        <div class="table-controls">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search by applicant name">
+          </div>
+          <div class="filter-group">
+            <div class="searchable-dropdown-wrapper">
+              <input type="text" id="agentFilterInput" placeholder="Filter by Agent..." autocomplete="off">
+              <ul class="dropdown-list" id="agentDropdownList"></ul>
+            </div>
+            <select id="statusFilter" class="status-filter">
+              <option value="all">All Status</option>
+              <option value="open/draft">Open/Draft</option>
+              <option value="submitted for review">Submitted for Review</option>
+              <option value="supervisor approved">Supervisor Approved</option>
+              <option value="client agreed">Client Agreed</option>
+              <option value="with underwriter">With Underwriter</option>
+              <option value="policy created">Policy Created</option>
+              <option value="policy denied">Policy Denied</option>
+              <option value="completed">Completed</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="proposals-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Unique ID</th>
+              <th>Submitted By</th>
+              <th>Application Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="proposalsTableBody">
+            <!-- Table rows will be populated dynamically by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination-container">
+        <div class="pagination-info">
+          Showing <span id="showingStart">1</span> to <span id="showingEnd">10</span> of <span id="totalEntries">10</span> entries
+        </div>
+        <div class="pagination-controls">
+          <button class="pagination-btn" id="firstPage" title="First Page">
+            <i class="fas fa-angle-double-left"></i>
+          </button>
+          <button class="pagination-btn" id="prevPage" title="Previous Page">
+            <i class="fas fa-angle-left"></i>
+          </button>
+          <div class="pagination-numbers" id="paginationNumbers">
+            <!-- Page numbers will be dynamically generated -->
+          </div>
+          <button class="pagination-btn" id="nextPage" title="Next Page">
+            <i class="fas fa-angle-right"></i>
+          </button>
+          <button class="pagination-btn" id="lastPage" title="Last Page">
+            <i class="fas fa-angle-double-right"></i>
+          </button>
+        </div>
+        <div class="pagination-size">
+          <label for="pageSize">Rows per page:</label>
+          <select id="pageSize" class="page-size-select">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Load sidebar component -->
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/dashboard.js"></script>
+</body>
+</html>

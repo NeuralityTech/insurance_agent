@@ -4,6 +4,7 @@
    ================================== */
 
 /* --- Medical Conditions Grid --- */
+
 .medical-conditions-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -44,6 +45,7 @@
     border-radius: 8px;
     background-color: #fdfdfd;
     transition: box-shadow 0.3s ease;
+    min-width: 0;
 }
 
 .disease-entry:hover {
@@ -77,7 +79,7 @@
     margin-bottom: 1.5rem;
 }
 
-/* Ensure inner rows don’t touch the group edges */
+/* Ensure inner rows donï¿½t touch the group edges */
 .group-box > .form-row:first-child { margin-top: 0.1rem; }
 .group-box > .form-row:last-child { margin-bottom: 0.1rem; }
 

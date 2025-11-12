@@ -1,0 +1,357 @@
+/* ==================================
+   REUSABLE SIDEBAR STYLES
+   Include this CSS file in pages that use the sidebar
+   ================================== */
+
+:root {
+  --primary-blue: #007bff;
+  --primary-dark: #0056b3;
+  --sidebar-width: 260px;
+  --sidebar-collapsed: 85px;
+  --bg-light: #f8f9fa;
+  --bg-white: #ffffff;
+  --text-dark: #2c3e50;
+  --text-muted: #6c757d;
+  --border-color: #dee2e6;
+  --danger-color: #dc3545;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
+
+/* Ensure body accommodates sidebar */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* ==================================
+   SIDEBAR STYLES
+   ================================== */
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: var(--sidebar-width);
+  background-color: var(--bg-white);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  transition: var(--transition);
+  z-index: 1000;
+  box-shadow: var(--shadow-sm);
+}
+
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed);
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 80px;
+}
+
+.logo-container {
+  overflow: hidden;
+}
+
+.logo-placeholder {
+  width: 150px;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.logo {
+    width: 130px;         
+    height: auto;        
+    object-fit: contain; 
+}
+
+.company-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.sidebar.collapsed .company-name {
+  opacity: 0;
+  width: 0;
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.sidebar-toggle:hover {
+  background-color: var(--bg-light);
+  color: var(--primary-blue);
+}
+
+.sidebar.collapsed .sidebar-toggle {
+  margin: 0 auto;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 1.5rem 0;
+  overflow-y: auto;
+}
+
+.nav-divider {
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 1rem 0.75rem;
+}
+
+.nav-section-title {
+  padding: 0.5rem 1.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.5rem;
+  transition: var(--transition);
+}
+
+.sidebar.collapsed .nav-section-title span {
+  opacity: 0;
+  display: none;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1.5rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: var(--transition);
+  font-weight: 500;
+  margin: 0.25rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.nav-item:hover {
+  background-color: rgba(0, 123, 255, 0.08);
+  color: var(--primary-blue);
+}
+
+.nav-item.active {
+  background-color: rgba(0, 123, 255, 0.12);
+  color: var(--primary-blue);
+}
+
+.nav-item.quick-action {
+  font-size: 0.9rem;
+}
+
+.nav-item i {
+  font-size: 1.125rem;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.nav-item span {
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.sidebar.collapsed .nav-item span {
+  opacity: 0;
+  width: 0;
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 0.875rem 0.5rem;
+}
+
+.sidebar-footer {
+  padding: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.user-role {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background-color: var(--bg-light);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.user-role i {
+  font-size: 1.5rem;
+  color: var(--primary-blue);
+  flex-shrink: 0;
+}
+
+.role-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.role-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.role-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.sidebar.collapsed .role-info {
+  opacity: 0;
+  width: 0;
+}
+
+.sidebar.collapsed .user-role {
+  justify-content: center;
+}
+
+.btn-logout {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: #505050;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-logout:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.sidebar.collapsed .btn-logout span {
+  opacity: 0;
+  width: 0;
+}
+
+.sidebar.collapsed .btn-logout {
+  padding: 0.75rem 0.5rem;
+}
+
+/* ==================================
+   MAIN CONTENT ADJUSTMENT
+   ================================== */
+
+.main-content,
+.container.main-content {
+  margin-left: var(--sidebar-width);
+  transition: var(--transition);
+  min-height: 100vh;
+}
+
+.sidebar.collapsed ~ .main-content,
+.sidebar.collapsed ~ * .main-content {
+  margin-left: var(--sidebar-collapsed);
+}
+
+/* Mobile menu button */
+.mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 999;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 1.25rem;
+  color: var(--text-dark);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.mobile-menu-btn:hover {
+  background-color: var(--bg-light);
+  color: var(--primary-blue);
+}
+
+/* ==================================
+   RESPONSIVE DESIGN
+   ================================== */
+
+@media (max-width: 1024px) {
+  .mobile-menu-btn {
+    display: block;
+  }
+
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.active {
+    transform: translateX(0);
+  }
+
+  .main-content,
+  .container.main-content {
+    margin-left: 0;
+    padding-top: 4rem; /* Space for mobile menu button */
+  }
+
+  .sidebar.collapsed ~ .main-content,
+  .sidebar.collapsed ~ * .main-content {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar-header {
+    padding: 1rem;
+  }
+
+  .logo-placeholder {
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+
+  .company-name {
+    font-size: 1.125rem;
+  }
+}

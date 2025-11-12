@@ -4,10 +4,11 @@
   <meta charset="UTF-8" />
   <title>Policy Creation</title>
   <link rel="stylesheet" href="../css/common.css" />
-  <link rel="stylesheet" href="../css/top_bar.css" />
+  <link rel="stylesheet" href="../css/sidebar.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="../js/sidebar.js"></script>
   <style>
-    body { min-height: 100vh; }
-    .container { max-width: 1100px; width: 95%; margin: 2rem auto; background: #fff; padding: 1.5rem; border-radius: 8px; }
+    
     .form-row { display: grid; grid-template-columns: 260px 1fr; gap: 12px; align-items: center; margin-bottom: 12px; }
     .form-row input, .form-row select { padding: 8px; }
     .actions { margin-top: 16px; display: flex; gap: 8px; }
@@ -16,13 +17,8 @@
     .btn-secondary { background-color: #64748b; }
   </style>
 </head>
-<body>
-  <header class="top-bar">
-    <div class="user-info">Logged in as: <span id="logged-in-user" class="user-id"></span></div>
-    <div class="right-actions">
-      <button id="btn-approvals" class="btn btn-secondary">Back to Approvals</button>
-    </div>
-  </header>
+<body data-sidebar="existing-applicant">
+
   <div class="container">
     <h1>Policy Creation</h1>
     <p>Enter policy details for the approved submission.</p>
@@ -65,8 +61,24 @@
     <div class="actions">
       <button id="saveBtn" class="btn btn-primary">Save Policy</button>
     </div>
-  </div>
 
+    <!-- Policy Summary Section (hidden initially) -->
+    <div id="policySummarySection" style="display: none; margin-top: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+      <h2 style="margin-bottom: 1rem; color: #28a745;">
+        <i class="fas fa-check-circle"></i> Policy Created Successfully
+      </h2>
+      
+      <div id="policySummaryContent">
+        <!-- Summary will be dynamically inserted here -->
+      </div>
+      
+      <div style="margin-top: 1.5rem;">
+        <button onclick="window.location.href='/html/dashboard.html'" class="btn btn-primary">
+          <i class="fas fa-home"></i> Back to Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
   <script>
     (function(){
       const uid = new URLSearchParams(window.location.search).get('uid') || '';
@@ -79,8 +91,11 @@
 
       try {
         const uidLS = localStorage.getItem('loggedInUserId');
-        if (uidLS && loggedInUserEl) loggedInUserEl.textContent = uidLS; else window.location.href = 'Main_login.html';
+        if (!uidLS) {
+          window.location.href = 'Main_login.html';
+        }
       } catch {}
+
 
       // Prefill Policy holder (memberName) and Member number (mobile) from DB submission
       async function prefillFromSubmission() {
@@ -278,6 +293,98 @@
         } catch (e) {
           console.warn('Prefill failed', e);
         }
+        // Check if we should auto-display the summary
+        const urlParams = new URLSearchParams(window.location.search);
+        const viewMode = urlParams.get('view');
+        
+        if (viewMode === 'summary') {
+          // Load saved policy details and display summary
+          await loadAndDisplaySavedPolicy();
+        }
+      }
+
+      async function loadAndDisplaySavedPolicy() {
+        if (!uid) return;
+        
+        try {
+          const res = await fetch(`/api/agent/submission/${encodeURIComponent(uid)}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          
+          // Check if policy has been created
+          if (!data.policy_details) {
+            alert('No policy details found for this application.');
+            return;
+          }
+          
+          let details = data.policy_details;
+          if (typeof details === 'string') {
+            try { details = JSON.parse(details); } catch { details = null; }
+          }
+          
+          if (!details || !details.rows || !Array.isArray(details.rows)) {
+            alert('Invalid policy details format.');
+            return;
+          }
+          
+          // Populate the form with saved data
+          details.rows.forEach((row, index) => {
+            if (index === 0) {
+              // First row already exists
+              const firstRow = rowsTbody.querySelector('tr');
+              if (firstRow) {
+                firstRow.querySelector('.pc-number').value = row.policy_number || '';
+                firstRow.querySelector('.pc-member-number').value = row.member_number || '';
+                firstRow.querySelector('.pc-member-name').value = row.member_name || '';
+                firstRow.querySelector('.pc-plan').value = row.plan || '';
+                firstRow.querySelector('.pc-start').value = row.policy_start_date || '';
+                firstRow.querySelector('.pc-period').value = row.policy_period_months || '12';
+                firstRow.querySelector('.pc-end').value = row.policy_end_date || '';
+              }
+            } else {
+              // Add additional rows
+              const memberNames = window.__memberNamesMaster || [];
+              addRow({
+                policyNumber: row.policy_number,
+                memberNumber: row.member_number,
+                memberName: row.member_name
+              }, memberNames);
+              
+              // Fill in the new row
+              const newRow = rowsTbody.querySelectorAll('tr')[index];
+              if (newRow) {
+                newRow.querySelector('.pc-plan').value = row.plan || '';
+                newRow.querySelector('.pc-start').value = row.policy_start_date || '';
+                newRow.querySelector('.pc-period').value = row.policy_period_months || '12';
+                newRow.querySelector('.pc-end').value = row.policy_end_date || '';
+              }
+            }
+          });
+          
+          // Populate comments if available
+          if (data.close_comments) {
+            const commentsEl = document.getElementById('appComments');
+            if (commentsEl) commentsEl.value = data.close_comments;
+          }
+          
+          // Create payload for summary
+          const payload = {
+            unique_id: uid,
+            policy_number: data.policy_number || details.rows[0].policy_number,
+            member_number: data.member_number || details.rows[0].member_number,
+            member_name: data.member_name || details.rows[0].member_name,
+            policy_start_date: data.policy_start_date || details.rows[0].policy_start_date,
+            policy_period_months: data.policy_period_months || details.rows[0].policy_period_months,
+            close_comments: data.close_comments || ''
+          };
+          
+          // Display the summary
+          displayPolicySummary(details.rows, payload);
+          
+        } catch (e) {
+          console.error('Error loading saved policy:', e);
+          alert('Failed to load policy details.');
+        }
       }
 
       prefillFromSubmission();
@@ -319,8 +426,8 @@
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td style="padding:6px; border:1px solid #eee;"><input type="text" class="pc-number" placeholder="Enter policy number" style="width:100%"></td>
-          <td style="padding:6px; border:1px solid #eee;"><input type="text" class="pc-member-number" placeholder="Member number" style="width:100%"></td>
+          <td style="padding:6px; border:1px solid #eee;"><input type="text" class="pc-number" placeholder="Policy #" style="width:100%"></td>
+          <td style="padding:6px; border:1px solid #eee;"><input type="text" class="pc-member-number" placeholder="Member #" style="width:100%"></td>
           <td style="padding:6px; border:1px solid #eee;">
             <select class="pc-member-name" style="width:100%">
               ${memberNameOptions}
@@ -372,9 +479,7 @@
         addRow({}, opts);
       });
 
-      backBtn.addEventListener('click', function(){
-        window.location.href = '/html/Approvals.html?uid=' + encodeURIComponent(uid);
-      });
+
       // Removed Cancel button; Back to Approvals available in header
 
       saveBtn.addEventListener('click', async function(){
@@ -388,11 +493,14 @@
           policy_period_months: parseInt(tr.querySelector('.pc-period')?.value || '12', 10),
           policy_end_date: tr.querySelector('.pc-end')?.value || ''
         }));
+        
         if (!rows.length) { return alert('Please add at least one row.'); }
+        
         const first = rows[0];
         if (!first.policy_number || !first.member_number || !first.member_name || !first.policy_start_date) {
           return alert('Please fill all required fields in the first row.');
         }
+        
         const payload = {
           unique_id: uid,
           policy_number: first.policy_number,
@@ -402,32 +510,121 @@
           policy_start_date: first.policy_start_date,
           policy_period_months: first.policy_period_months,
           close_comments: (document.getElementById('appComments')?.value || '').trim(),
-          // Serialize all rows into policy_details for reference/audit
           policy_details: JSON.stringify({ rows })
         };
+        
+        // Disable button during save
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+        
         try {
           const resp = await fetch('/api/agent/policy_details', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown') },
+            headers: { 
+              'Content-Type': 'application/json', 
+              'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown') 
+            },
             body: JSON.stringify(payload)
           });
+          
           if (!resp.ok) {
             const t = await resp.text().catch(()=> '');
             console.error('Save policy failed', resp.status, t);
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Policy';
             return alert('Failed to save policy details');
           }
+          
           const data = await resp.json();
           if (data && data.policy_end_date) {
             const firstEndEl = rowsTbody.querySelector('tr .pc-end');
             if (firstEndEl) firstEndEl.value = data.policy_end_date;
           }
-          alert('Policy details saved');
-          window.location.href = '/html/Approvals.html?uid=' + encodeURIComponent(uid);
+          
+          // Display summary below the form
+          displayPolicySummary(rows, payload);
+          
         } catch (e) {
           console.error(e);
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Policy';
           alert('Failed to save policy details');
         }
       });
+
+      function displayPolicySummary(rows, payload) {
+        const summarySection = document.getElementById('policySummarySection');
+        const summaryContent = document.getElementById('policySummaryContent');
+        
+        if (!summarySection || !summaryContent) return;
+        
+        // Get plan benefits (placeholder for now - implement this properly later)
+        const planBenefits = getPlanBenefits(rows[0].plan);
+        
+        let html = `
+          <div style="background: white; padding: 1rem; border-radius: 6px;">
+            <h3 style="margin-bottom: 0.5rem; color: #495057;">Plan Benefits</h3>
+            ${planBenefits}
+          </div>
+        `;
+        
+        summaryContent.innerHTML = html;
+        summarySection.style.display = 'block';
+        
+        // Disable form inputs (make read-only)
+        document.querySelectorAll('#policyRows input, #policyRows select, #policyRows button').forEach(el => {
+          el.disabled = true;
+        });
+        addRowBtn.disabled = true;
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Policy Saved';
+        
+        // Scroll to summary
+        summarySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      function formatDate(dateStr) {
+        if (!dateStr) return 'N/A';
+        try {
+          const date = new Date(dateStr);
+          return date.toLocaleDateString('en-IN', { 
+            day: '2-digit', 
+            month: 'short', 
+            year: 'numeric' 
+          });
+        } catch (e) {
+          return dateStr;
+        }
+      }
+
+      function getPlanBenefits(planName) {
+        // PLACEHOLDER: This will be replaced with actual plan data lookup
+        // (just for now!!!) return a generic template
+        
+        if (!planName) {
+          return '<p style="color: #6c757d;">Plan benefits information not available.</p>';
+        }
+        
+        return `
+          <div style="color: #495057;">
+            <p style="margin-bottom: 0.75rem;">
+              <strong>Selected Plan:</strong> ${planName}
+            </p>
+            <div style="background: #fff3cd; padding: 0.75rem; border-radius: 4px; border-left: 4px solid #ffc107; margin-bottom: 1rem;">
+              <p style="margin: 0; color: #856404;">
+                <i class="fas fa-info-circle"></i> Please refer to your policy documents for complete plann details.
+              </p>
+            </div>
+            <ul style="margin: 0; padding-left: 1.5rem;">
+              <li>the first benefit</li>
+              <li>the second benefit</li>
+              <li>the third benefit</li>
+              <li>the fourth benefit</li>
+              <li>the fifth benefit</li>
+            </ul>
+          </div>
+        `;
+      }
 
     })();
   </script>

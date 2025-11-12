@@ -1,19 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supervisor Dashboard</title>
+    <title>Supervisor Approve</title>
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
     <link rel="stylesheet" href="../css/style_1.css">
     <link rel="stylesheet" href="../css/supervisor_style.css">
+    <link rel="stylesheet" href="../css/common.css">
     <script defer src="{{ url_for('static', filename='js/plan_selection_summary_v2.js') }}"></script>
     <style>
         /* Ensure page can scroll */
-        body { overflow-y: auto; }
+        body { overflow-y: auto !important;}
         /* Constrain main content height */
-        main.supervisor-dashboard { max-height: 100vh; overflow-y: auto; }
+        main.supervisor-dashboard { overflow: visible !important; }
         /* Make client-details panel scrollable */
         .client-details { max-height: 80vh; overflow-y: auto; }
         /* Hide old Agent Search */
@@ -118,18 +120,12 @@
         .mini-card .value { font-size:1.4rem; font-weight:600; }
     </style>
 </head>
-<body>
+<body data-sidebar="supervisor-form">
     <!-- watermark removed -->
 
-    <main class="login-container supervisor-dashboard">
+    <main class="main-content login-container supervisor-dashboard">
         <header class="page-header">
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
-            <h1>Supervisor Dashboard</h1>
-            <div class="header-actions">
-                <span>Supervisor ID: SUPERVISOR01</span>
-                <button class="btn btn-logout">Logout</button>
-            </div>
+            <h1>Supervisor Approve</h1>
         </header>
 
         <div class="dashboard-main">
@@ -199,6 +195,8 @@
         </div>
     </main>
     <div id="toast-notification" class="toast"></div>
+    <script src="../js/sidebar.js"></script>
+
 <script>
     // --- Helper Functions ---
     function showToast(message) {
@@ -384,7 +382,7 @@
             });
         });
 
-        // JSON-backed 3-column summary renderer (supervisor mode)
+        // JSON-backed 3-column summary renderer 
         try {
             const host = document.getElementById('selection-summary-matrix');
             if (host) {
@@ -620,6 +618,40 @@
                 }
             });
         }
+        // --- Auto-run search when uid is provided in the URL ---
+        // Put this after the searchBtn click listener is attached (inside the same DOMContentLoaded block)
+        (function autoSearchFromQuery() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const uidParam = params.get('uid');
+                if (!uidParam) return;
+
+                // Prefill input
+                if (searchInput) {
+                    searchInput.value = uidParam;
+                }
+
+                // Small delay to let UI initialize (ensures click handler exists)
+                setTimeout(() => {
+                    // Debug log (remove if not wanted)
+                    console.log('Supervisor_Form: auto-searching for uid:', uidParam);
+
+                    // If the search button exists, trigger the click which runs the existing handler
+                    if (searchBtn) {
+                        // Only trigger if input is not empty (defensive)
+                        if ((searchInput?.value || '').trim()) {
+                            searchBtn.click();
+                        }
+                    } else {
+                        // If searchBtn missing for some reason, you can call the handler directly
+                        console.warn('Supervisor_Form: searchBtn not found — cannot auto-click. Check element IDs.');
+                    }
+                }, 60);
+            } catch (e) {
+                console.error('Auto-search error:', e);
+            }
+        })();
+
 
         // Decision modal logic
         const modal = document.getElementById('decision-modal');
@@ -985,7 +1017,7 @@
                 summaryEl.innerHTML = renderMiniSummary(sum);
                 const rows = data.map(c => [
                     c.name || '-',
-                    c.unique_id ? `<a href="/html/Existing_User_Request_Page.html?uid=${encodeURIComponent(c.unique_id)}">${c.unique_id}</a>` : '-',
+                    c.unique_id ? `<a href="/html/Existing_Applicant_Request_Form.html?uid=${encodeURIComponent(c.unique_id)}">${c.unique_id}</a>` : '-',
                     c.agent || '-',
                     c.supervisor_status || '-'
                 ]);
@@ -1013,8 +1045,28 @@
                 if (type === 'supervisors') return showSupervisors();
             });
         });
+        // Get the query parameters
+        const params = new URLSearchParams(window.location.search);
+        const uniqueId = params.get('uid'); // grabs the 'uid' value
+
+        if (uniqueId) {
+            // Find the input element and set its value
+            const input = document.getElementById('uniqueIdInput');
+            if (input) {
+                input.value = uniqueId;
+            }
+
+            // Optionally, trigger a search automatically
+            // triggerSearch(uniqueId); // if you have a function that performs the search
+        }
     });
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+});
+</script>
+
 </body>
 </html>
 

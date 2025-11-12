@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Primary Contact
     if (summaryData.primaryContact) {
-        html += createSection('Primary Contact', summaryData.primaryContact);
+        html += createSection('Applicant Details', summaryData.primaryContact);
     }
 
     // Self Health Details

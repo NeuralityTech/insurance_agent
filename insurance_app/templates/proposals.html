@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neurality - Proposals</title>
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <div class="logo-placeholder">N</div>
+                <span class="logo-text">Neurality</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            <a href="proposals.html" class="nav-item active">
+                <i class="fas fa-file-alt"></i>
+                <span class="nav-text">Proposals</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-role">
+                <i class="fas fa-user-circle"></i>
+                <span class="role-text" id="userRole">Administrator</span>
+            </div>
+            <button class="btn-logout" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="logout-text">Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>Proposals</h1>
+                    <p>View and manage all insurance proposals</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Proposals Table -->
+        <section class="table-section">
+            <div class="table-header">
+                <h2>All Proposals</h2>
+                <div class="table-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Search by name, ID, or agent...">
+                    </div>
+                    <select id="statusFilter" class="status-filter">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="denied">Denied</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="proposals-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Unique ID</th>
+                            <th>Agent</th>
+                            <th>Application Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="proposalsTableBody">
+                        <!-- Data will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="../js/dashboard.js"></script>
+</body>
+</html>
