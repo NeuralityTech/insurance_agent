@@ -381,7 +381,6 @@
                 
                 const normalizedStatus = (applicationStatus || '').toUpperCase().trim();
                 
-                // Show based only on application status, not user role
                 const showCreateButton = normalizedStatus === 'WITH_UW';
                 const showViewSummaryButton = normalizedStatus === 'POLICY_CREATED';
                 
