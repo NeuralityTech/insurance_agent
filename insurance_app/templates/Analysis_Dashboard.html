@@ -1,34 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Disabled page logo: removing CSS/JS that injects the brand image -->
-    <!-- <link rel="stylesheet" href="/static/css/logo.css"> -->
-    <!-- <script defer src="/static/js/logo.js"></script> -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plan Analysis Dashboard - {{ unique_id }}</title>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/top_bar.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/analysis_dashboard.css') }}">
+
+    <!-- Sidebar CSS-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <script defer src="{{ url_for('static', filename='js/plan_selection_summary_v2.js') }}"></script>
     <style>
-        /* Match status box styling used in Existing_Applicant_Request_Form.html */
         .comment-box { border:1px solid #ccc; padding:8px; min-height:40px; background:#fff; }
     </style>
 </head>
-<body>
-    <header class="top-bar">
-    <!-- Disabled duplicate logo includes in header -->
-    <!-- <link rel="stylesheet" href="/static/css/logo.css"> -->
-    <!-- <script defer src="/static/js/logo.js"></script> -->
-        <div class="user-info">
-            Logged in as: <span id="logged-in-user" class="user-id"></span>
-        </div>
-        <div class="right-actions">
-            <button id="btn-home" class="btn">Home</button>
-            <button id="logout-btn" class="btn btn-logout">Logout</button>
-        </div>
-    </header>
+<body data-sidebar="existing-applicant">
+
+
     <script type="application/json" id="client-data-json">{{ (client_data or {})|tojson|safe }}</script>
     <script type="application/json" id="analysis-data-json">{{ (analysis or {})|tojson|safe }}</script>
     <script type="application/json" id="supervisor-status-json">{{ (supervisor_status or "")|tojson|safe }}</script>
@@ -131,6 +122,9 @@
             </button>
         </div>
     </div>
+
+    <!-- Sidebar injector (must run before the page scripts that depend on injected DOM elements) -->
+    <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
 
     <script src="{{ url_for('static', filename='js/analysis_dashboard.js') }}" defer></script>
     <script>
@@ -489,38 +483,29 @@
         async function renderSummaryFromJson(mode){
             const uid = await getUidForSummary();
             if (!uid || !summaryHost) return;
+            
             try {
-                const data = await fetchPlanSummary(uid);
-                // Always render from the latest dataset
-                let dataset = data || {};
-                let proposed = dataset.proposed || {};
-                // Auto-init JSON if empty
-                if (!proposed || Object.keys(proposed).length === 0){
-                    try {
-                        proposed = buildProposedFromPage();
-                        const agentSelected = Array.from(document.querySelectorAll('.plan-options-section .plan-checkbox:checked')).map(cb => cb.getAttribute('data-plan-name'));
-                        await fetch(`/plan_summary/${encodeURIComponent(uid)}/init_or_update`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ proposed, agent_selected: agentSelected })
-                        });
-                    } catch(e) { /* ignore init errors */ }
-                    // Refetch after init
-                    try {
-                        const refreshed = await fetchPlanSummary(uid);
-                        dataset = refreshed || dataset;
-                        proposed = (refreshed && refreshed.proposed) || proposed;
-                    } catch {}
+                // CRITICAL: Always build fresh proposed from current page state
+                const proposed = buildProposedFromPage();
+                
+                // CRITICAL: Always read agent selections from LIVE DOM state, not stale JSON
+                const liveAgentSelections = Array.from(document.querySelectorAll('.plan-options-section .plan-checkbox:checked'))
+                    .map(cb => cb.getAttribute('data-plan-name'));
+                const agentSel = new Set(liveAgentSelections);
+                
+                // For supervisor and client selections, fetch from backend if available
+                let supSel = new Set();
+                let clientSel = new Set();
+                
+                try {
+                    const data = await fetchPlanSummary(uid);
+                    supSel = new Set((data && data.supervisor_selected) || []);
+                    clientSel = new Set((data && data.client_agreed) || []);
+                } catch(e) {
+                    console.warn('Could not fetch saved supervisor/client selections:', e);
                 }
-                // Prefer agent selections from refreshed dataset; fallback to live DOM if empty
-                let agentSelArr = (dataset && dataset.agent_selected) || [];
-                if (!agentSelArr || agentSelArr.length === 0) {
-                    agentSelArr = Array.from(document.querySelectorAll('.plan-options-section .plan-checkbox:checked'))
-                                        .map(cb => cb.getAttribute('data-plan-name'));
-                }
-                const agentSel = new Set(agentSelArr);
-                const supSel = new Set((dataset && dataset.supervisor_selected) || []);
-                const clientSel = new Set((dataset && dataset.client_agreed) || []);
+                
+                // Render with live data
                 window.renderPlanSelectionSummary(summaryHost, {
                     proposed,
                     agentSel,
@@ -528,8 +513,21 @@
                     clientSel,
                     mode: mode || 'analysis'
                 });
+                
+                // Log current state for debugging
+                console.log('[PlanSelectionSummary] Rendered with:', {
+                    uid,
+                    proposed: Object.keys(proposed),
+                    agentSelected: Array.from(agentSel),
+                    supervisorSelected: Array.from(supSel),
+                    clientAgreed: Array.from(clientSel)
+                });
+                
             } catch(e) {
-                console.warn('Summary render failed:', e);
+                console.error('Summary render failed:', e);
+                if (summaryHost) {
+                    summaryHost.innerHTML = '<p style="color:red;">Failed to load plan summary. Please try again.</p>';
+                }
             }
         }
 

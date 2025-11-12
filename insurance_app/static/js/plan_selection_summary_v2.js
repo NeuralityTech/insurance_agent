@@ -140,9 +140,9 @@
 
       if (!plans.length){
 
-        const noCells = ['<span style=\"color:#888;\">No plans</span>', '<span style=\"color:#bbb;\">â€”</span>'];
+        const noCells = ['<span style=\"color:#888;\">No plans</span>', '<span style=\"color:#bbb;\">—”</span>'];
 
-        if (mode === 'supervisor' || mode === 'approvals') noCells.push('<span style=\"color:#bbb;\">â€”</span>');
+        if (mode === 'supervisor' || mode === 'approvals') noCells.push('<span style=\"color:#bbb;\">—”</span>');
 
         if (mode === 'approvals') noCells.push('<span style=\"color:#bbb;\">â€”</span>');
 
