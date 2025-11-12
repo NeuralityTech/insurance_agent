@@ -57,6 +57,7 @@
 
             <div class="form-actions">
                 <button type="button" id="preview-btn" class="btn">Submit</button>
+                <button type="reset" id="reset-btn" class="btn btn-secondary">Reset</button>
                 <button type="button" id="create-policy-btn" class="btn" style="display: none; background-color: #10b981;">
                     <i class="fas fa-file-contract" style="margin-right: 6px;"></i>
                     Create Policy
@@ -76,8 +77,6 @@
     <script src="../js/member_management.js"></script>
     <script src="../js/disease_details.js"></script>
     <script src="../js/comments_noted.js"></script>
-    <script src="../js/occupation_data.js"></script>
-    <script src="../js/occupation_dropdown.js"></script>
     <script src="../js/progress_bar.js" defer></script>
     <script src="../js/existing_prefill.js"></script>
     <script src="../js/script.js" defer></script>
@@ -127,6 +126,7 @@
             const idInput = document.getElementById('load-unique-id');
             const form = document.getElementById('insurance-form');
             const previewBtn = document.getElementById('preview-btn');
+            const resetBtn = document.getElementById('reset-btn');
 
             function setActionButtonsEnabled(enabled) {
                 if (previewBtn) previewBtn.disabled = !enabled;
