@@ -7,7 +7,8 @@
   // Create and inject sidebar HTML
   function createSidebar(activePage = 'dashboard') {
     const userRole = localStorage.getItem('userRole') || 'agent';
-    const isAdmin = userRole.toLowerCase() === 'admin' || userRole.toLowerCase() === 'superadmin';
+    const isAdmin = userRole.toLowerCase() === 'admin';
+    const isSuperAdmin = userRole.toLowerCase() === 'superadmin';
     
     const sidebarHTML = `
       <aside class="sidebar" id="sidebar">
@@ -23,13 +24,17 @@
         </div>
 
         <nav class="sidebar-nav">
-          ${isAdmin ? `
+          ${isSuperAdmin ? `
+          <a href="/superadmin/dashboard" class="nav-item ${activePage === 'superadmin-dashboard' ? 'active' : ''}">
+            <i class="fas fa-crown"></i>
+            <span>Super Admin Dashboard</span>
+          </a>
+          ` : isAdmin ? `
           <a href="/admin/dashboard" class="nav-item ${activePage === 'admin-dashboard' ? 'active' : ''}">
             <i class="fas fa-tools"></i>
             <span>Admin Dashboard</span>
           </a>
-          ` : ''}
-          
+          ` : `
           <a href="/html/dashboard.html" class="nav-item ${activePage === 'dashboard' ? 'active' : ''}">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
@@ -46,6 +51,7 @@
             <i class="fas fa-edit"></i>
             <span>Existing Applicant</span>
           </a>
+          `}
         </nav>
 
         <div class="sidebar-footer">
@@ -100,8 +106,10 @@
       userRoleElement.textContent = userRole;
     }
 
-    // Add Supervisor Form link if role is supervisor
-    if (userRole && userRole.toLowerCase() === 'supervisor') {
+    // Add Supervisor Form link if role is supervisor (only for non-admin/non-superadmin users)
+    const isAdmin = userRole && userRole.toLowerCase() === 'admin';
+    const isSuperAdmin = userRole && userRole.toLowerCase() === 'superadmin';
+    if (userRole && userRole.toLowerCase() === 'supervisor' && !isAdmin && !isSuperAdmin) {
       const sidebarNav = document.querySelector('.sidebar-nav');
       if (sidebarNav) {
         const existingApplicantLink = sidebarNav.querySelector('a[href="/html/Existing_Applicant_Request_Form.html"]');

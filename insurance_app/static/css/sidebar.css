@@ -144,12 +144,12 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.875rem 1.5rem;
+  padding: 0.875rem 1.0rem;
   color: var(--text-muted);
   text-decoration: none;
   transition: var(--transition);
   font-weight: 500;
-  margin: 0.25rem 0.75rem;
+  margin: 0.25rem 0.55rem;
   border-radius: 8px;
   cursor: pointer;
 }

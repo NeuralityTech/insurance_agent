@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Policy Creation</title>
+  <link rel="icon" href="/static/img/icon.png" type="image/png">
   <link rel="stylesheet" href="../css/common.css" />
   <link rel="stylesheet" href="../css/sidebar.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -483,74 +484,89 @@
       // Removed Cancel button; Back to Approvals available in header
 
       saveBtn.addEventListener('click', async function(){
-        // Extract rows
-        const rows = Array.from(rowsTbody.querySelectorAll('tr')).map(tr => ({
-          policy_number: tr.querySelector('.pc-number')?.value.trim() || '',
-          member_number: tr.querySelector('.pc-member-number')?.value.trim() || '',
-          member_name: tr.querySelector('.pc-member-name')?.value || '',
-          plan: tr.querySelector('.pc-plan')?.value || '',
-          policy_start_date: tr.querySelector('.pc-start')?.value || '',
-          policy_period_months: parseInt(tr.querySelector('.pc-period')?.value || '12', 10),
-          policy_end_date: tr.querySelector('.pc-end')?.value || ''
-        }));
-        
-        if (!rows.length) { return alert('Please add at least one row.'); }
-        
-        const first = rows[0];
-        if (!first.policy_number || !first.member_number || !first.member_name || !first.policy_start_date) {
-          return alert('Please fill all required fields in the first row.');
-        }
-        
-        const payload = {
-          unique_id: uid,
-          policy_number: first.policy_number,
-          policy_name: '',
-          member_number: first.member_number,
-          member_name: first.member_name,
-          policy_start_date: first.policy_start_date,
-          policy_period_months: first.policy_period_months,
-          close_comments: (document.getElementById('appComments')?.value || '').trim(),
-          policy_details: JSON.stringify({ rows })
-        };
-        
-        // Disable button during save
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'Saving...';
-        
-        try {
-          const resp = await fetch('/api/agent/policy_details', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json', 
-              'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown') 
-            },
-            body: JSON.stringify(payload)
-          });
-          
-          if (!resp.ok) {
-            const t = await resp.text().catch(()=> '');
-            console.error('Save policy failed', resp.status, t);
-            saveBtn.disabled = false;
-            saveBtn.textContent = 'Save Policy';
-            return alert('Failed to save policy details');
-          }
-          
-          const data = await resp.json();
-          if (data && data.policy_end_date) {
-            const firstEndEl = rowsTbody.querySelector('tr .pc-end');
-            if (firstEndEl) firstEndEl.value = data.policy_end_date;
-          }
-          
-          // Display summary below the form
-          displayPolicySummary(rows, payload);
-          
-        } catch (e) {
-          console.error(e);
-          saveBtn.disabled = false;
-          saveBtn.textContent = 'Save Policy';
-          alert('Failed to save policy details');
-        }
-      });
+              // First, remove any completely empty rows
+              const allRows = Array.from(rowsTbody.querySelectorAll('tr'));
+              allRows.forEach(tr => {
+                const policyNum = tr.querySelector('.pc-number')?.value.trim() || '';
+                const memberNum = tr.querySelector('.pc-member-number')?.value.trim() || '';
+                const memberName = tr.querySelector('.pc-member-name')?.value || '';
+                const plan = tr.querySelector('.pc-plan')?.value || '';
+                const startDate = tr.querySelector('.pc-start')?.value || '';
+                
+                // If all fields are empty, remove the row
+                if (!policyNum && !memberNum && !memberName && !plan && !startDate) {
+                  tr.remove();
+                }
+              });
+              
+              // Extract remaining rows
+              const rows = Array.from(rowsTbody.querySelectorAll('tr')).map(tr => ({
+                policy_number: tr.querySelector('.pc-number')?.value.trim() || '',
+                member_number: tr.querySelector('.pc-member-number')?.value.trim() || '',
+                member_name: tr.querySelector('.pc-member-name')?.value || '',
+                plan: tr.querySelector('.pc-plan')?.value || '',
+                policy_start_date: tr.querySelector('.pc-start')?.value || '',
+                policy_period_months: parseInt(tr.querySelector('.pc-period')?.value || '12', 10),
+                policy_end_date: tr.querySelector('.pc-end')?.value || ''
+              }));
+              
+              if (!rows.length) { return alert('Please add at least one row with data.'); }
+              
+              const first = rows[0];
+              if (!first.policy_number || !first.member_number || !first.member_name || !first.policy_start_date) {
+                return alert('Please fill all required fields in the first row.');
+              }
+              
+              const payload = {
+                unique_id: uid,
+                policy_number: first.policy_number,
+                policy_name: '',
+                member_number: first.member_number,
+                member_name: first.member_name,
+                policy_start_date: first.policy_start_date,
+                policy_period_months: first.policy_period_months,
+                close_comments: (document.getElementById('appComments')?.value || '').trim(),
+                policy_details: JSON.stringify({ rows })
+              };
+              
+              // Disable button during save
+              saveBtn.disabled = true;
+              saveBtn.textContent = 'Saving...';
+              
+              try {
+                const resp = await fetch('/api/agent/policy_details', {
+                  method: 'POST',
+                  headers: { 
+                    'Content-Type': 'application/json', 
+                    'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown') 
+                  },
+                  body: JSON.stringify(payload)
+                });
+                
+                if (!resp.ok) {
+                  const t = await resp.text().catch(()=> '');
+                  console.error('Save policy failed', resp.status, t);
+                  saveBtn.disabled = false;
+                  saveBtn.textContent = 'Save Policy';
+                  return alert('Failed to save policy details');
+                }
+                
+                const data = await resp.json();
+                if (data && data.policy_end_date) {
+                  const firstEndEl = rowsTbody.querySelector('tr .pc-end');
+                  if (firstEndEl) firstEndEl.value = data.policy_end_date;
+                }
+                
+                // Display summary below the form
+                displayPolicySummary(rows, payload);
+                
+              } catch (e) {
+                console.error(e);
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Policy';
+                alert('Failed to save policy details');
+              }
+            });
 
       function displayPolicySummary(rows, payload) {
         const summarySection = document.getElementById('policySummarySection');
@@ -612,7 +628,7 @@
             </p>
             <div style="background: #fff3cd; padding: 0.75rem; border-radius: 4px; border-left: 4px solid #ffc107; margin-bottom: 1rem;">
               <p style="margin: 0; color: #856404;">
-                <i class="fas fa-info-circle"></i> Please refer to your policy documents for complete plann details.
+                <i class="fas fa-info-circle"></i> Please refer to your policy documents for complete plan details.
               </p>
             </div>
             <ul style="margin: 0; padding-left: 1.5rem;">

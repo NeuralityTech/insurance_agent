@@ -285,21 +285,39 @@
         // --- Aliases ---
         const aliases = {
             'APPLICATION_FILLED': 'OPEN',
-            'SUP_REJECTED': 'SUP_APPROVED',
             'SUP_REVIEW': 'SUBMITTED',
             'UW_APPROVED': 'WITH_UW',
             'UNDERWRITER_REVIEW': 'WITH_UW',
             'UW_REJECTED': 'WITH_UW',
             'CLIENT_APPROVED': 'CLIENT_AGREED',
-            'CLOSED': 'POLICY_CREATED',
-            'POLICY_DENIED': 'POLICY_CREATED'
+            'CLOSED': 'POLICY_CREATED'
         };
 
-        const resolved = aliases[normalized] || normalized;
+        // Resolve status for index calculation
+        let resolved = normalized;
+        if (normalized === 'SUP_REJECTED') {
+            resolved = 'SUBMITTED';
+        } else if (normalized === 'POLICY_DENIED') {
+            resolved = 'POLICY_CREATED';
+        } else {
+            resolved = aliases[normalized] || normalized;
+        }
+
         const currentIndex = stepOrder.indexOf(resolved);
 
         // --- Reset all states ---
         steps.forEach(step => step.classList.remove('completed', 'active'));
+
+        // Handle POLICY_DENIED - change last step label
+        const lastStep = steps[steps.length - 1];
+        const lastLabel = lastStep ? lastStep.querySelector('.progress-label') : null;
+        if (lastLabel) {
+            if (normalized === 'POLICY_DENIED') {
+                lastLabel.textContent = 'Policy Denied';
+            } else {
+                lastLabel.textContent = 'Policy Created';
+            }
+        }
 
         // --- Apply new states ---
         if (currentIndex >= 0) {
@@ -307,10 +325,10 @@
                 if (index <= currentIndex) step.classList.add('completed'); // mark current as completed too
             });
 
-            // Set *next* stage as active, unless we're at the last one
+            // Set 'next' stage as active
             if (currentIndex < steps.length - 1) {
-                    const nextIndex = currentIndex + 1;
-                    steps[nextIndex].classList.add('active');
+                const nextIndex = currentIndex + 1;
+                steps[nextIndex].classList.add('active');
             }
 
             // --- Custom percentage mapping ---
@@ -325,7 +343,5 @@
             steps[0].classList.add('active');
         }
     };
-
-
 
 })();

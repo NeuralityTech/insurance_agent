@@ -1,15 +1,18 @@
 {
-  "unique_id": "Dan_9123124124",
+  "unique_id": "Oliver_9123123123",
   "proposed": {
     "comprehensive_cover": {
-      "name": "Family",
+      "name": "comprehensive_cover",
       "plans": [
         "Young Star Silver Plan",
-        "Young Star Gold Plan"
+        "Young Star Gold Plan",
+        "Medi Classic Standard Plan",
+        "Medi Classic Gold Plan",
+        "Arogya Sanjeevani Policy"
       ]
     },
     "member1": {
-      "name": "Dan",
+      "name": "Oliver",
       "plans": [
         "Young Star Silver Plan",
         "Young Star Gold Plan",
@@ -23,9 +26,10 @@
     "Young Star Silver Plan"
   ],
   "supervisor_selected": [
-    "Young Star Silver Plan"
+    "Young Star Gold Plan"
   ],
   "client_agreed": [
-    "Young Star Silver Plan"
+    "Young Star Silver Plan",
+    "Young Star Gold Plan"
   ]
 }

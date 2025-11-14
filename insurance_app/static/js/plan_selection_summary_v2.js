@@ -94,9 +94,9 @@
 
             '<th style="border:1px solid #ddd; padding:8px; text-align:left;">System proposed plans</th>'+
 
-            '<th style="border:1px solid #ddd; padding:8px; text-align:left;">Agent selected plans</th>'+
+            '<th style="border:1px solid #ddd; padding:8px; text-align:left;">Agent selected plan(s)</th>'+
 
-            ((mode === 'supervisor' || mode === 'approvals') ? '<th style="border:1px solid #ddd; padding:8px; text-align:left;">Supervisor approved plans</th>' : '')+
+            ((mode === 'supervisor' || mode === 'approvals') ? '<th style="border:1px solid #ddd; padding:8px; text-align:left;">Supervisor approved plan(s)</th>' : '')+
 
             (mode === 'approvals' ? '<th style="border:1px solid #ddd; padding:8px; text-align:left;">Client Agreed plan(s)</th>' : '')+
 

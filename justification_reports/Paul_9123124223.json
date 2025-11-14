@@ -3,9 +3,7 @@
         {
             "plan_name": "Smart Health Pro",
             "policy_code": "MIX_2_3",
-            "proposed_for": [
-                "Paul"
-            ],
+            "proposed_for": [],
             "reason_for_proposal": "Proposed for members with needs: GENERAL",
             "family_fit_check_result": "Passed",
             "ailment_score": 1.0,
@@ -13,14 +11,12 @@
                 "Paul": 1.0
             },
             "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
-            "ai_reasoning": "This plan offers a perfect match for Paul's general health needs and passed the family fit check."
+            "ai_reasoning": "This plan offers a perfect match for Paul's general health needs, and it passed the family fit check."
         },
         {
             "plan_name": "Young Star Silver Plan",
             "policy_code": "MIX_1_1",
-            "proposed_for": [
-                "Paul"
-            ],
+            "proposed_for": [],
             "reason_for_proposal": "Proposed for members with needs: GENERAL",
             "family_fit_check_result": "Passed",
             "ailment_score": 1.0,
@@ -28,14 +24,12 @@
                 "Paul": 1.0
             },
             "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
-            "ai_reasoning": "This plan offers a perfect match for Paul's general health needs and passed the family fit check."
+            "ai_reasoning": "This plan provides a perfect match for Paul's general health requirements, and it successfully passed the family fit check."
         },
         {
             "plan_name": "Young Star Gold Plan",
             "policy_code": "MIX_1_1",
-            "proposed_for": [
-                "Paul"
-            ],
+            "proposed_for": [],
             "reason_for_proposal": "Proposed for members with needs: GENERAL",
             "family_fit_check_result": "Passed",
             "ailment_score": 1.0,
@@ -43,14 +37,12 @@
                 "Paul": 1.0
             },
             "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
-            "ai_reasoning": "This plan also provides a perfect match for Paul's general health requirements and passed the family fit check."
+            "ai_reasoning": "This plan offers a perfect match for Paul's general health needs, and it passed the family fit check."
         },
         {
             "plan_name": "Star Micro Rural and Farmers Care",
             "policy_code": "MIX_2_2",
-            "proposed_for": [
-                "Paul"
-            ],
+            "proposed_for": [],
             "reason_for_proposal": "Proposed for members with needs: GENERAL",
             "family_fit_check_result": "Passed",
             "ailment_score": 1.0,
@@ -58,14 +50,12 @@
                 "Paul": 1.0
             },
             "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
-            "ai_reasoning": "This plan offers a perfect match for Paul's general health needs and passed the family fit check."
+            "ai_reasoning": "This plan aligns perfectly with Paul's general health needs, and it passed the family fit evaluation."
         },
         {
             "plan_name": "Accident Care Individual Insurance Policy",
             "policy_code": "MIX_1_gt0",
-            "proposed_for": [
-                "Paul"
-            ],
+            "proposed_for": [],
             "reason_for_proposal": "Proposed for members with needs: GENERAL",
             "family_fit_check_result": "Failed",
             "ailment_score": 1.0,
@@ -73,7 +63,7 @@
                 "Paul": 1.0
             },
             "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
-            "ai_reasoning": "Although Paul has a perfect match for his general health needs, this plan failed the family fit check."
+            "ai_reasoning": "This plan provides a perfect match for Paul's general health needs. However, it failed the family fit check, indicating it is not suitable for the entire family unit."
         }
     ],
     "family_composition": {

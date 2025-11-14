@@ -1,54 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Update Existing User</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/create_user.css') }}">
+    <link rel="icon" href="/static/img/icon.png" type="image/png">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/sidebar.css">
+    <link rel="stylesheet" href="/static/css/create_user.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-    <header class="top-bar">
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
-        <div class="user-info">
-            Logged in as: <span class="user-id">superadmin</span>
-        </div>
-        <div class="header-buttons">
-            <a href="/superadmin/dashboard" class="btn btn-home">Home</a>
-            <a href="/logout" class="btn btn-logout">Logout</a>
-        </div>
-    </header>
-    <div class="container">
-        <header class="page-header">
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
-            <h1>Update Existing User</h1>
-            <p>Modify user roles, supervisors, and other details.</p>
+<body data-sidebar="superadmin-dashboard">
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Header Section -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div>
+                    <h1 class="page-title">Update Existing User</h1>
+                    <p class="page-subtitle">Modify user roles, supervisors, and other details</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="user-badge">
+                    <i class="fas fa-user-shield"></i>
+                    <span id="loggedInUser">Super Admin</span>
+                </div>
+            </div>
         </header>
 
-        <form id="update-user-form">
-            <div class="form-group">
-                <label for="search_user_id">Search by User ID</label>
-                <input type="text" id="search_user_id" name="search_user_id" placeholder="Enter User ID to find user">
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="search-header">
+                <i class="fas fa-search"></i>
+                <h2>Find User</h2>
             </div>
-            <div class="form-actions">
-                <button type="button" id="search-btn" class="btn">Search</button>
+            <form id="update-user-form">
+                <div class="search-container">
+                    <div class="form-group">
+                        <label for="search_user_id">User ID</label>
+                        <input type="text" id="search_user_id" name="search_user_id" placeholder="Enter User ID to search">
+                    </div>
+                    <button type="button" id="search-btn" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                        Search
+                    </button>
+                </div>
+            </form>
+            <div class="form-actions" style="border-top: none; padding-top: 1rem; margin-top: 1rem;">
+                <a href="/superadmin/dashboard" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Dashboard
+                </a>
             </div>
-        </form>
+        </section>
 
-        <div id="user-details-container" class="is-hidden">
-            <hr>
-            <h2>User Details</h2>
+        <!-- User Details Section -->
+        <section class="form-section is-hidden" id="user-details-container">
+            <div class="section-header">
+                <i class="fas fa-user-edit"></i>
+                <h2>User Details</h2>
+            </div>
+            
             <form id="user-update-form">
                 <!-- User details will be populated here by JavaScript -->
             </form>
 
-            <div id="reset-password-section" style="margin-top: 2rem;">
-                <hr>
-                <h2>Reset Password</h2>
+            <!-- Password Reset Section -->
+            <div id="reset-password-section">
+                <div class="section-header">
+                    <i class="fas fa-key"></i>
+                    <h2>Reset Password</h2>
+                </div>
                 <form id="reset-password-form">
                     <div class="form-row">
                         <div class="form-group">
@@ -62,15 +88,22 @@
                             <div class="error-message"></div>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-logout">Reset Password</button>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-key"></i>
+                            Reset Password
+                        </button>
+                    </div>
                 </form>
             </div>
-        </div>
+        </section>
 
         <div id="message-container"></div>
-    </div>
+    </main>
 
+    <!-- Load sidebar component -->
+    <script src="/static/js/sidebar.js"></script>
+    
     <script src="{{ url_for('static', filename='js/update_user.js') }}"></script>
 </body>
 </html>
-

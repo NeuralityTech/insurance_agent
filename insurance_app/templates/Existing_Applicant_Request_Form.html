@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Existing Applicant Request Form</title>
+    <link rel="icon" href="/static/img/icon.png" type="image/png">
     <link rel="stylesheet" href="../css/common.css">
     <link rel="stylesheet" href="../css/sidebar.css">
     <link rel="stylesheet" href="../css/health_history.css">
@@ -58,14 +59,6 @@
             <div class="form-actions">
                 <button type="button" id="preview-btn" class="btn">Submit</button>
                 <button type="reset" id="reset-btn" class="btn btn-secondary">Reset</button>
-                <button type="button" id="create-policy-btn" class="btn" style="display: none; background-color: #10b981;">
-                    <i class="fas fa-file-contract" style="margin-right: 6px;"></i>
-                    Create Policy
-                </button>
-                <button type="button" id="view-policy-summary-btn" class="btn" style="display: none; background-color: #10b981;">
-                    <i class="fas fa-file-alt" style="margin-right: 6px;"></i>
-                    View Policy Summary
-                </button>
                 <div id="last-modified-container" class="last-modified-inline"></div>
             </div>
         </form>
@@ -85,6 +78,7 @@
     <script src="../js/data_fetch.js" defer></script>
 
     <script>
+
         function formatTimestampForDisplay(timestampStr) {
             if (!timestampStr) return '—';
             
@@ -119,6 +113,204 @@
             } catch (e) {
                 console.warn('Error formatting timestamp:', e);
                 return timestampStr;
+            }
+        }
+
+        const ROLE_STATUS = {
+            OPEN_DRAFT: ['OPEN', ''],                 // OPEN or empty -> draft/open
+            SUBMITTED: ['SUP_REVIEW'],                // submitted for review (supervisor reviewing)
+            SUPERVISOR_REJECTED: ['SUP_REJECTED'],    // supervisor has rejected
+            SUPERVISOR_APPROVED: ['SUP_APPROVED'],    // supervisor has approved, pending client
+            CLIENT_APPROVED: ['client_approved'],     // client agreed
+            WITH_UW: ['With_UW'],                     // underwriter stage
+            POLICY_CREATED: ['Policy_Created', 'Policy created'] // normalize capitalization variants
+        };
+
+        // Normalize any incoming status value into a trimmed string
+        function _normalize(s) {
+            if (s === null || s === undefined) return '';
+            return String(s).trim();
+        }
+
+        // Returns true if applicant details should be editable by the role at the given status
+        function _isApplicantEditable(role, statusStr) {
+            const roleL = (role || '').toLowerCase();
+            const status = _normalize(statusStr);
+
+            // AGENT: editable only when OPEN (i.e. before 'Submitted for Review') or when SUPERVISOR_REJECTED
+            if (roleL === 'agent') {
+                if (ROLE_STATUS.OPEN_DRAFT.includes(status) || ROLE_STATUS.SUPERVISOR_REJECTED.includes(status)) {
+                    return true;
+                }
+                return false;
+            }
+
+            // SUPERVISOR: editable only during OPEN or SUP_REVIEW
+            if (roleL === 'supervisor') {
+                if (ROLE_STATUS.OPEN_DRAFT.includes(status) || ROLE_STATUS.SUBMITTED.includes(status)) return true;
+                return false;
+            }
+
+            // Other roles (admin, superadmin) do not edit applicant details here
+            return false;
+        }
+
+        // Returns true if agent should be allowed to select plans (SUP_APPROVED stage only)
+        function _canAgentSelectPlans(role, statusStr) {
+            const roleL = (role || '').toLowerCase();
+            const status = _normalize(statusStr);
+            return (roleL === ('agent' || 'supervisor') && ROLE_STATUS.SUPERVISOR_APPROVED.includes(status));
+        }
+        // Returns true if agent or supervisor can submit to UW (CLIENT_APPROVED stage only)
+        function _canSubmitToUnderwriter(role, statusStr) {
+            const roleL = (role || '').toLowerCase();
+            const status = _normalize(statusStr);
+            return (
+                (roleL === 'agent' || roleL === 'supervisor') && 
+                ROLE_STATUS.CLIENT_APPROVED.includes(status)
+            );
+        }
+
+        /* DOM lock/unlock helpers (scoped to #insurance-form so page nav stays functional) */
+        function _lockElement(el) {
+            if (!el) return;
+            const tag = (el.tagName || '').toLowerCase();
+            if (tag === 'input' || tag === 'textarea') {
+                el.setAttribute('readonly', 'readonly');
+            } else if (tag === 'select') {
+                el.disabled = true;
+            } else if (tag === 'button' || tag === 'a') {
+                // mark disabled
+                el.disabled = true;
+                el.setAttribute('aria-disabled', 'true');
+            }
+            el.style.opacity = '0.6';
+            el.style.cursor = 'not-allowed';
+        }
+
+        function _unlockElement(el) {
+            if (!el) return;
+            el.removeAttribute('readonly');
+            el.disabled = false;
+            el.removeAttribute('aria-disabled');
+            el.style.opacity = '';
+            el.style.cursor = '';
+        }
+
+        function _unlockEntireForm() {
+            const form = document.getElementById('insurance-form');
+            if (!form) return;
+            form.querySelectorAll('input,select,textarea,button,a').forEach(_unlockElement);
+        }
+
+        function _lockFormExcept(exceptions = []) {
+            const form = document.getElementById('insurance-form');
+            if (!form) return;
+            const controls = form.querySelectorAll('input,select,textarea,button,a');
+            controls.forEach(el => {
+                for (const ex of exceptions) {
+                    if (!ex) continue;
+                    if (typeof ex === 'string') {
+                        try { if (el.matches && el.matches(ex)) return; } catch(e) {}
+                    } else if (ex instanceof Element) {
+                        if (ex.contains(el)) return;
+                    }
+                }
+                _lockElement(el);
+            });
+        }
+
+        /* Derive the canonical status for decision making from the submission data.
+        Prefer application_status, then supervisor_approval_status, then underwriter_status, then client_status.
+        */
+        function deriveCanonicalStatusFromSubmission(data = {}) {
+            if (!data || typeof data !== 'object') return '';
+            const cand = [
+                data.application_status,
+                data.supervisor_approval_status,
+                data.underwriter_status,
+                data.client_status,
+                data.final_status
+            ];
+            for (const v of cand) {
+                if (v != null && String(v).trim()) return String(v).trim();
+            }
+            return '';
+        }
+
+        /**
+         * Apply role+status restrictions.
+         * role: string e.g., 'agent' | 'supervisor'
+         * submissionData: the fetched submission object (may be {} on initial page load)
+         */
+        function applyRoleAndStatusRestrictions(role, submissionData) {
+            // start from a clean slate
+            _unlockEntireForm();
+
+            const status = deriveCanonicalStatusFromSubmission(submissionData || {});
+            const applicantEditable = _isApplicantEditable(role, status);
+            const agentCanSelectPlans = _canAgentSelectPlans(role, status);
+            const canSubmitToUW = _canSubmitToUnderwriter(role, status);
+
+            // If applicant details editable for this role — leave everything unlocked
+            if (applicantEditable) {
+                return;
+            }
+
+            // Build exceptions to don't lock the navigation; 
+            const exceptions = ['.tab-button', '.tab-navigation', '.btn-next', '.btn-back'];
+
+            if (agentCanSelectPlans) {
+                const plansPanel = document.getElementById('tab-panel-plans-selection');
+                if (plansPanel) exceptions.push(plansPanel);
+                const plansTabBtn = document.getElementById('tab-plans-selection');
+                if (plansTabBtn) exceptions.push(plansTabBtn);
+            }
+
+            // perform the lock 
+            _lockFormExcept(exceptions);
+
+            // Hide reset/preview:
+            ['reset-btn','preview-btn'].forEach(id => {
+                const b = document.getElementById(id);
+                if (b) {
+                    b.classList.add('hidden');
+                    b.disabled = true;
+                }
+            });
+
+            if (ROLE_STATUS.WITH_UW.includes(status)) {
+                const policyDecision = document.getElementById('policy-decision-select');
+                if (policyDecision) {
+                    _unlockElement(policyDecision);
+                }
+            }
+
+            if (ROLE_STATUS.POLICY_CREATED.includes(status)) {
+                const viewBtn = document.getElementById('view-policy-summary-btn');
+                if (viewBtn) {
+                    _unlockElement(viewBtn);
+                }
+            }
+
+            // If agent can select plans, ensure plan controls are explicitly unlocked
+            if (agentCanSelectPlans) {
+                const plansPanel = document.getElementById('tab-panel-plans-selection');
+                if (plansPanel) {
+                    const planControls = plansPanel.querySelectorAll('input[type="checkbox"], .plan-checkbox, .plan-select, input.plan-select');
+                    planControls.forEach(_unlockElement);
+                }
+            }
+            // If the user can submit to UW, ensure the UW controls are unlocked
+            if (canSubmitToUW) {
+                const uwSection = document.getElementById('underwriter-section');
+                if (uwSection) {
+                    const uwControls = uwSection.querySelectorAll(
+                        '#underwriter-approve, #underwriter-comment, #save-underwriter-decision'
+                    );
+                    uwControls.forEach(_unlockElement);
+                    
+                }
             }
         }
 
@@ -215,7 +407,8 @@
             }
 
             const userRole = localStorage.getItem('userRole');
-            applyRoleRestrictions(userRole);
+            applyRoleAndStatusRestrictions(userRole, {}); // no submission data yet; safe initial call
+
 
             function hardResetForm() {
                 try {
@@ -351,98 +544,46 @@
                 footer.style.display = 'block';
             }
 
-            const createPolicyBtn = document.getElementById('create-policy-btn');
-            if (createPolicyBtn) {
-                createPolicyBtn.addEventListener('click', function() {
-                    const uniqueId = (idInput?.value || '').trim();
-                    if (!uniqueId) {
-                        alert('No Unique ID found. Please load an application first.');
-                        return;
-                    }
-                    window.location.href = `/html/Policy_Creation.html?uid=${encodeURIComponent(uniqueId)}`;
-                });
-            }
-
-            const viewSummaryBtn = document.getElementById('view-policy-summary-btn');
-            if (viewSummaryBtn) {
-                viewSummaryBtn.addEventListener('click', function() {
-                    const uniqueId = (idInput?.value || '').trim();
-                    if (!uniqueId) {
-                        alert('No Unique ID found. Please load an application first.');
-                        return;
-                    }
-                    window.location.href = `/html/Policy_Creation.html?uid=${encodeURIComponent(uniqueId)}&view=summary`;
-                });
-            }
-
             function updateWorkflowButtons(applicationStatus, userRole) {
-                const createPolicyBtn = document.getElementById('create-policy-btn');
+                const status = (applicationStatus || '').trim();
+                console.log("Workflow Button Status:", status, "Role:", userRole);
+
+                // Use querySelector to ensure elements are rtrieved when they're in the plans tab
+                const policyDecisionSelect = document.getElementById('policy-decision-select');
+                const policyDecisionLabel = document.getElementById('policy-decision-label');
                 const viewSummaryBtn = document.getElementById('view-policy-summary-btn');
                 
-                if (!createPolicyBtn) return;
-                
+                // Hide/disable everything by default
+                if (policyDecisionSelect) {
+                    policyDecisionSelect.style.display = 'none';
+                    policyDecisionSelect.disabled = true;
+                }
+                if (policyDecisionLabel) { 
+                    policyDecisionLabel.style.display = 'none';
+                }
+                if (viewSummaryBtn) {
+                    viewSummaryBtn.style.display = 'none';
+                }
+
                 const normalizedStatus = (applicationStatus || '').toUpperCase().trim();
                 
-                const showCreateButton = normalizedStatus === 'WITH_UW';
-                const showViewSummaryButton = normalizedStatus === 'POLICY_CREATED';
+                // Show the dropdown when the status is 'With_UW'
+                const showDecisionDropdown = normalizedStatus === 'WITH_UW';
+                // Show the view summary button when the status is 'Policy_Created' or 'Policy_Denied'
+                const showViewSummaryButton = normalizedStatus === 'POLICY_CREATED' || normalizedStatus === 'POLICY_DENIED';
                 
-                createPolicyBtn.style.display = showCreateButton ? 'inline-block' : 'none';
-                if (viewSummaryBtn) {
-                    viewSummaryBtn.style.display = showViewSummaryButton ? 'inline-block' : 'none';
+                if (policyDecisionSelect && showDecisionDropdown) {
+                    policyDecisionSelect.style.display = 'inline-block';
+                    policyDecisionSelect.disabled = false;
                 }
-            }
 
-
-            function applyRoleRestrictions(role) {
-                if (!role) return;
-
-                const userRole = role.toLowerCase();
-                
-                if (userRole === 'agent') {
-                    disableFormEditing();
+                if (policyDecisionLabel && showDecisionDropdown) { 
+                    policyDecisionLabel.style.display = 'inline-block'; 
                 }
-            }
 
-            function disableFormEditing() {
-                const allControls = document.querySelectorAll('input, select, textarea, button, a');
-                const plansTabContent = document.getElementById('tab-panel-plans-selection');
-
-                allControls.forEach(el => {
-                    const id = el.id?.toLowerCase();
-                    const exemptIds = ['primary-contact','btn-load', 'load-unique-id','create-policy-btn', 'view-policy-summary-btn'];
-                    
-                    if (plansTabContent && plansTabContent.contains(el)) {
-                        return; 
-                    }
-                    
-                    if (exemptIds.includes(id) || el.classList.contains('tab-button') || 
-                        el.classList.contains('btn-next') || el.classList.contains('btn-back')) return;
-                    
-                    if (['reset-btn', 'preview-btn'].includes(id)) return;
-
-                    if (el.closest('.sidebar') || el.classList.contains('mobile-menu-btn')) return;
-
-                    const tag = el.tagName.toLowerCase();
-                    if (tag === 'input' || tag === 'textarea') {
-                        el.setAttribute('readonly', 'readonly');
-                        el.style.cursor = 'not-allowed';
-                        el.style.opacity = '0.6';
-                        el.style.backgroundColor = '#f5f5f5';
-                    } else if (tag === 'select') {
-                        el.disabled = true;
-                        el.style.cursor = 'not-allowed';
-                        el.style.opacity = '0.6';
-                    } else if (tag === 'button' || tag === 'a') {
-                        el.disabled = true;
-                        el.style.cursor = 'not-allowed';
-                        el.style.opacity = '0.6';
-                    }
-                });
-
-                ['reset-btn', 'preview-btn'].forEach(btnId => {
-                    const btn = document.getElementById(btnId);
-                    if (btn) btn.classList.add('hidden');
-                });
+                if (viewSummaryBtn && showViewSummaryButton) {
+                    viewSummaryBtn.style.display = 'inline-block';
+                }
             }
 
             async function loadById(uniqueId) {
@@ -595,8 +736,9 @@
                     const userRole = localStorage.getItem('userRole');
                     updateWorkflowButtons(data.application_status, userRole);
                     if (userRole) {
-                        applyRoleRestrictions(userRole);
+                        applyRoleAndStatusRestrictions(userRole, data);
                     }
+
                     
                 } catch (e) {
                     console.error(e);
@@ -952,6 +1094,20 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="workflow-actions" style="margin-top: 2rem; border-top: 2px solid #eee; padding-top: 1.5rem; display: flex; gap: 10px; align-items: center;">
+                            <label for="policy-decision-select" id="policy-decision-label" style="font-weight: 600;">Final Policy Decision:</label>
+                            <select id="policy-decision-select" class="form-control" style="max-width: 200px;" disabled>
+                                <option value="" disabled selected>Select an action</option>
+                                <option value="policy_created">Policy Created</option>
+                                <option value="policy_denied">Policy Denied</option>
+                            </select>
+                            <span id="policy-decision-status" style="margin-left: 10px;"></span>
+
+                            <button type="button" id="view-policy-summary-btn" class="btn" style="display: none; background-color: #10b981;">
+                                <i class="fas fa-file-alt" style="margin-right: 6px;"></i>
+                                View Policy Summary
+                            </button>
+                        </div>
                     </div>
                 `;
 
@@ -1069,7 +1225,6 @@
                     });
                 }
 
-                // Underwriter save handler - never lock, always allow re-doing
                 const saveUnderwriterBtn = container.querySelector('#save-underwriter-decision');
                 const underwriterStatusEl = container.querySelector('#underwriter-decision-status');
                 const underwriterCommentEl = container.querySelector('#underwriter-comment');
@@ -1133,12 +1288,101 @@
                         }
                     });
                 }
+                const policyDecisionSelect = container.querySelector('#policy-decision-select');
+                if (policyDecisionSelect) {
+                    policyDecisionSelect.addEventListener('change', async function() {
+                        const decision = policyDecisionSelect.value;
+                        await handlePolicyDecision(uniqueId, decision);
+                    });
+                }
+
+                // Add the event listener for the view policy summary button
+                const viewSummaryBtn = container.querySelector('#view-policy-summary-btn');
+                if (viewSummaryBtn) {
+                    viewSummaryBtn.addEventListener('click', function() {
+                        if (!uniqueId) {
+                            alert('No Unique ID found. Please load an application first.');
+                            return;
+                        }
+                        window.location.href = `/html/Policy_Creation.html?uid=${encodeURIComponent(uniqueId)}&view=summary`;
+                    });
+                }
 
             } catch (err) {
                 console.error('Error rendering plans tab:', err);
                 container.innerHTML = '<p style="color: red;">Failed to load plans. Please try again.</p>';
             }
+
         };
+
+        /**
+         * Handles the final policy decision (Created/Denied).
+         * @param {string} uniqueId - The unique ID of the application.
+         * @param {string} decision - 'policy_created' or 'policy_denied'.
+         */
+        async function handlePolicyDecision(uniqueId, decision) {
+            const statusEl = document.getElementById('policy-decision-status');
+            const selectEl = document.getElementById('policy-decision-select');
+            const userRole = localStorage.getItem('userRole');
+            if (!uniqueId || !decision) return;
+
+            if (decision === 'policy_created') {
+                // Policy Created option: Navigate to the policy creation page
+                window.location.href = `/html/Policy_Creation.html?uid=${encodeURIComponent(uniqueId)}`;
+                return;
+            }
+
+            if (decision === 'policy_denied') {
+                // Policy Denied option: Update status and reload
+                if (!confirm("Are you sure you want to mark this application as Policy Denied? This action cannot be undone.")) {
+                    selectEl.value = ''; // Reset dropdown
+                    return;
+                }
+
+                if (selectEl) {
+                    selectEl.disabled = true;
+                }
+                statusEl.textContent = 'Processing denial...';
+                statusEl.style.color = 'orange';
+
+                try {
+                    const resp = await fetch('/api/agent/update_status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown')
+                        },
+                        body: JSON.stringify({
+                            unique_id: uniqueId,
+                            actor: 'underwriter',
+                            status: 'Policy_Denied', // Matches the desired final status
+                            comment: 'Application denied at the final policy stage.',
+                            application_status: 'Policy_Denied' // Ensure canonical status is set
+                        })
+                    });
+
+                    if (!resp.ok) {
+                        const errorText = await resp.text().catch(() => '');
+                        throw new Error(errorText || 'Denial update failed');
+                    }
+
+                    statusEl.textContent = 'Policy Denied status set. Reloading...';
+                    statusEl.style.color = 'green';
+                    
+                    // Reload the page to reflect the new status and lock the form
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+
+                } catch (err) {
+                    console.error(err);
+                    statusEl.textContent = 'Failed to set denial status: ' + (err.message || 'Unknown error');
+                    statusEl.style.color = 'red';
+                    if (selectEl) selectEl.disabled = false;
+                    selectEl.value = ''; // Reset dropdown
+                }
+            }
+        }
     </script>
 </body>
 </html>

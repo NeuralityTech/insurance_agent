@@ -1,111 +1,441 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="/static/css/logo.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Members to be Covered</title>
     <link rel="stylesheet" href="../css/members.css">
+    <link rel="stylesheet" href="../css/health_history.css">
+    <link rel="stylesheet" href="../css/common.css">
+    <style>
+        .members-table-container {
+        width: 100%;
+        max-width: 51vw; 
+        height: 5em;
+        box-sizing: border-box;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: #fff;
+        margin-bottom: 1em;
+        overflow-x: auto;
+        overflow-y: auto;
+
+        position: relative;
+        -webkit-overflow-scrolling: touch;
+        }
+
+        .members-table {
+        width: auto;                   
+        min-width: max-content;        
+        border-collapse: collapse;
+        table-layout: auto;
+        }
+
+        .members-table th,
+        .members-table td {
+        padding: 8px 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+        white-space: nowrap;
+        }
+
+        .members-table td.health-history-cell {
+        white-space: normal;
+        word-break: break-word;
+        max-width: 220px;
+        }
+
+        .members-table-container .members-table th {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        background: #f5f5f5;
+        }
+
+        .health-history-truncated {
+            display: inline;
+        }
+        
+        .health-history-full {
+            display: none;
+        }
+        
+        .view-more-btn {
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: underline;
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: 0.85rem;
+            margin-left: 4px;
+        }
+        
+        .view-more-btn:hover {
+            color: #0056b3;
+        }
+        
+        .member-checkbox {
+            cursor: pointer;
+        }
+        
+        .no-members-message {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .member-form-container {
+            display: none;
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+        }
+        
+        .member-form-container.show {
+            display: block;
+        }
+        
+        .member-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-actions-inline {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #ddd;
+        }
+
+        /* Styles for searchable dropdown */
+        .searchable-dropdown-wrapper {
+            position: relative;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ccc;
+            border-top: none;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            z-index: 1000;
+            display: none;
+        }
+
+        .dropdown-list.show {
+            display: block;
+        }
+
+        .dropdown-list li {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .dropdown-list li:hover,
+        .dropdown-list li.highlighted {
+            background-color: #f0f0f0;
+        }
+
+        .dropdown-list li.other-option {
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+        }
+    </style>
 </head>
 <body>
     <fieldset>
-        <div class="members-layout">
-            <div class="members-list-container">
-                <ul id="members-list">
-                    <!-- Member list items will be dynamically added here -->
-                </ul>
-                <div class="member-actions">
-                    <a href="member_details.html" id="add-member-link" class="btn" target="_blank" rel="noopener noreferrer">+ Add Member</a>
-                    <button type="button" id="delete-selected-btn" class="btn btn-danger">- Delete Selected</button>
-                </div>
+        <!-- Members Table -->
+        <div id="members-table-wrapper" style="display: none; max-width: 100%; overflow: hidden;">
+            <div class="members-table-container">
+                <table class="members-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Relationship</th>
+                            <th>Occupation</th>
+                            <th>Gender</th>
+                            <th>DOB</th>
+                            <th>Age</th>
+                            <th>Height (cm)</th>
+                            <th>Weight (kg)</th>
+                            <th>BMI</th>
+                            <th>Medical History</th>
+                            <th>Planned Surgeries</th>
+                            <th>Smoker</th>
+                            <th>Alcohol</th>
+                            <th>Risky Hobbies</th>
+                            <th>Occupational Risk</th>
+                            <th>Select</th>
+                        </tr>
+                    </thead>
+                    <tbody id="members-table-body">
+                        <!-- Rows will be dynamically added here -->
+                    </tbody>
+                </table>
             </div>
-            <div class="member-summary-placeholder">
-                <div id="summary-content">
-                    <p class="placeholder-text">Hover over a member to see their details.</p>
-                    <!-- The full summary grid will be injected here by JS -->
+        </div>
+        
+        <div class="no-members-message" id="no-members-message">
+            You can add members here
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="member-actions">
+            <button type="button" id="add-member-btn" class="btn">+ Add Member</button>
+            <button type="button" id="delete-selected-btn" class="btn btn-danger">- Delete Selected</button>
+        </div>
+        
+        <!-- Inline Member Form -->
+        <div id="member-form-container" class="member-form-container">
+            <h3 style="margin-top: 0;">Member Details</h3>
+            <div id="member-details-form">
+                <fieldset>
+                    <legend>Personal & Professional</legend>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="member-name">Full Name *</label>
+                            <input type="text" id="member-name" name="member_name" required pattern="[A-Za-z][A-Za-z.'\s]*" title="Name must start with a letter and can only contain letters, spaces, and apostrophes.">
+                            <span class="error-message" id="member-name-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="relationship">Relationship *</label>
+                            <select id="relationship" name="relationship" required>
+                                <option value="">Select Relationship</option>
+                                <option value="spouse">Spouse</option>
+                                <option value="son">Son</option>
+                                <option value="daughter">Daughter</option>
+                                <option value="father">Father</option>
+                                <option value="mother">Mother</option>
+                                <option value="father-in-law">Father-in-law</option>
+                                <option value="mother-in-law">Mother-in-law</option>
+                            </select>
+                            <span class="error-message" id="relationship-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="member-occupation">Occupation</label>
+                            <div class="searchable-dropdown-wrapper">
+                                <input type="text" 
+                                    id="member-occupation" 
+                                    name="occupation" 
+                                    placeholder="Search or select occupation..."
+                                    autocomplete="off"
+                                    aria-autocomplete="list"
+                                    aria-controls="member-occupation-list"
+                                    pattern="[A-Za-z\s]+" 
+                                    title="Please enter only letters and spaces.">
+                                <input type="hidden" id="member-occupation-value" name="occupation_value">
+                                <ul id="member-occupation-list" class="dropdown-list" role="listbox"></ul>
+                            </div>
+                            <span class="error-message" id="member-occupation-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="member-gender">Gender *</label>
+                            <select id="member-gender" name="gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <span class="error-message" id="member-gender-error"></span>
+                        </div>
+                    </div>
+                </fieldset>
+                
+                <!-- Health Vitals -->
+                <fieldset>
+                    <legend>Health Vitals</legend>
+                    <div class="form-row compact-row">
+                        <div class="form-group">
+                            <label for="member-dob">Date of Birth *</label>
+                            <input type="date" id="member-dob" name="member-dob" required>
+                            <span class="error-message" id="member-dob-error"></span>
+                        </div>
+                        <div class="form-group fixed-width-group">
+                            <label for="member-height">Height (cm) *</label>
+                            <input type="text" id="member-height" name="member-height" placeholder="e.g., 175" pattern="[0-9.]*" title="Please enter only numbers." required>
+                            <span class="error-message" id="member-height-error"></span>
+                        </div>
+                        <div class="form-group fixed-width-group">
+                            <label for="member-weight">Weight (kg) *</label>
+                            <input type="text" id="member-weight" name="member-weight" placeholder="e.g., 70" pattern="[0-9.]*" title="Please enter only numbers." required>
+                            <span class="error-message" id="member-weight-error"></span>
+                        </div>
+                        <div class="form-group fixed-width-group">
+                            <label for="member-age">Age</label>
+                            <input type="text" id="member-age" name="member-age" readonly class="readonly-field">
+                        </div>
+                        <div class="form-group fixed-width-group">
+                            <label for="member-bmi">BMI</label>
+                            <input type="text" id="member-bmi" name="member-bmi" readonly class="readonly-field">
+                        </div>
+                    </div>
+                </fieldset>
+                
+                <!-- Health History Section -->
+                <fieldset>
+                    <legend>Medical History & Lifestyle</legend>
+                    <fieldset class="sub-fieldset">
+                        <legend>Disease Details</legend>
+                        <div class="group-box" id="member-disease-list-group">
+                            <div id="member-disease-list">
+                                <!-- Cardiac Problems -->
+                                <div class="disease-entry">
+                                    <div class="disease-header">
+                                        <label class="checkbox-container">
+                                            <input type="checkbox" name="disease" value="cardiac">
+                                            Cardiac Problems
+                                        </label>
+                                    </div>
+                                    <div class="disease-details-container">
+                                        <textarea name="cardiac_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Diabetes -->
+                                <div class="disease-entry">
+                                    <div class="disease-header">
+                                        <label class="checkbox-container">
+                                            <input type="checkbox" name="disease" value="diabetes">
+                                            Diabetes
+                                        </label>
+                                    </div>
+                                    <div class="disease-details-container">
+                                        <textarea name="diabetes_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Cancer -->
+                                <div class="disease-entry">
+                                    <div class="disease-header">
+                                        <label class="checkbox-container">
+                                            <input type="checkbox" name="disease" value="cancer">
+                                            Cancer
+                                        </label>
+                                    </div>
+                                    <div class="disease-details-container">
+                                        <textarea name="cancer_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Critical Illnesses -->
+                                <div class="disease-entry">
+                                    <div class="disease-header">
+                                        <label class="checkbox-container">
+                                            <input type="checkbox" name="disease" value="critical_illness">
+                                            Critical Illnesses
+                                        </label>
+                                    </div>
+                                    <div class="disease-details-container">
+                                        <textarea name="critical_illness_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Other -->
+                                <div class="disease-entry">
+                                    <div class="disease-header">
+                                        <label class="checkbox-container">
+                                            <input type="checkbox" name="disease" value="other">
+                                            Other
+                                        </label>
+                                    </div>
+                                    <div class="disease-details-container">
+                                        <textarea name="other_details" placeholder="Please specify and provide details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <div class="group-box">
+                        <div class="form-row">
+                            <div class="form-group span-2">
+                                <label for="member-planned-surgeries">Any Planned Surgeries/Hospitalization in the next 6-12 months?</label>
+                                <textarea id="member-planned-surgeries" name="planned-surgeries" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="group-box">
+                        <div class="group-title">Lifestyle Risk</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <fieldset>
+                                    <legend>Smoker:</legend>
+                                    <div class="radio-group">
+                                        <label class="radio-label"><input type="radio" name="member-smoker" value="yes"> Yes</label>
+                                        <label class="radio-label"><input type="radio" name="member-smoker" value="no" checked> No</label>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <div class="form-group">
+                                <fieldset>
+                                    <legend>Alcohol Consumption:</legend>
+                                    <div class="radio-group">
+                                        <label class="radio-label"><input type="radio" name="member-alcohol" value="yes"> Yes</label>
+                                        <label class="radio-label"><input type="radio" name="member-alcohol" value="no" checked> No</label>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <div class="form-group">
+                                <fieldset>
+                                    <legend>Risky Hobbies (adventure sports, etc.)</legend>
+                                    <div class="radio-group">
+                                        <label class="radio-label"><input type="radio" name="member-risky-hobbies" value="yes"> Yes</label>
+                                        <label class="radio-label"><input type="radio" name="member-risky-hobbies" value="no" checked> No</label>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+
+                        <hr class="group-sep"/>
+
+                        <div class="group-title">Occupational Risk</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <fieldset>
+                                    <legend>Exposed to hazardous occupation?</legend>
+                                    <div id="member-occupational-risk">
+                                        <div class="radio-group">
+                                            <label class="radio-label">
+                                                <input type="radio" name="member-occupational-risk" value="yes"> Yes
+                                            </label>
+                                            <label class="radio-label">
+                                                <input type="radio" name="member-occupational-risk" value="no" checked> No
+                                            </label>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                            <div class="form-group span-2" id="member-occupational-risk-details-group" style="display:none;">
+                                <label for="member-occupational-risk-details">If yes, describe (e.g., mining, high-altitude, chemicals, heavy machinery)</label>
+                                <textarea id="member-occupational-risk-details" name="occupational-risk-details" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+                
+                <!-- Form Actions -->
+                <div class="form-actions-inline">
+                    <div id="member-error" class="error-message" style="display:none;color:red;margin-right:auto;"></div>
+                    <button type="button" id="save-member-btn" class="btn btn-primary">Save Member</button>
+                    <button type="button" id="cancel-member-btn" class="btn btn-secondary">Cancel</button>
+                    <button type="button" id="clear-member-btn" class="btn btn-secondary">Clear Form</button>
                 </div>
             </div>
         </div>
-        <!-- Template for a new member list item -->
-        <template id="member-list-item-template">
-            <li class="member-list-item" tabindex="0">
-                <div class="item-info">
-                    <span class="member-name"></span>
-                    <span class="separator">-</span>
-                    <span class="member-relationship"></span>
-                    <span class="separator">-</span>
-                    <span class="bmi-summary">BMI: <span class="member-bmi"></span></span>
-                </div>
-                <div class="item-actions">
-                    <button type="button" class="btn-edit">Edit</button>
-                    <input type="checkbox" class="member-select-checkbox">
-                </div>
-                <!-- Full details will be stored in a hidden div -->
-                <div class="full-member-details" style="display: none;"></div>
-            </li>
-        </template>
-        <!-- Template for the summary card details -->
-        <template id="member-summary-template">
-            <div class="summary-grid">
-                <div class="summary-item">
-                    <span class="summary-label">Name:</span>
-                    <span class="summary-value member-name"></span>
-                </div>
-                <div class="summary-item">
-                    <span class="summary-label">Relationship:</span>
-                    <span class="summary-value member-relationship"></span>
-                </div>
-                <div class="summary-item">
-                    <span class="summary-label">DOB:</span>
-                    <span class="summary-value member-dob"></span>
-                </div>
-                <div class="summary-item">
-                    <span class="summary-label">Age:</span>
-                    <span class="summary-value member-age"></span>
-                </div>
-                <div class="summary-item">
-                    <span class="summary-label">Height:</span>
-                    <span class="summary-value member-height"></span>
-                </div>
-                <div class="summary-item">
-                    <span class="summary-label">Weight:</span>
-                    <span class="summary-value member-weight"></span>
-                </div>
-                <div class="summary-item">
-                    <span class="summary-label">BMI:</span>
-                    <span class="summary-value member-bmi"></span>
-                </div>
-                <div class="summary-item">
-                    <span class="summary-label">Smoker:</span>
-                    <span class="summary-value member-smoker"></span>
-                </div>
-                <div class="summary-item">
-                    <span class="summary-label">Alcohol:</span>
-                    <span class="summary-value member-alcohol"></span>
-                </div>
-                <div class="summary-item">
-                    <span class="summary-label">Risky Hobbies:</span>
-                    <span class="summary-value member-risky-hobbies"></span>
-                </div>
-                <div class="summary-item">
-                    <span class="summary-label">Occupational Risk:</span>
-                    <span class="summary-value member-occupational-risk"></span>
-                </div>
-                <div class="summary-item summary-item-full-width">
-                    <span class="summary-label">Occupational Risk Details:</span>
-                    <span class="summary-value member-occupational-risk-details"></span>
-                </div>
-                <div class="summary-item summary-item-full-width">
-                    <span class="summary-label">Medical History:</span>
-                    <span class="summary-value member-medical-history"></span>
-                </div>
-                <div class="summary-item summary-item-full-width">
-                    <span class="summary-label">Planned Surgeries:</span>
-                    <span class="summary-value member-planned-surgeries"></span>
-                </div>
-            </div>
-        </template>
     </fieldset>
-    <script src="../js/member_management.js"></script>
 </body>
 </html>

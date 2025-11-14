@@ -59,8 +59,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Database status -> Display status
     'OPEN': 'Open/Draft',
     'SUP_REVIEW': 'Submitted for Review',
-    'SUP_APPROVED': 'Supervisor Approved',
-    'SUP_REJECTED': 'Policy Denied',
+    'SUP_APPROVED': 'Pending Client Agreement',
+    'SUP_REJECTED': 'Supervisor Rejected',
     'With_UW': 'With Underwriter',
     'UW_Rejected': 'Policy Denied',
     'Policy_Created': 'Completed',
@@ -73,13 +73,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Status display configuration for stat cards
   const STATUS_CONFIG = {
-    'Completed': { icon: 'fa-check-circle', color: 'completed' },
     'Open/Draft': { icon: 'fa-file', color: 'open-draft' },
     'Submitted for Review': { icon: 'fa-clock', color: 'submitted-for-review' },
+    'Supervisor Rejected': { icon: 'fa-times-circle', color: 'supervisor-rejected' },
     'Supervisor Approved': { icon: 'fa-user-check', color: 'supervisor-approved' },
+    'Pending Client Agreement': { icon: 'fa-user-check', color: 'pending-client-agreement' },
     'Client Agreed': { icon: 'fa-handshake', color: 'client-agreed' },
     'With Underwriter': { icon: 'fa-file-contract', color: 'with-underwriter' },
-    'Policy Created': { icon: 'fa-file-alt', color: 'policy-created' },
+    'Completed': { icon: 'fa-check-circle', color: 'completed' },
     'Policy Denied': { icon: 'fa-times-circle', color: 'policy-denied' },
     'Closed': { icon: 'fa-archive', color: 'closed' }
   };
@@ -767,7 +768,6 @@ function handleStatCardClick(filterValue, clickedCard) {
   filterTable();
 }
 
-// Update filterTable to respect stat card filter
 function filterTable() {
   const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
   const statusValue = statusFilter ? statusFilter.value.toLowerCase() : 'all';

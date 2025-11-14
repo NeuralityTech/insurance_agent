@@ -12,16 +12,29 @@
      * Get all form data from all tabs
      */
     function getAllFormData() {
+        let members = [];
+        try {
+            const membersStr = localStorage.getItem('members');
+            members = membersStr ? JSON.parse(membersStr) : [];
+        } catch (e) {
+            console.error('Error reading members from localStorage:', e);
+            members = [];
+        }
+
         const formData = {
             primaryContact: getSectionFormData('primary-contact-content'),
             healthHistory: getSectionFormData('health-history-content'),
-            members: JSON.parse(localStorage.getItem('members')) || [],
+            members: members, // Always get fresh from localStorage
             coverAndCost: getSectionFormData('cover-cost-content'),
             existingCoverage: getSectionFormData('existing-coverage-content'),
             claimsAndService: getSectionFormData('claims-service-content'),
             financeAndDocumentation: getSectionFormData('finance-documentation-content'),
             commentsNoted: window.getCommentsData ? window.getCommentsData() : { comments_noted: [] }
         };
+        
+        // Debug log to verify members are being captured
+        console.log('Saving form data with members:', members.length, 'members');
+        
         return formData;
     }
 
@@ -91,6 +104,10 @@
         try {
             const formData = getAllFormData();
             localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+            
+            // Debug confirmation
+            console.log('Form data saved successfully. Members count:', formData.members.length);
+            
             return true;
         } catch (error) {
             console.error('Error saving form data:', error);
@@ -107,6 +124,9 @@
             if (!savedData) return null;
 
             const formData = JSON.parse(savedData);
+            
+            console.log('Loading saved form data. Members count:', formData.members?.length || 0);
+            
             setTimeout(() => {
                 // Restore each section
                 if (formData.primaryContact) {
@@ -128,12 +148,19 @@
                     setSectionFormData('finance-documentation-content', formData.financeAndDocumentation);
                 }
 
-                // Restore members if they exist
-                if (formData.members && formData.members.length > 0) {
+                if (formData.members && Array.isArray(formData.members)) {
+                    console.log('Restoring', formData.members.length, 'members to localStorage');
                     localStorage.setItem('members', JSON.stringify(formData.members));
+                    
+                    // Then trigger UI update
                     if (window.loadMembersGlobal) {
-                        window.loadMembersGlobal();
+                        setTimeout(() => {
+                            window.loadMembersGlobal();
+                            console.log('Members UI refreshed');
+                        }, 100);
                     }
+                } else {
+                    console.log('No members to restore');
                 }
 
                 // Restore comments if they exist
@@ -146,10 +173,8 @@
 
                 // Update people counter after restoring data
                 if (window.updatePeopleCounter) {
-                    setTimeout(() => window.updatePeopleCounter(), 100);
+                    setTimeout(() => window.updatePeopleCounter(), 200);
                 }
-
-                
             }, 200);
 
             return formData;
@@ -165,6 +190,7 @@
     function clearSavedFormData() {
         try {
             localStorage.removeItem(STORAGE_KEY);
+            console.log('Saved form data cleared');
             return true;
         } catch (error) {
             console.error('Error clearing saved form data:', error);
@@ -186,6 +212,7 @@
         const saveBtn = document.getElementById('save-btn');
         if (saveBtn) {
             saveBtn.disabled = false;
+            saveBtn.classList.add('has-changes');
         }
     }
 
@@ -196,6 +223,7 @@
         const saveBtn = document.getElementById('save-btn');
         if (saveBtn) {
             saveBtn.disabled = true;
+            saveBtn.classList.remove('has-changes');
         }
     }
 
@@ -213,14 +241,20 @@
         form.addEventListener('input', enableSaveButton, true);
         form.addEventListener('change', enableSaveButton, true);
         
-        // Also monitor localStorage for member/comment changes
-        const originalSetItem = localStorage.setItem;
-        localStorage.setItem = function(key, value) {
-            originalSetItem.apply(this, arguments);
-            if (key === 'members' || key === 'comments_noted') {
-                enableSaveButton();
-            }
-        };
+        // Store original setItem to avoid infinite loops
+        if (!window._originalLocalStorageSetItem) {
+            window._originalLocalStorageSetItem = localStorage.setItem.bind(localStorage);
+            
+            localStorage.setItem = function(key, value) {
+                window._originalLocalStorageSetItem(key, value);
+                
+                // Enable save button when members or comments change
+                if (key === 'members' || key === 'comments_noted') {
+                    console.log('Detected change to', key, '- enabling save button');
+                    enableSaveButton();
+                }
+            };
+        }
     }
 
     /**
@@ -235,19 +269,23 @@
             return;
         }
 
-        // Start with save button ENABLED so user can test it
-        // (It will be disabled after first save, then re-enabled on any change)
+        // Start with save button enabled 
         saveBtn.disabled = false;
 
         // Handle Save button click
         saveBtn.addEventListener('click', function() {
-            console.log('Save button clicked'); // Debug log
+            console.log('Save button clicked');
+            
+            // Force-read current members state before saving
+            const currentMembers = localStorage.getItem('members');
+            console.log('Current members in localStorage:', currentMembers ? JSON.parse(currentMembers).length : 0, 'members');
+            
             const success = saveFormData();
             
             if (success) {
-                console.log('Form data saved successfully'); // Debug log
-                // Darken button and disable it
-                disableSaveButton();
+                setTimeout(() => {
+                    disableSaveButton();
+                }, 1500);
             } else {
                 alert('Failed to save form progress. Please try again.');
             }
@@ -256,11 +294,13 @@
         // Handle Reset button - also clear saved data and enable save button
         if (resetBtn) {
             resetBtn.addEventListener('click', function(e) {
-                clearSavedFormData();
-                // Re-enable save button after reset
-                setTimeout(() => {
-                    enableSaveButton();
-                }, 100);
+                if (confirm('Are you sure you want to reset all form data? This will clear all saved progress.')) {
+                    clearSavedFormData();
+                    // Re-enable save button after reset
+                    setTimeout(() => {
+                        enableSaveButton();
+                    }, 100);
+                }
             });
         }
 
@@ -268,13 +308,16 @@
         // Delay this to ensure tabs are loaded
         setTimeout(() => {
             attachChangeListeners();
-            console.log('Change listeners attached'); // Debug log
+            console.log('Change listeners attached');
         }, 1000);
 
         // Auto-load saved data on page load
         if (hasSavedData()) {
+            console.log('Found saved form data, loading...');
             loadFormData();
             disableSaveButton();
+        } else {
+            console.log('No saved form data found');
         }
     }
 
@@ -290,6 +333,6 @@
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeFormPersistence);
     } else {
-          setTimeout(initializeFormPersistence, 100);
+        setTimeout(initializeFormPersistence, 100);
     }
 })();

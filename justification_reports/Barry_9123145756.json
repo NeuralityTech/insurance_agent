@@ -4,31 +4,31 @@
             "plan_name": "Young Star Silver Plan",
             "policy_code": "MIX_1_1",
             "proposed_for": [
-                "Dan"
+                "Barry"
             ],
             "reason_for_proposal": "Proposed for members with needs: GENERAL",
             "family_fit_check_result": "Passed",
             "ailment_score": 1.0,
             "member_specific_scores": {
-                "Dan": 1.0
+                "Barry": 1.0
             },
             "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
-            "ai_reasoning": "This plan offers a perfect match for Dan's general health needs, and the family fit check has passed, indicating strong alignment."
+            "ai_reasoning": "Barry has general health needs, and this plan provides a perfect match for him. The family fit check has passed, indicating strong alignment."
         },
         {
             "plan_name": "Young Star Gold Plan",
             "policy_code": "MIX_1_1",
             "proposed_for": [
-                "Dan"
+                "Barry"
             ],
             "reason_for_proposal": "Proposed for members with needs: GENERAL",
             "family_fit_check_result": "Passed",
             "ailment_score": 1.0,
             "member_specific_scores": {
-                "Dan": 1.0
+                "Barry": 1.0
             },
             "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
-            "ai_reasoning": "This plan also delivers a perfect match for Dan's general health needs, with a passed family fit check, making it a suitable option."
+            "ai_reasoning": "This plan also offers a perfect match for Barry's general health needs. The family fit check has passed, making it a suitable option."
         }
     ],
     "family_composition": {

@@ -795,10 +795,10 @@ select.input-error {
 }
 
 .btn-save:disabled {
-    background-color: #004085;
-    border-color: #003366;
+    background-color: #cccccc;
+    border-color: #cccccc;
     cursor: not-allowed;
-    opacity: 1;
+    opacity: 0.6;
 }
 
 /* Responsive adjustments */

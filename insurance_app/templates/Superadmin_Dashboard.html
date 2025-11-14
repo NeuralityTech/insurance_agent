@@ -1,50 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Super Admin Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/superadmin_dashboard.css') }}">
+    <link rel="icon" href="/static/img/icon.png" type="image/png">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/sidebar.css">
+    <link rel="stylesheet" href="/static/css/superadmin_dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-    <header class="top-bar">
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
-        <div class="user-info">
-            Logged in as: <span class="user-id">superadmin</span>
-        </div>
-        <button id="logout-btn" class="btn btn-logout">Logout</button>
-    </header>
-    <div class="container">
-        <header class="page-header">
-    <link rel="stylesheet" href="/static/css/logo.css">
-    <script defer src="/static/js/logo.js"></script>
-            <h1>Super Admin Dashboard</h1>
-            <p>User Management & System Control</p>
+<body data-sidebar="superadmin-dashboard">
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Header Section -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div>
+                    <h1 class="page-title">Super Admin Dashboard</h1>
+                    <p class="page-subtitle">User Management & System Control</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="user-badge">
+                    <i class="fas fa-user-shield"></i>
+                    <span id="loggedInUser">Super Admin</span>
+                </div>
+            </div>
         </header>
 
+        <!-- Navigation Cards -->
         <nav class="dashboard-nav">
             <a href="/superadmin/create_user" class="nav-card">
+                <div class="nav-card-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
                 <h2>Create New User</h2>
-                <p>Add new admins, supervisors, or agents to the system.</p>
+                <p>Add new admins, supervisors, or agents to the system with customized access levels.</p>
             </a>
+            
             <a href="/superadmin/update_user" class="nav-card">
+                <div class="nav-card-icon">
+                    <i class="fas fa-user-edit"></i>
+                </div>
                 <h2>Update Existing User</h2>
-                <p>Modify roles, supervisors, or other user details.</p>
+                <p>Modify user roles, supervisors, permissions, or other account details.</p>
             </a>
-            <!-- Add more links to other admin functions here as needed -->
         </nav>
-    </div>
+    </main>
 
-    <script>
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            // Basic logout, redirects to login page
-            window.location.href = '/';
-        });
-    </script>
+    <!-- Load sidebar component -->
+    <script src="/static/js/sidebar.js"></script>
 </body>
 </html>
-
