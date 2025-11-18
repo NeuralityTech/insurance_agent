@@ -202,6 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector('.tab-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
+
     // Load HTML into tab content
     function loadTabContent(section, index) {
         return fetch(section.file)
@@ -265,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function() {
         newContinueBtn.type = 'button';
         newContinueBtn.id = 'continue-btn';
         newContinueBtn.className = 'btn';
-        newContinueBtn.textContent = 'Submit';
+        newContinueBtn.textContent = 'Proceed';
         newContinueBtn.disabled = true; // Start disabled
         
         // Insert before Save button

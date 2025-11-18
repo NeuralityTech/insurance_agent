@@ -39,7 +39,6 @@
 
 /* --- Disease Details Form --- */
 .disease-entry {
-    /*padding: 1em;*/
     padding: 0.5em 0.75em 0.5em; /* Apply padding, ensuring bottom is controlled */
     border: 1px solid #e0e0e0;
     border-radius: 8px;
@@ -79,7 +78,7 @@
     margin-bottom: 1.5rem;
 }
 
-/* Ensure inner rows don�t touch the group edges */
+/* Ensure inner rows don't touch the group edges */
 .group-box > .form-row:first-child { margin-top: 0.1rem; }
 .group-box > .form-row:last-child { margin-bottom: 0.1rem; }
 
@@ -150,4 +149,473 @@
     flex-grow: 1; /* Allow the textarea to take up remaining space */
     min-height: 40px;
     height: 50px;
+}
+
+/* ==================================
+   LARGE SCREEN OPTIMIZATIONS
+   ================================== */
+
+/* Extra large screens (1400px+) */
+@media (min-width: 1400px) {
+    .medical-conditions-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5em;
+        padding-top: 0.75em;
+    }
+    
+    #disease-list {
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 0.75em;
+    }
+    
+    .disease-entry {
+        padding: 0.75em 1em;
+        border-radius: 10px;
+    }
+    
+    .group-box {
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+    }
+    
+    .disease-header {
+        gap: 2em;
+    }
+    
+    .disease-header .checkbox-container {
+        font-size: 1.15em;
+    }
+    
+    .disease-header .checkbox-container input {
+        width: 20px;
+        height: 20px;
+        margin-right: 0.9em;
+    }
+    
+    .disease-details-container {
+        gap: 1.25em;
+        padding: 0.75em;
+    }
+    
+    .disease-details-container textarea {
+        min-height: 50px;
+        height: 60px;
+    }
+}
+
+/* Large screens (1200px - 1399px) */
+@media (min-width: 1200px) and (max-width: 1399px) {
+    .medical-conditions-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.25em;
+    }
+    
+    #disease-list {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 0.65em;
+    }
+    
+    .disease-entry {
+        padding: 0.65em 0.9em;
+    }
+    
+    .group-box {
+        padding: 0.875rem 1.1rem;
+    }
+    
+    .disease-header .checkbox-container input {
+        width: 19px;
+        height: 19px;
+    }
+}
+
+/* Medium laptops (992px - 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .medical-conditions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.125em;
+    }
+    
+    #disease-list {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 0.6em;
+    }
+    
+    .disease-entry {
+        padding: 0.6em 0.85em;
+    }
+    
+    .group-box {
+        padding: 0.8rem 1rem;
+    }
+}
+
+/* ==================================
+   TABLET & MOBILE RESPONSIVE STYLES
+   ================================== */
+
+/* Tablets (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .medical-conditions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1em;
+    }
+    
+    #disease-list {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 0.75em;
+    }
+    
+    .disease-entry {
+        padding: 0.6em 0.8em;
+        border-radius: 8px;
+    }
+    
+    .group-box {
+        padding: 0.75rem 0.875rem;
+        margin: 0.65rem 0 1.125rem;
+    }
+    
+    #disease-list-group {
+        margin-bottom: 1.25rem;
+    }
+    
+    .disease-header {
+        gap: 1.25em;
+    }
+    
+    .disease-header .checkbox-container {
+        font-size: 1.05em;
+    }
+    
+    .disease-header .checkbox-container input {
+        width: 18px;
+        height: 18px;
+        margin-right: 0.7em;
+    }
+    
+    .disease-details-container {
+        gap: 0.875em;
+        padding: 0.5em;
+    }
+    
+    .disease-details-container textarea {
+        min-height: 45px;
+        height: 55px;
+    }
+    
+    .condition-details {
+        padding: 0.6em;
+    }
+}
+
+/* Mobile devices (480px - 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+    .medical-conditions-grid {
+        grid-template-columns: 1fr;
+        gap: 0.875em;
+        padding-top: 0.5em;
+    }
+    
+    .condition-item label {
+        margin-bottom: 0.4em;
+        font-size: 0.95em;
+    }
+    
+    .condition-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin-right: 0.6em;
+    }
+    
+    .condition-details {
+        padding: 0.6em;
+        font-size: 0.95em;
+        min-height: 60px;
+    }
+    
+    #disease-list {
+        grid-template-columns: 1fr;
+        gap: 0.875em;
+    }
+    
+    .disease-entry {
+        padding: 0.75em 0.875em;
+        border-radius: 8px;
+    }
+    
+    .group-box {
+        padding: 0.75rem 0.875rem;
+        margin: 0.625rem 0 1rem;
+        border-radius: 8px;
+    }
+    
+    #disease-list-group {
+        margin-bottom: 1.125rem;
+    }
+    
+    .group-title {
+        font-size: 1.05em;
+        margin-bottom: 0.5rem;
+    }
+    
+    .disease-header {
+        gap: 1em;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .disease-header .checkbox-container {
+        font-size: 1.05em;
+        width: 100%;
+    }
+    
+    .disease-header .checkbox-container input {
+        width: 20px;
+        height: 20px;
+        margin-right: 0.7em;
+    }
+    
+    .diagnosis-date-group {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .diagnosis-date-group label {
+        font-size: 0.9em;
+    }
+    
+    .diagnosis-date-group input[type="date"] {
+        flex: 1;
+        font-size: 1rem; /* Prevent iOS zoom */
+        min-height: 44px;
+    }
+    
+    .disease-details-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75em;
+        padding: 0.75em 0.5em;
+    }
+    
+    .disease-details-container .diagnosis-date-group {
+        width: 100%;
+    }
+    
+    .disease-details-container textarea {
+        width: 100%;
+        min-height: 70px;
+        height: 80px;
+        font-size: 1rem; /* Prevent iOS zoom */
+    }
+}
+
+/* Small mobile devices (below 480px) */
+@media (max-width: 479px) {
+    .medical-conditions-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75em;
+        padding-top: 0.5em;
+    }
+    
+    .condition-item label {
+        margin-bottom: 0.375em;
+        font-size: 0.9em;
+    }
+    
+    .condition-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin-right: 0.5em;
+    }
+    
+    .condition-details {
+        padding: 0.5em;
+        font-size: 0.9em;
+        min-height: 60px;
+    }
+    
+    #disease-list {
+        grid-template-columns: 1fr;
+        gap: 0.75em;
+    }
+    
+    .disease-entry {
+        padding: 0.65em 0.75em;
+        border-radius: 6px;
+    }
+    
+    .group-box {
+        padding: 0.65rem 0.75rem;
+        margin: 0.5rem 0 0.875rem;
+        border-radius: 8px;
+    }
+    
+    #disease-list-group {
+        margin-bottom: 1rem;
+    }
+    
+    .group-title {
+        font-size: 1em;
+        margin-bottom: 0.4rem;
+    }
+    
+    .group-sep {
+        margin: .5rem 0 .7rem;
+    }
+    
+    .disease-header {
+        gap: 0.875em;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .disease-header .checkbox-container {
+        font-size: 1em;
+        width: 100%;
+    }
+    
+    .disease-header .checkbox-container input {
+        width: 20px;
+        height: 20px;
+        margin-right: 0.6em;
+    }
+    
+    .diagnosis-date-group {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 0.4em;
+    }
+    
+    .diagnosis-date-group label {
+        font-size: 0.85em;
+        white-space: nowrap;
+    }
+    
+    .diagnosis-date-group input[type="date"] {
+        flex: 1;
+        font-size: 1rem; /* Prevent iOS zoom */
+        min-height: 44px;
+        padding: 0.5em;
+    }
+    
+    .disease-details-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.65em;
+        padding: 0.65em 0.5em;
+    }
+    
+    .disease-details-container .diagnosis-date-group {
+        width: 100%;
+    }
+    
+    .disease-details-container textarea {
+        width: 100%;
+        min-height: 70px;
+        height: 80px;
+        font-size: 1rem; /* Prevent iOS zoom */
+        padding: 0.5em;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .condition-item input[type="checkbox"],
+    .disease-header .checkbox-container input {
+        min-width: 20px;
+        min-height: 20px;
+    }
+    
+    .condition-item label {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .diagnosis-date-group input[type="date"] {
+        min-height: 44px;
+        font-size: 16px; /* Prevent iOS zoom */
+    }
+    
+    .disease-details-container textarea {
+        min-height: 80px;
+        font-size: 16px; /* Prevent iOS zoom */
+    }
+    
+    .condition-details {
+        min-height: 80px;
+        font-size: 16px; /* Prevent iOS zoom */
+    }
+    
+    /* Remove hover effect on touch devices */
+    .disease-entry:hover {
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    
+    .disease-entry:active {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+}
+
+/* Landscape mobile orientation */
+@media (max-width: 767px) and (orientation: landscape) {
+    .medical-conditions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1em;
+    }
+    
+    #disease-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75em;
+    }
+    
+    .disease-header {
+        flex-direction: row;
+        align-items: center;
+    }
+    
+    .diagnosis-date-group {
+        width: auto;
+    }
+    
+    .disease-details-container {
+        flex-direction: row;
+        align-items: center;
+    }
+    
+    .disease-details-container textarea {
+        height: 60px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .disease-entry,
+    .group-box,
+    .condition-details {
+        border-width: 2px;
+    }
+    
+    .condition-item input[type="checkbox"],
+    .disease-header .checkbox-container input {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+    }
+    
+    .group-title {
+        font-weight: 800;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .disease-entry {
+        transition: none;
+    }
+    
+    .disease-entry:hover,
+    .disease-entry:active {
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
 }

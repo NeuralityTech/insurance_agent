@@ -1,4 +1,7 @@
-/* plan.css - styles for Plan selection page */
+/* ==================================
+   PLAN SELECTION PAGE STYLES
+   plan.css - styles for Plan selection page
+   ================================== */
 
 body {
     margin: 0;
@@ -157,4 +160,484 @@ body {
     max-height: 260px; /* adjust as needed */
     overflow-y: auto;
     padding-right: 0.25rem; /* room for scrollbar */
+}
+
+/* ==================================
+   LARGE SCREEN OPTIMIZATIONS
+   ================================== */
+
+/* Extra large screens (1400px+) */
+@media (min-width: 1400px) {
+    .plan-container {
+        max-width: 1100px;
+        margin: 2.5rem auto;
+        padding: 2rem;
+        border-radius: 12px;
+    }
+    
+    .plan-header {
+        margin-bottom: 2rem;
+    }
+    
+    .plan-header h1 {
+        font-size: 2.5rem;
+    }
+    
+    .plan-header p {
+        font-size: 1.05rem;
+        margin-top: 0.75rem;
+    }
+    
+    .plan-card {
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .plan-title {
+        font-size: 1.5rem;
+    }
+    
+    .plan-description {
+        font-size: 1.05rem;
+        margin: 0.75rem 0 1.25rem;
+    }
+    
+    .plan-details li {
+        font-size: 1rem;
+        margin-bottom: 0.625rem;
+    }
+    
+    .btn-submit-plan {
+        padding: 0.875rem 2rem;
+        font-size: 1.125rem;
+    }
+    
+    .member-group {
+        padding: 1rem 1.5rem 1.25rem;
+        margin-bottom: 1.5rem;
+        border-radius: 10px;
+    }
+    
+    .member-group > legend {
+        font-size: 1.125rem;
+        padding: 0 0.75rem;
+    }
+    
+    .detail-chip {
+        padding: 0.35rem 0.65rem;
+        font-size: 0.9rem;
+    }
+    
+    .member-plan-cards {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+        max-height: 320px;
+    }
+}
+
+/* Large screens (1200px - 1399px) */
+@media (min-width: 1200px) and (max-width: 1399px) {
+    .plan-container {
+        max-width: 1000px;
+        margin: 2.25rem auto;
+        padding: 1.75rem;
+        border-radius: 10px;
+    }
+    
+    .plan-header {
+        margin-bottom: 1.75rem;
+    }
+    
+    .plan-header h1 {
+        font-size: 2.25rem;
+    }
+    
+    .plan-header p {
+        font-size: 1.025rem;
+    }
+    
+    .plan-card {
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .plan-title {
+        font-size: 1.375rem;
+    }
+    
+    .plan-description {
+        font-size: 1rem;
+    }
+    
+    .plan-details li {
+        font-size: 0.95rem;
+    }
+    
+    .btn-submit-plan {
+        padding: 0.8rem 1.75rem;
+        font-size: 1.05rem;
+    }
+    
+    .member-group {
+        padding: 0.875rem 1.25rem 1.125rem;
+    }
+    
+    .member-plan-cards {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 0.875rem;
+        max-height: 280px;
+    }
+}
+
+/* Medium laptops (992px - 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .plan-container {
+        max-width: 950px;
+        margin: 2rem auto;
+        padding: 1.5rem;
+    }
+    
+    .plan-header h1 {
+        font-size: 2.125rem;
+    }
+    
+    .plan-card {
+        padding: 1.125rem;
+        margin-bottom: 1.125rem;
+    }
+    
+    .plan-title {
+        font-size: 1.3rem;
+    }
+    
+    .member-plan-cards {
+        grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+        max-height: 270px;
+    }
+}
+
+/* ==================================
+   TABLET & MOBILE RESPONSIVE STYLES
+   ================================== */
+
+/* Tablets (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .plan-container {
+        max-width: 95%;
+        margin: 1.75rem auto;
+        padding: 1.25rem;
+    }
+    
+    .plan-header {
+        margin-bottom: 1.25rem;
+    }
+    
+    .plan-header h1 {
+        font-size: 1.875rem;
+    }
+    
+    .plan-header p {
+        font-size: 0.95rem;
+    }
+    
+    .plan-card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .plan-title {
+        font-size: 1.2rem;
+    }
+    
+    .plan-description {
+        font-size: 0.925rem;
+        margin: 0.5rem 0 0.875rem;
+    }
+    
+    .plan-details li {
+        font-size: 0.875rem;
+        margin-bottom: 0.45rem;
+    }
+    
+    .btn-submit-plan {
+        padding: 0.7rem 1.5rem;
+        font-size: 0.975rem;
+    }
+    
+    .member-group {
+        padding: 0.7rem 0.875rem 0.875rem;
+        margin-bottom: 1.125rem;
+    }
+    
+    .detail-chip {
+        font-size: 0.8rem;
+        padding: 0.2rem 0.45rem;
+    }
+    
+    .member-plan-cards {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 0.675rem;
+        max-height: 240px;
+    }
+}
+
+/* Mobile devices (480px - 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+    body {
+        background-color: #f7f9fc;
+    }
+    
+    .plan-container {
+        max-width: 100%;
+        margin: 1rem 0.5rem;
+        padding: 1rem;
+        border-radius: 8px;
+    }
+    
+    .plan-header {
+        margin-bottom: 1rem;
+    }
+    
+    .plan-header h1 {
+        font-size: 1.625rem;
+    }
+    
+    .plan-header p {
+        font-size: 0.9rem;
+        margin-top: 0.4rem;
+    }
+    
+    .plan-card {
+        padding: 0.875rem;
+        margin-bottom: 0.875rem;
+        border-radius: 6px;
+    }
+    
+    .plan-title {
+        font-size: 1.125rem;
+    }
+    
+    .plan-description {
+        font-size: 0.9rem;
+        margin: 0.4rem 0 0.75rem;
+    }
+    
+    .plan-details li {
+        font-size: 0.85rem;
+        margin-bottom: 0.4rem;
+    }
+    
+    .form-actions {
+        margin-top: 1.25rem;
+    }
+    
+    .btn-submit-plan {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 0.975rem;
+    }
+    
+    .member-group {
+        padding: 0.65rem 0.75rem 0.75rem;
+        margin-bottom: 1rem;
+        border-radius: 6px;
+    }
+    
+    .member-group > legend {
+        font-size: 0.95rem;
+        padding: 0 0.4rem;
+    }
+    
+    .member-details {
+        gap: 0.4rem;
+        margin: 0.4rem 0 0.65rem;
+    }
+    
+    .detail-chip {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.4rem;
+    }
+    
+    .member-plan-cards {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        max-height: 280px;
+    }
+}
+
+/* Small mobile devices (below 480px) */
+@media (max-width: 479px) {
+    body {
+        background-color: #fff;
+    }
+    
+    .plan-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0.875rem;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    
+    .plan-header {
+        margin-bottom: 0.875rem;
+    }
+    
+    .plan-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .plan-header p {
+        font-size: 0.85rem;
+        margin-top: 0.35rem;
+    }
+    
+    .plan-card {
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        border-radius: 6px;
+    }
+    
+    .plan-title {
+        font-size: 1.05rem;
+    }
+    
+    .plan-description {
+        font-size: 0.85rem;
+        margin: 0.35rem 0 0.65rem;
+    }
+    
+    .plan-details li {
+        font-size: 0.8rem;
+        margin-bottom: 0.35rem;
+    }
+    
+    .form-actions {
+        margin-top: 1rem;
+    }
+    
+    .btn-submit-plan {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        font-size: 0.95rem;
+    }
+    
+    .member-group {
+        padding: 0.6rem 0.65rem 0.65rem;
+        margin-bottom: 0.875rem;
+        border-radius: 6px;
+    }
+    
+    .member-group > legend {
+        font-size: 0.9rem;
+        padding: 0 0.35rem;
+    }
+    
+    .member-details {
+        gap: 0.35rem;
+        margin: 0.35rem 0 0.6rem;
+    }
+    
+    .detail-chip {
+        font-size: 0.7rem;
+        padding: 0.175rem 0.35rem;
+        gap: 0.2rem;
+    }
+    
+    .member-plan-cards {
+        grid-template-columns: 1fr;
+        gap: 0.65rem;
+        max-height: 300px;
+        padding-right: 0.15rem;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .plan-card {
+        min-height: 120px;
+    }
+    
+    .plan-card input[type="radio"] {
+        /* Make the clickable area larger */
+        width: 100%;
+        height: 100%;
+    }
+    
+    .btn-submit-plan {
+        min-height: 48px;
+        font-size: 1rem;
+    }
+    
+    /* Remove hover effects on touch devices */
+    .plan-card:hover {
+        border-color: #e0e0e0;
+        box-shadow: none;
+    }
+    
+    .plan-card:active {
+        border-color: #3b82f6;
+        box-shadow: 0 6px 16px rgba(59,130,246,0.1);
+    }
+    
+    .btn-submit-plan:hover {
+        background: #3b82f6;
+    }
+    
+    .btn-submit-plan:active {
+        background: #2563eb;
+    }
+    
+    /* Make scrollable areas more obvious */
+    .member-plan-cards {
+        border: 1px dashed #d1d5db;
+        border-radius: 4px;
+        padding: 0.5rem;
+    }
+}
+
+/* Landscape mobile orientation */
+@media (max-width: 767px) and (orientation: landscape) {
+    .plan-container {
+        margin: 1rem 0.75rem;
+        padding: 1rem 1.25rem;
+    }
+    
+    .plan-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .member-plan-cards {
+        grid-template-columns: repeat(2, 1fr);
+        max-height: 220px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .plan-card {
+        border-width: 3px;
+    }
+    
+    .plan-card input[type="radio"]:checked + .plan-content {
+        border-width: 3px;
+    }
+    
+    .member-group {
+        border-width: 2px;
+    }
+    
+    .detail-chip {
+        border-width: 2px;
+        font-weight: 600;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .plan-card,
+    .btn-submit-plan {
+        transition: none;
+    }
 }

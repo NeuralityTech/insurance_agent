@@ -1,23 +1,23 @@
 /*
- * This script handles all logic for member management in the Members to be Covered section.
- * It manages adding, deleting, and displaying members in an inline form and table.
+ * This script handles all logic for member management with tab-based interface.
+ * It manages adding, editing, deleting, and displaying members in tabs.
  * It is used by: Health_Insurance_Requirement_Form.html, Members_to_be_Covered.html.
  */
 
 (function() {
     'use strict';
 
-    let memberOccupationDropdown = null;
+    let activeMemberId = null;
+    let memberTabs = {};
+    let hasUnsavedChanges = false;
+    let originalFormData = {};
 
-    // Note: We use the global calculateAge and calculateBmi from calculations.js
-    // These are loaded in the main HTML file before this script
-
-    // Initialize member occupation dropdown
-    function initializeMemberOccupationDropdown() {
-        const input = document.getElementById('member-occupation');
-        const hiddenInput = document.getElementById('member-occupation-value');
-        const dropdown = document.getElementById('member-occupation-list');
-        const occupationalRiskDetailsGroup = document.getElementById('member-occupational-risk-details-group');
+    // Initialize member occupation dropdown for a specific form
+    function initializeMemberOccupationDropdown(formContainer) {
+        const input = formContainer.querySelector('.member-occupation');
+        const hiddenInput = formContainer.querySelector('.member-occupation-value');
+        const dropdown = formContainer.querySelector('.member-occupation-list');
+        const occupationalRiskDetailsGroup = formContainer.querySelector('.member-occupational-risk-details-group');
 
         if (!input || !dropdown || typeof ALL_OCCUPATIONS === 'undefined') {
             console.warn('Occupation dropdown elements or data not found');
@@ -33,16 +33,12 @@
             const otherLi = document.createElement('li');
             otherLi.textContent = 'Other';
             otherLi.classList.add('other-option');
-            otherLi.setAttribute('role', 'option');
-            otherLi.setAttribute('data-index', '0');
             otherLi.addEventListener('click', () => selectOccupation('Other'));
             dropdown.appendChild(otherLi);
 
             occupations.forEach((occupation, index) => {
                 const li = document.createElement('li');
                 li.textContent = occupation;
-                li.setAttribute('role', 'option');
-                li.setAttribute('data-index', index + 1);
                 li.addEventListener('click', () => selectOccupation(occupation));
                 dropdown.appendChild(li);
             });
@@ -66,11 +62,12 @@
             dropdown.classList.remove('show');
             selectedIndex = -1;
             updateOccupationalRisk(occupation);
+            markFormAsModified();
         }
 
         function updateOccupationalRisk(occupation) {
-            const yesRadio = document.querySelector('input[name="member-occupational-risk"][value="yes"]');
-            const noRadio = document.querySelector('input[name="member-occupational-risk"][value="no"]');
+            const yesRadio = formContainer.querySelector('input[name="member-occupational-risk"][value="yes"]');
+            const noRadio = formContainer.querySelector('input[name="member-occupational-risk"][value="no"]');
 
             if (!yesRadio || !noRadio || typeof isHazardousOccupation === 'undefined') {
                 return;
@@ -93,7 +90,7 @@
                 noRadio.dispatchEvent(new Event('change', { bubbles: true }));
                 if (occupationalRiskDetailsGroup) {
                     occupationalRiskDetailsGroup.style.display = 'none';
-                    const detailsTextarea = document.getElementById('member-occupational-risk-details');
+                    const detailsTextarea = formContainer.querySelector('.member-occupational-risk-details');
                     if (detailsTextarea) detailsTextarea.value = '';
                 }
             }
@@ -124,6 +121,7 @@
             populateDropdown(filtered);
             dropdown.classList.add('show');
             selectedIndex = -1;
+            markFormAsModified();
         });
 
         input.addEventListener('keydown', function(e) {
@@ -158,9 +156,9 @@
         return { updateOccupationalRisk };
     }
 
-    // Initialize disease details toggles for member form
-    function initializeMemberDiseaseDetails() {
-        const container = document.getElementById('member-disease-list');
+    // Initialize disease details toggles for a form
+    function initializeMemberDiseaseDetails(formContainer) {
+        const container = formContainer.querySelector('.member-disease-list');
         if (!container) return;
 
         function setEntryState(entry, checked) {
@@ -176,8 +174,6 @@
                 textarea.value = '';
                 textarea.disabled = true;
                 textarea.required = false;
-                if (textarea.classList) textarea.classList.remove('error', 'is-invalid');
-                if (textarea.removeAttribute) textarea.removeAttribute('aria-invalid');
             }
         }
 
@@ -185,15 +181,18 @@
             const checkbox = entry.querySelector('input[type="checkbox"][name="disease"]');
             if (!checkbox) return;
             setEntryState(entry, checkbox.checked);
-            checkbox.addEventListener('change', () => setEntryState(entry, checkbox.checked));
+            checkbox.addEventListener('change', function() {
+                setEntryState(entry, checkbox.checked);
+                markFormAsModified();
+            });
         });
     }
 
-    // Initialize occupational risk toggle for member form
-    function initializeMemberOccupationalRisk() {
-        const yesRadio = document.querySelector('input[name="member-occupational-risk"][value="yes"]');
-        const noRadio = document.querySelector('input[name="member-occupational-risk"][value="no"]');
-        const detailsGroup = document.getElementById('member-occupational-risk-details-group');
+    // Initialize occupational risk toggle for a form
+    function initializeMemberOccupationalRisk(formContainer) {
+        const yesRadio = formContainer.querySelector('input[name="member-occupational-risk"][value="yes"]');
+        const noRadio = formContainer.querySelector('input[name="member-occupational-risk"][value="no"]');
+        const detailsGroup = formContainer.querySelector('.member-occupational-risk-details-group');
 
         if (!detailsGroup || (!yesRadio && !noRadio)) return;
 
@@ -205,169 +204,181 @@
             if (!show && textarea) textarea.value = '';
         }
 
-        if (yesRadio) yesRadio.addEventListener('change', render);
-        if (noRadio) noRadio.addEventListener('change', render);
+        if (yesRadio) {
+            yesRadio.addEventListener('change', function() {
+                render();
+                markFormAsModified();
+            });
+        }
+        if (noRadio) {
+            noRadio.addEventListener('change', function() {
+                render();
+                markFormAsModified();
+            });
+        }
         render();
     }
 
-    // Load and display members in table
-    function loadMembersTable() {
-        const members = JSON.parse(localStorage.getItem('members')) || [];
-        const tableWrapper = document.getElementById('members-table-wrapper');
-        const tableBody = document.getElementById('members-table-body');
-        const noMembersMsg = document.getElementById('no-members-message');
-
-        if (!tableWrapper || !tableBody || !noMembersMsg) return;
-
-        if (members.length === 0) {
-            tableWrapper.style.display = 'none';
-            noMembersMsg.style.display = 'block';
-            // Update people counter
-            if (typeof window.updatePeopleCounter === 'function') {
-                window.updatePeopleCounter();
-            }
-            return;
-        }
-
-        tableWrapper.style.display = 'block';
-        noMembersMsg.style.display = 'none';
-        tableBody.innerHTML = '';
-
-        members.forEach((member) => {
-            const row = document.createElement('tr');
-            row.dataset.memberId = member.id;
-
-            // Format health history
-            let healthHistoryText = 'None';
-            if (member.healthHistory && Object.keys(member.healthHistory).length > 0) {
-                const conditions = Object.entries(member.healthHistory).map(([key, details]) => {
-                    const conditionName = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    return details ? `${conditionName}: ${details}` : conditionName;
-                });
-                healthHistoryText = conditions.join('; ');
-            }
-
-            // Truncate health history if too long
-            const maxLength = 100;
-            let healthHistoryDisplay = healthHistoryText;
-            let needsTruncation = healthHistoryText.length > maxLength;
+    // Mark form as modified
+    function markFormAsModified() {
+        if (activeMemberId) {
+            const currentData = getFormData(getActiveFormContainer());
+            const originalData = originalFormData[activeMemberId];
             
-            if (needsTruncation) {
-                const truncated = healthHistoryText.substring(0, maxLength) + '...';
-                healthHistoryDisplay = `
-                    <span class="health-history-truncated">${truncated}</span>
-                    <span class="health-history-full" style="display:none;">${healthHistoryText}</span>
-                    <button class="view-more-btn" data-expanded="false">View More</button>
-                `;
-            }
-
-            // Format occupational risk display
-            let occRiskDisplay = member.occupationalRisk || 'No';
-            if (member.occupationalRiskDetails && member.occupationalRiskDetails.trim()) {
-                occRiskDisplay += `: ${member.occupationalRiskDetails}`;
-            }
-
-            row.innerHTML = `
-                <td>${member.name || ''}</td>
-                <td>${member.relationship || ''}</td>
-                <td>${member.occupation || ''}</td>
-                <td>${member.gender || ''}</td>
-                <td>${member.dob || ''}</td>
-                <td>${member.age || ''}</td>
-                <td>${member.height || ''}</td>
-                <td>${member.weight || ''}</td>
-                <td>${member.bmi || ''}</td>
-                <td class="health-history-cell">${healthHistoryDisplay}</td>
-                <td>${member.plannedSurgeries || 'None'}</td>
-                <td>${member.smoker || 'No'}</td>
-                <td>${member.alcohol || 'No'}</td>
-                <td>${member.riskyHobbies || 'No'}</td>
-                <td>${occRiskDisplay}</td>
-                <td><input type="checkbox" class="member-checkbox" data-member-id="${member.id}"></td>
-            `;
-
-            tableBody.appendChild(row);
-
-            // Add event listener for view more button
-            if (needsTruncation) {
-                const viewMoreBtn = row.querySelector('.view-more-btn');
-                if (viewMoreBtn) {
-                    viewMoreBtn.addEventListener('click', function() {
-                        const truncated = row.querySelector('.health-history-truncated');
-                        const full = row.querySelector('.health-history-full');
-                        const isExpanded = this.dataset.expanded === 'true';
-
-                        if (isExpanded) {
-                            truncated.style.display = 'inline';
-                            full.style.display = 'none';
-                            this.textContent = 'View More';
-                            this.dataset.expanded = 'false';
-                        } else {
-                            truncated.style.display = 'none';
-                            full.style.display = 'inline';
-                            this.textContent = 'View Less';
-                            this.dataset.expanded = 'true';
-                        }
-                    });
+            if (originalData && JSON.stringify(currentData) !== JSON.stringify(originalData)) {
+                hasUnsavedChanges = true;
+                const tab = document.querySelector(`.member-tab[data-member-id="${activeMemberId}"]`);
+                if (tab) {
+                    tab.classList.add('modified');
                 }
             }
+        }
+    }
+
+    // Get active form container
+    function getActiveFormContainer() {
+        return document.querySelector('.member-tab-content.active .member-form');
+    }
+
+    // Get form data from a container
+    function getFormData(formContainer) {
+        if (!formContainer) return null;
+
+        const data = {
+            name: formContainer.querySelector('.member-name').value.trim(),
+            relationship: formContainer.querySelector('.relationship').value,
+            occupation: formContainer.querySelector('.member-occupation').value.trim(),
+            gender: formContainer.querySelector('.member-gender').value,
+            dob: formContainer.querySelector('.member-dob').value,
+            age: formContainer.querySelector('.member-age').value,
+            height: formContainer.querySelector('.member-height').value.trim(),
+            weight: formContainer.querySelector('.member-weight').value.trim(),
+            bmi: formContainer.querySelector('.member-bmi').value,
+            plannedSurgeries: formContainer.querySelector('.member-planned-surgeries').value.trim(),
+            smoker: formContainer.querySelector('input[name="member-smoker"]:checked')?.value || 'no',
+            alcohol: formContainer.querySelector('input[name="member-alcohol"]:checked')?.value || 'no',
+            riskyHobbies: formContainer.querySelector('input[name="member-risky-hobbies"]:checked')?.value || 'no',
+            occupationalRisk: formContainer.querySelector('input[name="member-occupational-risk"]:checked')?.value || 'no',
+            occupationalRiskDetails: formContainer.querySelector('.member-occupational-risk-details')?.value.trim() || ''
+        };
+
+        // Collect health history
+        const healthHistory = {};
+        formContainer.querySelectorAll('.member-disease-list input[name="disease"]').forEach(checkbox => {
+            if (!checkbox.checked) return;
+            const key = checkbox.value;
+            const detailsTextarea = formContainer.querySelector(`.member-disease-list textarea[name="${key}_details"]`);
+            const detailsValue = detailsTextarea ? detailsTextarea.value.trim() : '';
+            // If checkbox is checked but details are empty, use "None"
+            healthHistory[key] = detailsValue || "None";
         });
+        data.healthHistory = healthHistory;
 
-        // Update people counter if available
-        if (typeof window.updatePeopleCounter === 'function') {
-            window.updatePeopleCounter();
+        // Add disease keys array for backend compatibility (same as Health History tab)
+        try {
+            const diseasesChecked = [];
+            if (data.healthHistory && typeof data.healthHistory === 'object') {
+                for (const [key, value] of Object.entries(data.healthHistory)) {
+                    if (key && key.toString().trim() !== '') {
+                        diseasesChecked.push(key);
+                    }
+                }
+            }
+
+            // Add deterministic fields (backward-compatible)
+            if (diseasesChecked.length > 0) {
+                data.diseases = diseasesChecked;         // e.g. ['diabetes', 'cardiac']
+                data.disease = diseasesChecked[0];       
+            } else {
+                data.diseases = [];
+            }
+        } catch (e) {
+            console.warn('Failed to normalize member diseases:', e);
         }
+
+        return data;
     }
 
-    // Show member form
-    function showMemberForm() {
-        const formContainer = document.getElementById('member-form-container');
-        if (formContainer) {
-            formContainer.classList.add('show');
-            // Scroll to form
-            formContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Populate form with member data
+    function populateForm(formContainer, memberData) {
+        if (!formContainer || !memberData) return;
+
+        formContainer.querySelector('.member-name').value = memberData.name || '';
+        formContainer.querySelector('.relationship').value = memberData.relationship || '';
+        formContainer.querySelector('.member-occupation').value = memberData.occupation || '';
+        formContainer.querySelector('.member-gender').value = memberData.gender || '';
+        formContainer.querySelector('.member-dob').value = memberData.dob || '';
+        formContainer.querySelector('.member-age').value = memberData.age || '';
+        formContainer.querySelector('.member-height').value = memberData.height || '';
+        formContainer.querySelector('.member-weight').value = memberData.weight || '';
+        formContainer.querySelector('.member-bmi').value = memberData.bmi || '';
+        formContainer.querySelector('.member-planned-surgeries').value = memberData.plannedSurgeries || '';
+
+        // Set radio buttons
+        if (memberData.smoker) {
+            const smokerRadio = formContainer.querySelector(`input[name="member-smoker"][value="${memberData.smoker}"]`);
+            if (smokerRadio) smokerRadio.checked = true;
         }
+        if (memberData.alcohol) {
+            const alcoholRadio = formContainer.querySelector(`input[name="member-alcohol"][value="${memberData.alcohol}"]`);
+            if (alcoholRadio) alcoholRadio.checked = true;
+        }
+        if (memberData.riskyHobbies) {
+            const hobbyRadio = formContainer.querySelector(`input[name="member-risky-hobbies"][value="${memberData.riskyHobbies}"]`);
+            if (hobbyRadio) hobbyRadio.checked = true;
+        }
+        if (memberData.occupationalRisk) {
+            const riskRadio = formContainer.querySelector(`input[name="member-occupational-risk"][value="${memberData.occupationalRisk}"]`);
+            if (riskRadio) {
+                riskRadio.checked = true;
+                riskRadio.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+        if (memberData.occupationalRiskDetails) {
+            const detailsTextarea = formContainer.querySelector('.member-occupational-risk-details');
+            if (detailsTextarea) detailsTextarea.value = memberData.occupationalRiskDetails;
+        }
+
+        // Populate health history
+        if (memberData.healthHistory) {
+            for (const [key, details] of Object.entries(memberData.healthHistory)) {
+                const checkbox = formContainer.querySelector(`.member-disease-list input[name="disease"][value="${key}"]`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                    
+                    const detailsTextarea = formContainer.querySelector(`.member-disease-list textarea[name="${key}_details"]`);
+                    if (detailsTextarea) {
+                        // If details are "None", show empty field for user convenience
+                        detailsTextarea.value = details === 'None' ? '' : details;
+                    }
+                }
+            }
+        }
+
+        // Trigger calculations
+        formContainer.querySelector('.member-dob').dispatchEvent(new Event('change'));
+        formContainer.querySelector('.member-height').dispatchEvent(new Event('input'));
     }
 
-    // Hide member form and reset it
-    function hideMemberForm() {
-        const formContainer = document.getElementById('member-form-container');
-        const errorDiv = document.getElementById('member-error');
-        
-        if (formContainer) {
-            formContainer.classList.remove('show');
-        }
-        
-        // Clear all form fields
-        clearMemberForm();
-        
-        if (errorDiv) {
-            errorDiv.style.display = 'none';
-            errorDiv.textContent = '';
-        }
-    }
+    // Clear form
+    function clearForm(formContainer) {
+        if (!formContainer) return;
 
-    // Clear member form
-    function clearMemberForm() {
         // Clear text inputs
-        const textInputs = ['member-name', 'member-occupation', 'member-occupation-value', 
-                           'member-dob', 'member-height', 'member-weight', 'member-age', 
-                           'member-bmi', 'member-planned-surgeries', 'member-occupational-risk-details'];
-        textInputs.forEach(id => {
-            const input = document.getElementById(id);
-            if (input) input.value = '';
+        formContainer.querySelectorAll('input[type="text"], input[type="date"], textarea').forEach(input => {
+            if (!input.classList.contains('readonly-field')) {
+                input.value = '';
+            }
         });
-        
-        // Reset select fields
-        const selectInputs = ['relationship', 'member-gender'];
-        selectInputs.forEach(id => {
-            const select = document.getElementById(id);
-            if (select) select.selectedIndex = 0;
+
+        // Reset selects
+        formContainer.querySelectorAll('select').forEach(select => {
+            select.selectedIndex = 0;
         });
-        
+
         // Uncheck all disease checkboxes and hide details
-        const diseaseEntries = document.querySelectorAll('#member-disease-list .disease-entry');
-        diseaseEntries.forEach(entry => {
+        formContainer.querySelectorAll('.disease-entry').forEach(entry => {
             const checkbox = entry.querySelector('input[type="checkbox"]');
             const details = entry.querySelector('.disease-details-container');
             const textarea = details && details.querySelector('textarea');
@@ -379,40 +390,157 @@
                 textarea.value = '';
             }
         });
-        
+
         // Reset radio buttons to 'no'
-        const radioGroups = ['member-smoker', 'member-alcohol', 'member-risky-hobbies', 'member-occupational-risk'];
-        radioGroups.forEach(name => {
-            const noRadio = document.querySelector(`input[name="${name}"][value="no"]`);
+        ['member-smoker', 'member-alcohol', 'member-risky-hobbies', 'member-occupational-risk'].forEach(name => {
+            const noRadio = formContainer.querySelector(`input[name="${name}"][value="no"]`);
             if (noRadio) noRadio.checked = true;
         });
-        
+
         // Hide occupational risk details
-        const occRiskDetails = document.getElementById('member-occupational-risk-details-group');
+        const occRiskDetails = formContainer.querySelector('.member-occupational-risk-details-group');
         if (occRiskDetails) {
             occRiskDetails.style.display = 'none';
+        }
+
+        // Clear readonly fields
+        formContainer.querySelector('.member-age').value = '';
+        formContainer.querySelector('.member-bmi').value = '';
+
+        hasUnsavedChanges = false;
+        if (activeMemberId) {
+            const tab = document.querySelector(`.member-tab[data-member-id="${activeMemberId}"]`);
+            if (tab) {
+                tab.classList.remove('modified');
+            }
+        }
+    }
+
+    // Create a new member tab
+    function createMemberTab(memberId, memberName, isNewMember = false) {
+        const tabsContainer = document.getElementById('member-tabs');
+        const contentsContainer = document.getElementById('member-tab-contents');
+        const template = document.getElementById('member-form-template');
+
+        // For new members being added (not existing members being loaded), don't create tab yet
+        // The tab will be created/updated when they save
+        if (isNewMember && memberId === 'new') {
+            // Check if content already exists
+            let existingContent = document.querySelector('.member-tab-content[data-member-id="new"]');
+            if (existingContent) {
+                return existingContent;
+            }
+        }
+
+        // Create tab button only for saved members
+        if (memberId !== 'new') {
+            const tab = document.createElement('div');
+            tab.className = 'member-tab';
+            tab.dataset.memberId = memberId;
+            tab.textContent = memberName || 'Member';
+            tab.addEventListener('click', () => switchToTab(memberId));
+
+            // Insert before "+ Add New" tab
+            const addNewTab = document.querySelector('.add-new-tab');
+            if (addNewTab) {
+                tabsContainer.insertBefore(tab, addNewTab);
+            } else {
+                tabsContainer.appendChild(tab);
+            }
+
+            memberTabs[memberId] = memberTabs[memberId] || {};
+            memberTabs[memberId].tab = tab;
+        }
+
+        // Create tab content
+        const content = template.content.cloneNode(true);
+        const contentDiv = content.querySelector('.member-tab-content');
+        contentDiv.dataset.memberId = memberId;
+
+        // Get the form container for initialization
+        const formContainer = contentDiv.querySelector('.member-form');
+
+        // Show delete button only for saved members
+        if (memberId !== 'new') {
+            const deleteBtn = contentDiv.querySelector('.delete-member-btn');
+            if (deleteBtn) deleteBtn.style.display = 'inline-block';
+        }
+
+        // Initialize form components
+        initializeMemberDiseaseDetails(contentDiv);
+        initializeMemberOccupationalRisk(contentDiv);
+        initializeMemberOccupationDropdown(contentDiv);
+        initializeAgeCalculation(contentDiv);
+        initializeBmiCalculation(contentDiv);
+
+        // Add change listeners to all form inputs
+        formContainer.querySelectorAll('input, select, textarea').forEach(input => {
+            input.addEventListener('input', markFormAsModified);
+            input.addEventListener('change', markFormAsModified);
+        });
+
+        // Add event listeners
+        const saveBtn = contentDiv.querySelector('.save-member-btn');
+        const clearBtn = contentDiv.querySelector('.clear-member-btn');
+        const deleteBtn = contentDiv.querySelector('.delete-member-btn');
+
+        if (saveBtn) saveBtn.addEventListener('click', () => saveMember(memberId));
+        if (clearBtn) clearBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear this form?')) {
+                clearForm(formContainer);
+            }
+        });
+        if (deleteBtn) deleteBtn.addEventListener('click', () => deleteMember(memberId));
+
+        contentsContainer.appendChild(contentDiv);
+
+        memberTabs[memberId] = memberTabs[memberId] || {};
+        memberTabs[memberId].content = contentDiv;
+
+        return contentDiv;
+    }
+
+    // Switch to a tab
+    function switchToTab(memberId) {
+        // Check for unsaved changes
+        if (hasUnsavedChanges && activeMemberId !== memberId) {
+            if (!confirm('You have unsaved changes. Do you want to discard them and switch tabs?')) {
+                return;
+            }
+            hasUnsavedChanges = false;
+        }
+
+        // Deactivate all tabs
+        document.querySelectorAll('.member-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.member-tab-content').forEach(c => c.classList.remove('active'));
+
+        // Activate selected tab
+        const tab = document.querySelector(`.member-tab[data-member-id="${memberId}"]`);
+        const content = document.querySelector(`.member-tab-content[data-member-id="${memberId}"]`);
+
+        if (tab) tab.classList.add('active');
+        if (content) content.classList.add('active');
+
+        activeMemberId = memberId;
+
+        // Store original form data for comparison
+        if (memberId !== 'new') {
+            const formContainer = content.querySelector('.member-form');
+            originalFormData[memberId] = getFormData(formContainer);
         }
     }
 
     // Save member
-    function saveMember() {
-        console.log('Save member called');
-        
+    function saveMember(memberId) {
+        const formContainer = getActiveFormContainer();
+        if (!formContainer) return;
+
         const members = JSON.parse(localStorage.getItem('members')) || [];
-        const errorDiv = document.getElementById('member-error');
-        
-        const name = document.getElementById('member-name').value.trim();
-        const relationship = document.getElementById('relationship').value;
-        const occupation = document.getElementById('member-occupation').value.trim();
-        const gender = document.getElementById('member-gender').value;
-        const dob = document.getElementById('member-dob').value;
-        const age = document.getElementById('member-age').value;
-        const height = document.getElementById('member-height').value.trim();
-        const weight = document.getElementById('member-weight').value.trim();
-        const bmi = document.getElementById('member-bmi').value;
+        const errorDiv = formContainer.querySelector('.member-error');
+        const data = getFormData(formContainer);
 
         // Validate required fields
-        if (!name || !relationship || !gender || !dob || !height || !weight) {
+        if (!data.name || !data.relationship || !data.gender || !data.dob || !data.height || !data.weight) {
             if (errorDiv) {
                 errorDiv.textContent = 'Please fill in all required fields marked with *';
                 errorDiv.style.display = 'block';
@@ -421,7 +549,7 @@
         }
 
         // Validate numeric fields
-        if (isNaN(parseFloat(height)) || parseFloat(height) <= 0) {
+        if (isNaN(parseFloat(data.height)) || parseFloat(data.height) <= 0) {
             if (errorDiv) {
                 errorDiv.textContent = 'Height must be a valid number greater than 0';
                 errorDiv.style.display = 'block';
@@ -429,7 +557,7 @@
             return;
         }
 
-        if (isNaN(parseFloat(weight)) || parseFloat(weight) <= 0) {
+        if (isNaN(parseFloat(data.weight)) || parseFloat(data.weight) <= 0) {
             if (errorDiv) {
                 errorDiv.textContent = 'Weight must be a valid number greater than 0';
                 errorDiv.style.display = 'block';
@@ -437,105 +565,158 @@
             return;
         }
 
-        // Check for duplicate
-        const duplicate = members.some(m => 
-            m.name === name && 
-            m.relationship === relationship && 
-            m.dob === dob
-        );
+        // Check for duplicate 
+        if (memberId === 'new') {
+            const duplicate = members.some(m => 
+                m.name === data.name && 
+                m.relationship === data.relationship && 
+                m.dob === data.dob
+            );
 
-        if (duplicate) {
-            if (errorDiv) {
-                errorDiv.textContent = 'Member already exists';
-                errorDiv.style.display = 'block';
+            if (duplicate) {
+                if (errorDiv) {
+                    errorDiv.textContent = 'Member already exists';
+                    errorDiv.style.display = 'block';
+                }
+                return;
             }
-            return;
+
+            // Generate member ID for new member
+            const birthYear = data.dob ? new Date(data.dob).getFullYear() : 'YYYY';
+            const namePart = data.name.replace(/[^a-zA-Z]/g, '').substring(0, 5).toUpperCase();
+            const newMemberId = `${namePart}${birthYear}_${Date.now()}`;
+            data.id = newMemberId;
+
+            members.push(data);
+            localStorage.setItem('members', JSON.stringify(members));
+
+            // Remove the new content and create tab for the saved member
+            const newContent = document.querySelector('.member-tab-content[data-member-id="new"]');
+            if (newContent) {
+                newContent.remove();
+            }
+
+            // Create the actual member tab and content
+            const contentDiv = createMemberTab(newMemberId, data.name, false);
+            const newFormContainer = contentDiv.querySelector('.member-form');
+            populateForm(newFormContainer, data);
+
+            // Update memberTabs reference
+            delete memberTabs['new'];
+            activeMemberId = newMemberId;
+
+            // Switch to the new member's tab
+            switchToTab(newMemberId);
+
+            alert('Member added successfully!');
+        } else {
+            // Update existing member
+            const index = members.findIndex(m => m.id === memberId);
+            if (index !== -1) {
+                data.id = memberId;
+                members[index] = data;
+                localStorage.setItem('members', JSON.stringify(members));
+
+                // Update tab name if changed
+                const tab = document.querySelector(`.member-tab[data-member-id="${memberId}"]`);
+                if (tab) {
+                    tab.textContent = data.name;
+                    tab.classList.remove('modified');
+                }
+
+                alert('Member information updated successfully!');
+            }
         }
 
-        // Collect health history
-        const healthHistory = {};
-        document.querySelectorAll('#member-disease-list input[name="disease"]').forEach(checkbox => {
-            if (!checkbox.checked) return;
-            const key = checkbox.value;
-            const detailsTextarea = document.querySelector(`#member-disease-list textarea[name="${key}_details"]`);
-            healthHistory[key] = detailsTextarea ? detailsTextarea.value.trim() : '';
-        });
-
-        // Generate member ID
-        const birthYear = dob ? new Date(dob).getFullYear() : 'YYYY';
-        const namePart = name.replace(/[^a-zA-Z]/g, '').substring(0, 5).toUpperCase();
-        const memberId = `${namePart}${birthYear}_${Date.now()}`;
-
-        // Create member object
-        const memberData = {
-            id: memberId,
-            name: name,
-            relationship: relationship,
-            occupation: occupation,
-            gender: gender,
-            dob: dob,
-            age: age,
-            height: height,
-            weight: weight,
-            bmi: bmi,
-            healthHistory: healthHistory,
-            plannedSurgeries: document.getElementById('member-planned-surgeries').value.trim(),
-            smoker: document.querySelector('input[name="member-smoker"]:checked')?.value || 'no',
-            alcohol: document.querySelector('input[name="member-alcohol"]:checked')?.value || 'no',
-            riskyHobbies: document.querySelector('input[name="member-risky-hobbies"]:checked')?.value || 'no',
-            occupationalRisk: document.querySelector('input[name="member-occupational-risk"]:checked')?.value || 'no',
-            occupationalRiskDetails: document.getElementById('member-occupational-risk-details')?.value.trim() || ''
-        };
-
-        members.push(memberData);
-        localStorage.setItem('members', JSON.stringify(members));
-
-        // Clear any cached form summary so it rebuilds fresh
-        localStorage.removeItem('formSummary');
-
-        // Reload table and hide form
-        loadMembersTable();
-        hideMemberForm();
-
-        // Show success message (optional)
-        console.log('Member added successfully:', memberData);
-    }
-
-    // Delete selected members
-    function deleteSelectedMembers() {
-        const checkboxes = document.querySelectorAll('.member-checkbox:checked');
-        
-        if (checkboxes.length === 0) {
-            alert('Please select at least one member to delete');
-            return;
-        }
-
-        if (!confirm(`Are you sure you want to delete ${checkboxes.length} member(s)?`)) {
-            return;
-        }
-
-        const members = JSON.parse(localStorage.getItem('members')) || [];
-        const memberIdsToDelete = Array.from(checkboxes).map(cb => cb.dataset.memberId);
-
-        const updatedMembers = members.filter(m => !memberIdsToDelete.includes(m.id));
-        localStorage.setItem('members', JSON.stringify(updatedMembers));
+        hasUnsavedChanges = false;
+        originalFormData[memberId] = data;
 
         // Clear cached summary
         localStorage.removeItem('formSummary');
 
-        loadMembersTable();
+        // Update people counter
+        if (typeof window.updatePeopleCounter === 'function') {
+            window.updatePeopleCounter();
+        }
+
+        if (errorDiv) {
+            errorDiv.style.display = 'none';
+        }
     }
 
-    // Initialize age calculation (uses global calculateAge from calculations.js)
-    function initializeAgeCalculation() {
-        const dobInput = document.getElementById('member-dob');
-        const ageInput = document.getElementById('member-age');
+    // Delete member
+    function deleteMember(memberId) {
+        if (!confirm('Are you sure you want to delete this member?')) {
+            return;
+        }
+
+        const members = JSON.parse(localStorage.getItem('members')) || [];
+        const updatedMembers = members.filter(m => m.id !== memberId);
+        localStorage.setItem('members', JSON.stringify(updatedMembers));
+
+        // Remove tab and content
+        const tab = document.querySelector(`.member-tab[data-member-id="${memberId}"]`);
+        const content = document.querySelector(`.member-tab-content[data-member-id="${memberId}"]`);
+
+        if (tab) tab.remove();
+        if (content) content.remove();
+
+        delete memberTabs[memberId];
+
+        // Switch to first available member tab or create new form
+        const remainingTabs = document.querySelectorAll('.member-tab:not(.add-new-tab)');
+        if (remainingTabs.length > 0) {
+            remainingTabs[0].click();
+        } else {
+            // No members left, show new member form
+            const addNewTab = document.querySelector('.add-new-tab');
+            if (addNewTab) {
+                addNewTab.click();
+            }
+        }
+
+        // Update people counter
+        if (typeof window.updatePeopleCounter === 'function') {
+            window.updatePeopleCounter();
+        }
+
+        // Clear cached summary
+        localStorage.removeItem('formSummary');
+    }
+
+    // Create "+ Add New" tab
+    function createAddNewTab() {
+        const tabsContainer = document.getElementById('member-tabs');
+        
+        // Check if it already exists
+        const existingAddNew = document.querySelector('.add-new-tab');
+        if (existingAddNew) return;
+
+        // Create new tab
+        const tab = document.createElement('div');
+        tab.className = 'member-tab add-new-tab';
+        tab.textContent = '+ Add New';
+        tab.addEventListener('click', () => {
+            // Create "new" content if it doesn't exist
+            let existingNewContent = document.querySelector('.member-tab-content[data-member-id="new"]');
+            if (!existingNewContent) {
+                createMemberTab('new', 'New Member', true);
+            }
+            switchToTab('new');
+        });
+
+        tabsContainer.appendChild(tab);
+    }
+
+    // Initialize age calculation
+    function initializeAgeCalculation(contentDiv) {
+        const dobInput = contentDiv.querySelector('.member-dob');
+        const ageInput = contentDiv.querySelector('.member-age');
 
         if (dobInput && ageInput && typeof calculateAge === 'function') {
             dobInput.addEventListener('change', function() {
                 const age = calculateAge(this.value);
                 ageInput.value = age !== null ? age : '';
-                // Update people counter
                 if (typeof window.updatePeopleCounter === 'function') {
                     window.updatePeopleCounter();
                 }
@@ -543,11 +724,11 @@
         }
     }
 
-    // Initialize BMI calculation (uses global calculateBmi from calculations.js)
-    function initializeBmiCalculation() {
-        const heightInput = document.getElementById('member-height');
-        const weightInput = document.getElementById('member-weight');
-        const bmiInput = document.getElementById('member-bmi');
+    // Initialize BMI calculation
+    function initializeBmiCalculation(contentDiv) {
+        const heightInput = contentDiv.querySelector('.member-height');
+        const weightInput = contentDiv.querySelector('.member-weight');
+        const bmiInput = contentDiv.querySelector('.member-bmi');
 
         if (heightInput && weightInput && bmiInput && typeof calculateBmi === 'function') {
             function updateBmi() {
@@ -560,60 +741,45 @@
         }
     }
 
-    // Main initialization function
-    function initializeMemberManagement() {
-        console.log('Initializing member management...');
+    // Load all existing members into tabs
+    function loadExistingMembers() {
+        const members = JSON.parse(localStorage.getItem('members')) || [];
         
-        // Load existing members into table
-        loadMembersTable();
+        // Load all existing members first (this creates their tabs)
+        members.forEach(member => {
+            const contentDiv = createMemberTab(member.id, member.name, false);
+            const formContainer = contentDiv.querySelector('.member-form');
+            populateForm(formContainer, member);
+            originalFormData[member.id] = member;
+        });
 
-        // Initialize form components
-        initializeAgeCalculation();
-        initializeBmiCalculation();
-        initializeMemberDiseaseDetails();
-        initializeMemberOccupationalRisk();
-        memberOccupationDropdown = initializeMemberOccupationDropdown();
+        // Create "+ Add New" tab at the end
+        createAddNewTab();
 
-        // Add Member button
-        const addMemberBtn = document.getElementById('add-member-btn');
-        if (addMemberBtn) {
-            addMemberBtn.addEventListener('click', showMemberForm);
+        // Activate first tab or show new member form
+        if (members.length > 0) {
+            switchToTab(members[0].id);
+        } else {
+            // No existing members, create and show new member form
+            createMemberTab('new', 'New Member', true);
+            switchToTab('new');
         }
-
-        // Cancel button
-        const cancelBtn = document.getElementById('cancel-member-btn');
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', hideMemberForm);
-        }
-
-        // Clear form button
-        const clearBtn = document.getElementById('clear-member-btn');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', clearMemberForm);
-        }
-
-        // Delete Selected button
-        const deleteBtn = document.getElementById('delete-selected-btn');
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', deleteSelectedMembers);
-        }
-
-        // Save Member button
-        const saveMemberBtn = document.getElementById('save-member-btn');
-        if (saveMemberBtn) {
-            saveMemberBtn.addEventListener('click', saveMember);
-        }
-
-        // Listen for storage changes from other tabs
-        window.addEventListener('storage', loadMembersTable);
-
-        // Reload when window gets focus
-        window.addEventListener('focus', loadMembersTable);
     }
 
-    // Make functions globally available for compatibility with existing code
+    // Main initialization function
+    function initializeMemberManagement() {
+        console.log('Initializing member management with tabs...');
+        loadExistingMembers();
+
+        // Update people counter
+        if (typeof window.updatePeopleCounter === 'function') {
+            window.updatePeopleCounter();
+        }
+    }
+
+    // Make functions globally available
     window.initializeMemberManagement = initializeMemberManagement;
-    window.loadMembersGlobal = loadMembersTable;
+    window.loadMembersGlobal = loadExistingMembers;
 
     // Auto-initialize if DOM is ready
     if (document.readyState === 'loading') {

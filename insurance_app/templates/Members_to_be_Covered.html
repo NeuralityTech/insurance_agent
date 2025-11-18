@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="/static/css/logo.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Members to be Covered</title>
@@ -8,112 +9,147 @@
     <link rel="stylesheet" href="../css/health_history.css">
     <link rel="stylesheet" href="../css/common.css">
     <style>
-        .members-table-container {
-        width: 100%;
-        max-width: 51vw; 
-        height: 5em;
-        box-sizing: border-box;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        background: #fff;
-        margin-bottom: 1em;
-        overflow-x: auto;
-        overflow-y: auto;
-
-        position: relative;
-        -webkit-overflow-scrolling: touch;
-        }
-
-        .members-table {
-        width: auto;                   
-        min-width: max-content;        
-        border-collapse: collapse;
-        table-layout: auto;
-        }
-
-        .members-table th,
-        .members-table td {
-        padding: 8px 12px;
-        text-align: left;
-        border-bottom: 1px solid #ddd;
-        white-space: nowrap;
-        }
-
-        .members-table td.health-history-cell {
-        white-space: normal;
-        word-break: break-word;
-        max-width: 220px;
-        }
-
-        .members-table-container .members-table th {
-        position: sticky;
-        top: 0;
-        z-index: 3;
-        background: #f5f5f5;
-        }
-
-        .health-history-truncated {
-            display: inline;
-        }
-        
-        .health-history-full {
-            display: none;
-        }
-        
-        .view-more-btn {
-            color: #007bff;
-            cursor: pointer;
-            text-decoration: underline;
-            background: none;
-            border: none;
-            padding: 0;
-            font-size: 0.85rem;
-            margin-left: 4px;
-        }
-        
-        .view-more-btn:hover {
-            color: #0056b3;
-        }
-        
-        .member-checkbox {
-            cursor: pointer;
-        }
-        
-        .no-members-message {
-            text-align: center;
-            padding: 2rem;
-            color: #666;
-            font-style: italic;
-        }
-        
-        .member-form-container {
-            display: none;
-            margin-top: 1.5rem;
-            padding: 1.5rem;
-            border: 2px solid #007bff;
-            border-radius: 8px;
+        /* Tab Navigation Styles */
+        .member-tabs-container {
+            margin-bottom: 0;
             background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
         }
-        
-        .member-form-container.show {
-            display: block;
-        }
-        
-        .member-actions {
+
+        .member-tabs {
             display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
+            gap: 0;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            padding: 0.5rem 1rem 0 1rem;
+            background-color: transparent;
         }
-        
+
+        .member-tab {
+            padding: 0.75rem 1.5rem;
+            background-color: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            position: relative;
+            color: #6c757d;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .member-tab:hover {
+            color: #495057;
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+
+        .member-tab.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+            background-color: white;
+        }
+
+        .member-tab.add-new-tab {
+            color: #007bff;
+            background-color: transparent;
+            border: none;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .member-tab.add-new-tab:hover {
+            background-color: rgba(0, 123, 255, 0.08);
+        }
+
+        .member-tab.add-new-tab.active {
+            background-color: white;
+            border-bottom-color: #007bff;
+        }
+
+        .member-tab.modified::after {
+            content: "";
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 6px;
+            height: 6px;
+            background-color: #007bff;
+            border-radius: 50%;
+        }
+
+        /* Tab Content Styles */
+        .member-tab-content {
+            display: none;
+            padding: 2rem;
+            background-color: white;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            min-height: 400px;
+        }
+
+        .member-tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .member-tab-content h3 {
+            color: #343a40;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
         .form-actions-inline {
             display: flex;
             gap: 1rem;
-            margin-top: 1.5rem;
-            padding-top: 1rem;
-            border-top: 1px solid #ddd;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #dee2e6;
         }
 
-        /* Styles for searchable dropdown */
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            margin-left: auto;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        /* Scrollbar styling for tab overflow */
+        .member-tabs::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .member-tabs::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .member-tabs::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .member-tabs::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Dropdown styles */
         .searchable-dropdown-wrapper {
             position: relative;
         }
@@ -126,13 +162,14 @@
             max-height: 200px;
             overflow-y: auto;
             background: white;
-            border: 1px solid #ccc;
+            border: 1px solid #ced4da;
             border-top: none;
             list-style: none;
             margin: 0;
             padding: 0;
             z-index: 1000;
             display: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .dropdown-list.show {
@@ -140,79 +177,70 @@
         }
 
         .dropdown-list li {
-            padding: 8px 12px;
+            padding: 0.5rem 0.75rem;
             cursor: pointer;
+            transition: background-color 0.15s ease;
         }
 
         .dropdown-list li:hover,
         .dropdown-list li.highlighted {
-            background-color: #f0f0f0;
+            background-color: #f8f9fa;
         }
 
         .dropdown-list li.other-option {
-            font-weight: bold;
-            border-bottom: 1px solid #ddd;
+            font-weight: 600;
+            border-bottom: 1px solid #dee2e6;
+            background-color: #f8f9fa;
+        }
+
+        /* screen size adjustments */
+        @media (max-width: 768px) {
+            .member-tabs {
+                padding: 0.25rem 0.5rem 0 0.5rem;
+            }
+
+            .member-tab {
+                padding: 0.6rem 1rem;
+                font-size: 0.875rem;
+            }
+
+            .member-tab-content {
+                padding: 1rem;
+            }
         }
     </style>
 </head>
 <body>
     <fieldset>
-        <!-- Members Table -->
-        <div id="members-table-wrapper" style="display: none; max-width: 100%; overflow: hidden;">
-            <div class="members-table-container">
-                <table class="members-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Relationship</th>
-                            <th>Occupation</th>
-                            <th>Gender</th>
-                            <th>DOB</th>
-                            <th>Age</th>
-                            <th>Height (cm)</th>
-                            <th>Weight (kg)</th>
-                            <th>BMI</th>
-                            <th>Medical History</th>
-                            <th>Planned Surgeries</th>
-                            <th>Smoker</th>
-                            <th>Alcohol</th>
-                            <th>Risky Hobbies</th>
-                            <th>Occupational Risk</th>
-                            <th>Select</th>
-                        </tr>
-                    </thead>
-                    <tbody id="members-table-body">
-                        <!-- Rows will be dynamically added here -->
-                    </tbody>
-                </table>
+        <!-- Member Tabs Container -->
+        <div class="member-tabs-container">
+            <div class="member-tabs" id="member-tabs">
+                <!-- Tabs will be dynamically added here -->
             </div>
         </div>
-        
-        <div class="no-members-message" id="no-members-message">
-            You can add members here
+
+        <!-- Tab Contents Container -->
+        <div id="member-tab-contents">
+            <!-- Tab content panels will be dynamically added here -->
         </div>
-        
-        <!-- Action Buttons -->
-        <div class="member-actions">
-            <button type="button" id="add-member-btn" class="btn">+ Add Member</button>
-            <button type="button" id="delete-selected-btn" class="btn btn-danger">- Delete Selected</button>
-        </div>
-        
-        <!-- Inline Member Form -->
-        <div id="member-form-container" class="member-form-container">
+    </fieldset>
+
+    <!-- Template for Member Form -->
+    <template id="member-form-template">
+        <div class="member-tab-content">
             <h3 style="margin-top: 0;">Member Details</h3>
-            <div id="member-details-form">
+            <div class="member-form">
                 <fieldset>
                     <legend>Personal & Professional</legend>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="member-name">Full Name *</label>
-                            <input type="text" id="member-name" name="member_name" required pattern="[A-Za-z][A-Za-z.'\s]*" title="Name must start with a letter and can only contain letters, spaces, and apostrophes.">
-                            <span class="error-message" id="member-name-error"></span>
+                            <label>Full Name *</label>
+                            <input type="text" class="member-name" name="member_name" required pattern="[A-Za-z][A-Za-z.'\s]*" title="Name must start with a letter and can only contain letters, spaces, and apostrophes.">
+                            <span class="error-message member-name-error"></span>
                         </div>
                         <div class="form-group">
-                            <label for="relationship">Relationship *</label>
-                            <select id="relationship" name="relationship" required>
+                            <label>Relationship *</label>
+                            <select class="relationship" name="relationship" required>
                                 <option value="">Select Relationship</option>
                                 <option value="spouse">Spouse</option>
                                 <option value="son">Son</option>
@@ -222,34 +250,32 @@
                                 <option value="father-in-law">Father-in-law</option>
                                 <option value="mother-in-law">Mother-in-law</option>
                             </select>
-                            <span class="error-message" id="relationship-error"></span>
+                            <span class="error-message relationship-error"></span>
                         </div>
                         <div class="form-group">
-                            <label for="member-occupation">Occupation</label>
+                            <label>Occupation</label>
                             <div class="searchable-dropdown-wrapper">
                                 <input type="text" 
-                                    id="member-occupation" 
+                                    class="member-occupation" 
                                     name="occupation" 
                                     placeholder="Search or select occupation..."
                                     autocomplete="off"
-                                    aria-autocomplete="list"
-                                    aria-controls="member-occupation-list"
                                     pattern="[A-Za-z\s]+" 
                                     title="Please enter only letters and spaces.">
-                                <input type="hidden" id="member-occupation-value" name="occupation_value">
-                                <ul id="member-occupation-list" class="dropdown-list" role="listbox"></ul>
+                                <input type="hidden" class="member-occupation-value" name="occupation_value">
+                                <ul class="member-occupation-list dropdown-list" role="listbox"></ul>
                             </div>
-                            <span class="error-message" id="member-occupation-error"></span>
+                            <span class="error-message member-occupation-error"></span>
                         </div>
                         <div class="form-group">
-                            <label for="member-gender">Gender *</label>
-                            <select id="member-gender" name="gender" required>
+                            <label>Gender *</label>
+                            <select class="member-gender" name="gender" required>
                                 <option value="">Select Gender</option>
                                 <option value="male">Male</option>
                                 <option value="female">Female</option>
                                 <option value="other">Other</option>
                             </select>
-                            <span class="error-message" id="member-gender-error"></span>
+                            <span class="error-message member-gender-error"></span>
                         </div>
                     </div>
                 </fieldset>
@@ -259,27 +285,27 @@
                     <legend>Health Vitals</legend>
                     <div class="form-row compact-row">
                         <div class="form-group">
-                            <label for="member-dob">Date of Birth *</label>
-                            <input type="date" id="member-dob" name="member-dob" required>
-                            <span class="error-message" id="member-dob-error"></span>
+                            <label>Date of Birth *</label>
+                            <input type="date" class="member-dob" name="member-dob" required>
+                            <span class="error-message member-dob-error"></span>
                         </div>
                         <div class="form-group fixed-width-group">
-                            <label for="member-height">Height (cm) *</label>
-                            <input type="text" id="member-height" name="member-height" placeholder="e.g., 175" pattern="[0-9.]*" title="Please enter only numbers." required>
-                            <span class="error-message" id="member-height-error"></span>
+                            <label>Height (cm) *</label>
+                            <input type="text" class="member-height" name="member-height" placeholder="e.g., 175" pattern="[0-9.]*" title="Please enter only numbers." required>
+                            <span class="error-message member-height-error"></span>
                         </div>
                         <div class="form-group fixed-width-group">
-                            <label for="member-weight">Weight (kg) *</label>
-                            <input type="text" id="member-weight" name="member-weight" placeholder="e.g., 70" pattern="[0-9.]*" title="Please enter only numbers." required>
-                            <span class="error-message" id="member-weight-error"></span>
+                            <label>Weight (kg) *</label>
+                            <input type="text" class="member-weight" name="member-weight" placeholder="e.g., 70" pattern="[0-9.]*" title="Please enter only numbers." required>
+                            <span class="error-message member-weight-error"></span>
                         </div>
                         <div class="form-group fixed-width-group">
-                            <label for="member-age">Age</label>
-                            <input type="text" id="member-age" name="member-age" readonly class="readonly-field">
+                            <label>Age</label>
+                            <input type="text" class="member-age" name="member-age" readonly class="readonly-field">
                         </div>
                         <div class="form-group fixed-width-group">
-                            <label for="member-bmi">BMI</label>
-                            <input type="text" id="member-bmi" name="member-bmi" readonly class="readonly-field">
+                            <label>BMI</label>
+                            <input type="text" class="member-bmi" name="member-bmi" readonly class="readonly-field">
                         </div>
                     </div>
                 </fieldset>
@@ -289,8 +315,8 @@
                     <legend>Medical History & Lifestyle</legend>
                     <fieldset class="sub-fieldset">
                         <legend>Disease Details</legend>
-                        <div class="group-box" id="member-disease-list-group">
-                            <div id="member-disease-list">
+                        <div class="group-box member-disease-list-group">
+                            <div class="member-disease-list">
                                 <!-- Cardiac Problems -->
                                 <div class="disease-entry">
                                     <div class="disease-header">
@@ -300,7 +326,7 @@
                                         </label>
                                     </div>
                                     <div class="disease-details-container">
-                                        <textarea name="cardiac_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation."></textarea>
+                                        <textarea name="cardiac_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2"></textarea>
                                     </div>
                                 </div>
 
@@ -313,7 +339,7 @@
                                         </label>
                                     </div>
                                     <div class="disease-details-container">
-                                        <textarea name="diabetes_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation."></textarea>
+                                        <textarea name="diabetes_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2"></textarea>
                                     </div>
                                 </div>
 
@@ -326,7 +352,7 @@
                                         </label>
                                     </div>
                                     <div class="disease-details-container">
-                                        <textarea name="cancer_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation."></textarea>
+                                        <textarea name="cancer_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2"></textarea>
                                     </div>
                                 </div>
 
@@ -339,7 +365,7 @@
                                         </label>
                                     </div>
                                     <div class="disease-details-container">
-                                        <textarea name="critical_illness_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation."></textarea>
+                                        <textarea name="critical_illness_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2"></textarea>
                                     </div>
                                 </div>
 
@@ -352,7 +378,7 @@
                                         </label>
                                     </div>
                                     <div class="disease-details-container">
-                                        <textarea name="other_details" placeholder="Please specify and provide details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation."></textarea>
+                                        <textarea name="other_details" class="disease-details-textarea" placeholder="Please specify and provide details..." rows="2"></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -362,8 +388,8 @@
                     <div class="group-box">
                         <div class="form-row">
                             <div class="form-group span-2">
-                                <label for="member-planned-surgeries">Any Planned Surgeries/Hospitalization in the next 6-12 months?</label>
-                                <textarea id="member-planned-surgeries" name="planned-surgeries" rows="2"></textarea>
+                                <label>Any Planned Surgeries/Hospitalization in the next 6-12 months?</label>
+                                <textarea class="member-planned-surgeries" name="planned-surgeries" rows="2"></textarea>
                             </div>
                         </div>
                     </div>
@@ -407,7 +433,7 @@
                             <div class="form-group">
                                 <fieldset>
                                     <legend>Exposed to hazardous occupation?</legend>
-                                    <div id="member-occupational-risk">
+                                    <div class="member-occupational-risk">
                                         <div class="radio-group">
                                             <label class="radio-label">
                                                 <input type="radio" name="member-occupational-risk" value="yes"> Yes
@@ -419,9 +445,9 @@
                                     </div>
                                 </fieldset>
                             </div>
-                            <div class="form-group span-2" id="member-occupational-risk-details-group" style="display:none;">
-                                <label for="member-occupational-risk-details">If yes, describe (e.g., mining, high-altitude, chemicals, heavy machinery)</label>
-                                <textarea id="member-occupational-risk-details" name="occupational-risk-details" rows="2"></textarea>
+                            <div class="form-group span-2 member-occupational-risk-details-group" style="display:none;">
+                                <label>If yes, describe (e.g., mining, high-altitude, chemicals, heavy machinery)</label>
+                                <textarea class="member-occupational-risk-details" name="occupational-risk-details" rows="2"></textarea>
                             </div>
                         </div>
                     </div>
@@ -429,13 +455,13 @@
                 
                 <!-- Form Actions -->
                 <div class="form-actions-inline">
-                    <div id="member-error" class="error-message" style="display:none;color:red;margin-right:auto;"></div>
-                    <button type="button" id="save-member-btn" class="btn btn-primary">Save Member</button>
-                    <button type="button" id="cancel-member-btn" class="btn btn-secondary">Cancel</button>
-                    <button type="button" id="clear-member-btn" class="btn btn-secondary">Clear Form</button>
+                    <div class="member-error error-message" style="display:none;color:red;margin-right:auto;"></div>
+                    <button type="button" class="btn btn-primary save-member-btn">Save Member</button>
+                    <button type="button" class="btn btn-secondary clear-member-btn">Clear Form</button>
+                    <button type="button" class="btn btn-danger delete-member-btn" style="display:none;">Delete Member</button>
                 </div>
             </div>
         </div>
-    </fieldset>
+    </template>
 </body>
 </html>

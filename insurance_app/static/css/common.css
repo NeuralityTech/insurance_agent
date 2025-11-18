@@ -594,62 +594,6 @@ select.input-error {
     visibility: hidden;
 }
 
-/* Responsive tabs - stack on small screens */
-@media (max-width: 992px) {
-    .tab-container {
-        flex-direction: column;
-    }
-    
-    .tab-navigation {
-        flex: 0 0 auto;
-        width: 100%;
-        flex-direction: row;
-        flex-wrap: wrap;
-        border-right: none;
-        border-bottom: 2px solid rgba(0, 123, 255, 0.3);
-        overflow-x: auto;
-    }
-    
-    .tab-navigation li {
-        flex: 1 1 auto;
-        min-width: 120px;
-    }
-    
-    .tab-button {
-        border-right: none;
-        border-bottom: 3px solid transparent;
-        margin-right: 0;
-        margin-bottom: -2px;
-        text-align: center;
-        padding: 0.75rem 1rem;
-    }
-    
-    .tab-button.active {
-        border-bottom-color: #007bff;
-    }
-}
-
-@media (max-width: 768px) {
-    .tab-navigation {
-        flex-direction: column;
-    }
-    
-    .tab-navigation li {
-        width: 100%;
-    }
-    
-    .tab-button {
-        border-bottom: 1px solid #ddd;
-        margin-bottom: 0;
-        text-align: left;
-    }
-    
-    .tab-button.active {
-        border-bottom-color: #ddd;
-        background-color: rgba(0, 123, 255, 0.15);
-    }
-}
-
 /* ==================================
    PROGRESS BAR STYLES
    ================================== */
@@ -801,45 +745,6 @@ select.input-error {
     opacity: 0.6;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .progress-bar-wrapper {
-        padding: 0 1rem;
-    }
-    
-    .progress-line {
-        left: 1rem;
-        right: 1rem;
-    }
-    
-    .progress-label {
-        font-size: 0.75rem;
-        max-width: 80px;
-    }
-    
-    .progress-dot {
-        width: 16px;
-        height: 16px;
-        border-width: 3px;
-    }
-    
-    .progress-step.active .progress-dot {
-        border-width: 3px;
-    }
-}
-
-@media (max-width: 480px) {
-    .progress-label {
-        font-size: 0.7rem;
-        max-width: 60px;
-    }
-    
-    .progress-dot {
-        width: 14px;
-        height: 14px;
-    }
-}
-
 /* Continue button styling */
 #continue-btn {
     margin-right: 5px;
@@ -857,3 +762,768 @@ select.input-error {
     border-color: #004085;
 }
 
+/* ==================================
+   LARGE SCREEN OPTIMIZATIONS
+   ================================== */
+
+/* Extra large screens (1400px+) */
+@media (min-width: 1400px) {
+    .container {
+        max-width: 1200px;
+        padding: 2.5em;
+    }
+    
+    .policy-container {
+        max-width: 1300px;
+        padding: 2rem;
+    }
+    
+    .title-header {
+        font-size: 3rem;
+    }
+    
+    .welcome-message {
+        font-size: 1.35rem;
+    }
+    
+    .page-header h1 {
+        font-size: 2.25rem;
+    }
+    
+    .main-title {
+        font-size: 2.25em;
+    }
+    
+    .tab-navigation {
+        flex: 0 0 240px;
+    }
+    
+    .tab-button {
+        padding: 1.125rem 1.75rem;
+        font-size: 1rem;
+    }
+    
+    .tab-content-wrapper {
+        padding: 2.5rem 2rem;
+    }
+    
+    .progress-bar-container {
+        max-width: 1000px;
+        padding: 2rem 2.5rem;
+    }
+    
+    .form-row {
+        gap: 0.1rem 2.5rem;
+    }
+    
+    .form-row.compact-row {
+        gap: 2rem;
+    }
+}
+
+/* Large screens (1200px - 1399px) */
+@media (min-width: 1200px) and (max-width: 1399px) {
+    .container {
+        max-width: 1100px;
+        padding: 2.25em;
+    }
+    
+    .policy-container {
+        max-width: 1200px;
+        padding: 1.75rem;
+    }
+    
+    .title-header {
+        font-size: 2.75rem;
+    }
+    
+    .tab-navigation {
+        flex: 0 0 220px;
+    }
+    
+    .tab-button {
+        padding: 1.05rem 1.6rem;
+    }
+    
+    .tab-content-wrapper {
+        padding: 2.25rem 1.75rem;
+    }
+}
+
+/* Medium laptops (992px - 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .container {
+        max-width: 950px;
+        padding: 2em;
+    }
+    
+    .policy-container {
+        max-width: 1000px;
+        padding: 1.5rem;
+    }
+    
+    .title-header {
+        font-size: 2.25rem;
+    }
+    
+    .welcome-message {
+        font-size: 1.15rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.875rem;
+    }
+    
+    .tab-container {
+        gap: 1.5rem;
+    }
+    
+    .tab-navigation {
+        flex: 0 0 180px;
+    }
+    
+    .tab-button {
+        padding: 0.9rem 1.25rem;
+        font-size: 0.9rem;
+    }
+    
+    .tab-content-wrapper {
+        padding: 1.75rem 1.25rem;
+        min-height: 350px;
+    }
+    
+    .form-row {
+        gap: 0.1rem 1.75rem;
+    }
+    
+    .form-row.compact-row {
+        gap: 1.5rem;
+    }
+}
+
+/* ==================================
+   TABLET & MOBILE RESPONSIVE STYLES
+   ================================== */
+
+/* Tablets (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .container {
+        padding: 1.75em;
+        max-width: 95%;
+    }
+    
+    .policy-container {
+        padding: 1.25rem;
+    }
+    
+    .title-header {
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .welcome-message {
+        font-size: 1.1rem;
+        margin-bottom: 1.75rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .main-title {
+        font-size: 1.75em;
+    }
+    
+    .form-row {
+        gap: 0.5rem 1.5rem;
+    }
+    
+    .form-row.compact-row {
+        gap: 1.25rem;
+    }
+    
+    /* Tab styles already handled in existing media query */
+    
+    .tab-content-wrapper {
+        padding: 1.75rem 1.25rem;
+    }
+    
+    .progress-bar-wrapper {
+        padding: 0 1.5rem;
+    }
+    
+    .progress-line {
+        left: 1.5rem;
+        right: 1.5rem;
+    }
+}
+
+/* Responsive tabs - stack on small screens */
+@media (max-width: 992px) {
+    .tab-container {
+        flex-direction: column;
+    }
+    
+    .tab-navigation {
+        flex: 0 0 auto;
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        border-right: none;
+        border-bottom: 2px solid rgba(0, 123, 255, 0.3);
+        overflow-x: auto;
+    }
+    
+    .tab-navigation li {
+        flex: 1 1 auto;
+        min-width: 120px;
+    }
+    
+    .tab-button {
+        border-right: none;
+        border-bottom: 3px solid transparent;
+        margin-right: 0;
+        margin-bottom: -2px;
+        text-align: center;
+        padding: 0.75rem 1rem;
+    }
+    
+    .tab-button.active {
+        border-bottom-color: #007bff;
+    }
+}
+
+/* Mobile devices (480px - 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+    .container {
+        padding: 1.25em;
+        border-radius: 6px;
+        margin: 0 0.5rem;
+    }
+    
+    .policy-container {
+        width: 100%;
+        padding: 1rem;
+        margin: 1rem 0.5rem;
+        border-radius: 6px;
+    }
+    
+    .title-header {
+        font-size: 1.75rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .welcome-message {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-header {
+        padding: 0.875rem 1rem;
+        border-radius: 12px;
+    }
+    
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    h2 {
+        font-size: 1.1em;
+    }
+    
+    .main-title {
+        font-size: 1.5em;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .form-row.compact-row {
+        flex-direction: column;
+        gap: 0.875rem;
+    }
+    
+    .form-group {
+        width: 100%;
+        margin-bottom: 0.75rem;
+    }
+    
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="tel"],
+    .form-group input[type="date"],
+    .form-group input[type="number"],
+    #full-name,
+    #city,
+    #email,
+    #hubs,
+    #address {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .form-group select {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    textarea {
+        width: 100%;
+        min-width: 100%;
+    }
+    
+    .fixed-width-group input {
+        width: 100% !important;
+    }
+    
+    .searchable-dropdown-wrapper {
+        width: 100%;
+    }
+    
+    label {
+        font-size: 0.9em;
+    }
+    
+    input,
+    select,
+    textarea {
+        font-size: 1rem;
+        padding: 0.6em 0.75em;
+    }
+    
+    .btn {
+        padding: 0.65rem 1rem;
+        font-size: 0.95rem;
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .header-buttons {
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+    }
+    
+    .header-buttons .btn {
+        width: 100%;
+    }
+    
+    .top-bar {
+        padding: 8px 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .top-bar .user-info {
+        font-size: 12px;
+        order: 3;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .btn-home {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+    
+    summary {
+        font-size: 1.1rem;
+        padding: 0.75rem 1rem;
+    }
+    
+    summary::before {
+        right: 1rem;
+        font-size: 1.1rem;
+    }
+    
+    details > fieldset {
+        padding: 1rem;
+    }
+    
+    .tab-navigation {
+        flex-direction: column;
+    }
+    
+    .tab-navigation li {
+        width: 100%;
+    }
+    
+    .tab-button {
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 0;
+        text-align: left;
+    }
+    
+    .tab-button.active {
+        border-bottom-color: #ddd;
+        background-color: rgba(0, 123, 255, 0.15);
+    }
+    
+    .tab-navigation-buttons {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .tab-nav-btn {
+        width: 100%;
+        min-width: auto;
+        padding: 0.75rem 1rem;
+    }
+    
+    .tab-nav-btn.btn-next {
+        margin-left: 0;
+    }
+    
+    .tab-content-wrapper {
+        padding: 1.5rem 1rem;
+        min-height: 300px;
+    }
+    
+    .progress-bar-container {
+        padding: 1rem;
+    }
+    
+    .progress-bar-wrapper {
+        padding: 0 1rem;
+    }
+    
+    .progress-line {
+        left: 1rem;
+        right: 1rem;
+    }
+    
+    .progress-label {
+        font-size: 0.75rem;
+        max-width: 80px;
+        margin-top: 0.75rem;
+    }
+    
+    .progress-dot {
+        width: 16px;
+        height: 16px;
+        border-width: 3px;
+    }
+    
+    .progress-step.active .progress-dot {
+        border-width: 3px;
+    }
+    
+    .progress-step {
+        min-height: 60px;
+    }
+}
+
+/* Small mobile devices (below 480px) */
+@media (max-width: 479px) {
+    .container {
+        padding: 0.75em;
+        margin: 0 0.25rem;
+    }
+    
+    .policy-container {
+        padding: 0.75rem;
+        margin: 0.75rem 0.25rem;
+    }
+    
+    .title-header {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .welcome-message {
+        font-size: 0.95rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .page-header {
+        padding: 0.75rem 0.875rem;
+        border-radius: 10px;
+    }
+    
+    .page-header h1 {
+        font-size: 1.25rem;
+    }
+    
+    h2 {
+        font-size: 1em;
+    }
+    
+    .main-title {
+        font-size: 1.35em;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0.625rem;
+    }
+    
+    .form-row.compact-row {
+        gap: 0.75rem;
+    }
+    
+    .form-group {
+        width: 100%;
+        margin-bottom: 0.625rem;
+    }
+    
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="tel"],
+    .form-group input[type="date"],
+    .form-group input[type="number"],
+    #full-name,
+    #city,
+    #email,
+    #hubs,
+    #address {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .form-group select {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    textarea {
+        width: 100%;
+        min-width: 100%;
+        min-height: 70px;
+    }
+    
+    .fixed-width-group input {
+        width: 100% !important;
+    }
+    
+    .searchable-dropdown-wrapper {
+        width: 100%;
+    }
+    
+    label {
+        font-size: 0.85em;
+    }
+    
+    input,
+    select,
+    textarea {
+        font-size: 1rem;
+        padding: 0.65rem 0.75rem;
+    }
+    
+    .btn {
+        font-size: 0.9rem;
+        padding: 0.65rem 0.9rem;
+    }
+    
+    .top-bar {
+        padding: 6px 10px;
+    }
+    
+    .btn-home {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+    
+    summary {
+        font-size: 1rem;
+        padding: 0.65rem 0.85rem;
+    }
+    
+    summary::before {
+        right: 0.85rem;
+        font-size: 1rem;
+    }
+    
+    details > fieldset {
+        padding: 0.75rem;
+    }
+    
+    .tab-navigation {
+        flex-direction: column;
+    }
+    
+    .tab-navigation li {
+        width: 100%;
+    }
+    
+    .tab-button {
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 0;
+        text-align: left;
+        padding: 0.65rem 0.875rem;
+        font-size: 0.9rem;
+    }
+    
+    .tab-button.active {
+        border-bottom-color: #ddd;
+        background-color: rgba(0, 123, 255, 0.15);
+    }
+    
+    .tab-navigation-buttons {
+        flex-direction: column;
+        gap: 0.625rem;
+    }
+    
+    .tab-nav-btn {
+        width: 100%;
+        min-width: auto;
+        padding: 0.65rem 0.875rem;
+        font-size: 0.9rem;
+    }
+    
+    .tab-nav-btn.btn-next {
+        margin-left: 0;
+    }
+    
+    .tab-content-wrapper {
+        padding: 1.25rem 0.875rem;
+        min-height: 250px;
+    }
+    
+    .progress-bar-container {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .progress-bar-wrapper {
+        padding: 0 0.5rem;
+    }
+    
+    .progress-line {
+        left: 0.5rem;
+        right: 0.5rem;
+    }
+    
+    .progress-label {
+        font-size: 0.7rem;
+        max-width: 60px;
+    }
+    
+    .progress-dot {
+        width: 14px;
+        height: 14px;
+        border-width: 2px;
+    }
+    
+    .progress-step.active .progress-dot {
+        border-width: 3px;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .btn,
+    button,
+    summary,
+    .tab-button {
+        min-height: 44px;
+    }
+    
+    input,
+    select,
+    textarea {
+        min-height: 44px;
+        font-size: 16px;
+    }
+    
+    .dropdown-list li {
+        padding: 0.75em 0.7em;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+    
+    /* Remove hover effects, use active states */
+    summary:hover {
+        background-color: #f7f7f7;
+    }
+    
+    summary:active {
+        background-color: #f0f0f0;
+    }
+    
+    .tab-button:hover {
+        background-color: transparent;
+    }
+    
+    .tab-button:active {
+        background-color: rgba(0, 123, 255, 0.08);
+    }
+    
+    .btn:hover {
+        opacity: 1;
+    }
+    
+    .btn:active {
+        opacity: 0.85;
+    }
+}
+
+/* Landscape mobile adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+    .container {
+        padding: 1em 1.5em;
+    }
+    
+    .progress-bar-container {
+        padding: 1rem 1.5rem;
+    }
+    
+    .tab-content-wrapper {
+        min-height: 250px;
+    }
+    
+    .form-row {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .form-group {
+        flex: 1 1 calc(50% - 1rem);
+        min-width: 200px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    details {
+        border-width: 2px;
+    }
+    
+    input,
+    select,
+    textarea {
+        border-width: 2px;
+    }
+    
+    .input-error,
+    input.input-error,
+    select.input-error {
+        border-width: 3px;
+    }
+    
+    .tab-button.active {
+        border-right-width: 4px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .tab-content-wrapper.active {
+        animation: none;
+    }
+    
+    .progress-dot[data-tooltip]:hover::after,
+    .progress-dot[data-tooltip]:hover::before {
+        transition: none;
+    }
+}

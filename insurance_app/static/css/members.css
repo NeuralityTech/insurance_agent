@@ -74,3 +74,315 @@ td {
     border: 1px solid #ccc;
     border-radius: 4px;
 }
+
+/* ==================================
+   LARGE SCREEN OPTIMIZATIONS
+   ================================== */
+
+/* Extra large screens (1400px+) */
+@media (min-width: 1400px) {
+    .table-container {
+        margin-bottom: 2em;
+    }
+    
+    .table-container table {
+        min-width: 1200px;
+    }
+    
+    th {
+        padding: 0.875em 1em;
+        font-size: 0.95rem;
+    }
+    
+    .cell-wrapper {
+        padding: 0.3em;
+    }
+    
+    .table-container .cell-wrapper input,
+    .table-container .cell-wrapper select,
+    .table-container .cell-wrapper textarea {
+        padding: 0.825em;
+        font-size: 0.95rem;
+    }
+    
+    .table-container::-webkit-scrollbar {
+        height: 14px;
+    }
+}
+
+/* Large screens (1200px - 1399px) */
+@media (min-width: 1200px) and (max-width: 1399px) {
+    .table-container {
+        margin-bottom: 1.75em;
+    }
+    
+    .table-container table {
+        min-width: 1100px;
+    }
+    
+    th {
+        padding: 0.8em 0.9em;
+    }
+    
+    .table-container .cell-wrapper input,
+    .table-container .cell-wrapper select,
+    .table-container .cell-wrapper textarea {
+        padding: 0.775em;
+    }
+}
+
+/* Medium laptops (992px - 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .table-container table {
+        min-width: 1000px;
+    }
+    
+    th {
+        padding: 0.75em 0.85em;
+        font-size: 0.925rem;
+    }
+    
+    .table-container .cell-wrapper input,
+    .table-container .cell-wrapper select,
+    .table-container .cell-wrapper textarea {
+        padding: 0.7em;
+        font-size: 0.9rem;
+    }
+}
+
+/* ==================================
+   TABLET & MOBILE RESPONSIVE STYLES
+   ================================== */
+
+/* Tablets (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .table-container {
+        margin-bottom: 1.25em;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding: 0 1rem;
+    }
+    
+    .table-container table {
+        min-width: 900px;
+    }
+    
+    th {
+        padding: 0.65em 0.75em;
+        font-size: 0.875rem;
+    }
+    
+    .cell-wrapper {
+        padding: 0.2em;
+    }
+    
+    .table-container .cell-wrapper input,
+    .table-container .cell-wrapper select,
+    .table-container .cell-wrapper textarea {
+        padding: 0.65em;
+        font-size: 0.875rem;
+    }
+    
+    .table-container::-webkit-scrollbar {
+        height: 10px;
+    }
+    
+    /* Adjust column widths slightly for tablets */
+    .table-container .col-xlarge { width: 20%; }
+    .table-container .col-large { width: 13%; }
+    .table-container .col-medium { width: 9%; }
+    .table-container .col-small { width: 8%; }
+    .table-container .col-action { width: 5%; }
+}
+
+/* Mobile devices (480px - 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+    .table-container {
+        margin-bottom: 1rem;
+        margin-left: -0.75rem;
+        margin-right: -0.75rem;
+        padding: 0 0.75rem;
+        /* Enhanced scroll indication */
+        border-left: 3px solid #007bff;
+        border-right: 3px solid #007bff;
+    }
+    
+    .table-container table {
+        min-width: 800px;
+    }
+    
+    th {
+        padding: 0.6em 0.65em;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+    
+    .cell-wrapper {
+        padding: 0.15em;
+    }
+    
+    .table-container .cell-wrapper input,
+    .table-container .cell-wrapper select,
+    .table-container .cell-wrapper textarea {
+        padding: 0.6em 0.5em;
+        font-size: 1rem; /* Prevent iOS zoom */
+        border-radius: 4px;
+    }
+    
+    .table-container::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    /* More compact column widths for mobile */
+    .table-container .col-xlarge { width: 22%; }
+    .table-container .col-large { width: 14%; }
+    .table-container .col-medium { width: 10%; }
+    .table-container .col-small { width: 9%; }
+    .table-container .col-action { width: 6%; }
+}
+
+/* Small mobile devices (below 480px) */
+@media (max-width: 479px) {
+    .table-container {
+        margin-bottom: 0.875rem;
+        margin-left: -0.5rem;
+        margin-right: -0.5rem;
+        padding: 0 0.5rem;
+        /* Strong scroll indication */
+        border-left: 4px solid #007bff;
+        border-right: 4px solid #007bff;
+        /* Add scroll hint shadow */
+        box-shadow: inset 8px 0 8px -8px rgba(0, 123, 255, 0.3),
+                    inset -8px 0 8px -8px rgba(0, 123, 255, 0.3);
+    }
+    
+    .table-container table {
+        min-width: 750px;
+    }
+    
+    th {
+        padding: 0.5em 0.55em;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+    
+    td {
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .cell-wrapper {
+        padding: 0.125em;
+    }
+    
+    .table-container .cell-wrapper input,
+    .table-container .cell-wrapper select,
+    .table-container .cell-wrapper textarea {
+        padding: 0.55em 0.45em;
+        font-size: 1rem; /* Prevent iOS zoom */
+        border-radius: 3px;
+    }
+    
+    .table-container::-webkit-scrollbar {
+        height: 6px;
+    }
+    
+    .table-container::-webkit-scrollbar-track {
+        background: #e0e0e0;
+    }
+    
+    .table-container::-webkit-scrollbar-thumb {
+        background: #007bff;
+    }
+    
+    /* Very compact column widths for small mobile */
+    .table-container .col-xlarge { width: 24%; }
+    .table-container .col-large { width: 15%; }
+    .table-container .col-medium { width: 11%; }
+    .table-container .col-small { width: 9%; }
+    .table-container .col-action { width: 7%; }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .table-container .cell-wrapper input,
+    .table-container .cell-wrapper select,
+    .table-container .cell-wrapper textarea {
+        min-height: 44px;
+        font-size: 16px; /* Prevent iOS zoom */
+        padding: 0.6em;
+    }
+    
+    .table-container .cell-wrapper select {
+        /* Ensure dropdowns are easy to tap */
+        padding-right: 2em;
+    }
+    
+    /* Make scrollbar more prominent on touch devices */
+    .table-container::-webkit-scrollbar {
+        height: 12px;
+    }
+    
+    .table-container::-webkit-scrollbar-thumb {
+        background: #007bff;
+    }
+    
+    .table-container::-webkit-scrollbar-thumb:active {
+        background: #0056b3;
+    }
+    
+    /* Remove hover effect on scrollbar for touch */
+    .table-container::-webkit-scrollbar-thumb:hover {
+        background: #007bff;
+    }
+}
+
+/* Landscape mobile orientation */
+@media (max-width: 767px) and (orientation: landscape) {
+    .table-container {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    
+    .table-container table {
+        min-width: 850px;
+    }
+    
+    th {
+        padding: 0.55em 0.6em;
+        font-size: 0.8rem;
+    }
+    
+    .table-container .cell-wrapper input,
+    .table-container .cell-wrapper select,
+    .table-container .cell-wrapper textarea {
+        padding: 0.55em 0.5em;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .table-container {
+        border: 2px solid #000;
+    }
+    
+    th {
+        border-bottom-width: 2px;
+    }
+    
+    td {
+        border-bottom-width: 2px;
+    }
+    
+    .table-container .cell-wrapper input,
+    .table-container .cell-wrapper select,
+    .table-container .cell-wrapper textarea {
+        border-width: 2px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .table-container {
+        scroll-behavior: auto;
+    }
+}
