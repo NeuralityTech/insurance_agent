@@ -12,6 +12,122 @@
     <link rel="stylesheet" href="../css/health_history.css">
     <link rel="stylesheet" href="../css/members.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body[data-sidebar="existing-applicant"] {
+            background: #f4f6fb;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto 3rem;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        #page-description {
+            margin: 1.5rem 0 2rem;
+            text-align: center;
+            color: #4b5563;
+        }
+
+        #summary-container {
+            max-width: 100%;
+            margin: 0 auto 2rem;
+        }
+
+        #summary-container fieldset {
+            border: none;
+            border-radius: 16px;
+            padding: 0;
+            margin: 0 0 1.75rem;
+            background: #ffffff;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
+
+        #summary-container legend {
+            width: 100%;
+            margin: 0;
+            padding: 0.9rem 1.5rem;
+            background: #e5f0ff;
+            color: #1d4ed8;
+            font-weight: 600;
+            font-size: 1rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.4);
+        }
+
+        #summary-container legend::before {
+            content: '\f007';
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            margin-right: 0.5rem;
+        }
+
+        /* More subtle icon for other sections can be overridden by JS if needed, but this keeps a consistent look */
+
+        #summary-container .summary-grid,
+        #summary-container .summary-member-card {
+            padding: 1.25rem 1.5rem 1.4rem;
+        }
+
+        #summary-container .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            column-gap: 2.5rem;
+            row-gap: 0.5rem;
+        }
+
+        #summary-container .summary-item {
+            font-size: 0.95rem;
+            color: #111827;
+        }
+
+        #summary-container .summary-item strong {
+            font-weight: 600;
+            color: #111827;
+            display: inline-block;
+            margin-right: 0.25rem;
+        }
+
+        #summary-container .summary-member-card {
+            border-top: 1px solid rgba(209, 213, 219, 0.8);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            column-gap: 2.5rem;
+            row-gap: 0.5rem;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem 2rem;
+            }
+
+            #summary-container fieldset {
+                border-radius: 12px;
+                box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+
+            .form-actions .btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body data-sidebar="existing-applicant">
     <div class="container">
@@ -20,7 +136,7 @@
             <h1>Health Insurance Requirement Summary Preview</h1>
         </header>
 
-        <p id="page-description" style="margin: 1.5em 0; text-align: center;">
+        <p id="page-description">
             Preview the summary below. Use Back to close this preview or Submit to save the record.
         </p>
 
@@ -29,7 +145,7 @@
                 <!-- Summary content will be injected here by /static/js/summary.js -->
             </div>
 
-            <div class="form-actions" style="margin-top: 1rem;">
+            <div class="form-actions">
                 <button type="button" id="btn-back" class="btn btn-secondary">Back</button>
                 <button type="button" id="submit-btn" class="btn">Submit</button>
             </div>

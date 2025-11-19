@@ -439,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         localStorage.setItem('formSummary', JSON.stringify(summaryData));
         try { sessionStorage.setItem('previousFormPage', window.location.pathname); } catch(e) {}
-        window.open('Preview.html', '_blank');
+        window.location.href = 'Preview.html';
     }
 
     // Make switchTab globally available
@@ -663,7 +663,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             localStorage.setItem('formSummary', JSON.stringify(summaryData));
             try { sessionStorage.setItem('previousFormPage', window.location.pathname); } catch(e) {}
-            window.open('Preview.html', '_blank');
+            window.location.href = 'Preview.html';
         });
     }
 
