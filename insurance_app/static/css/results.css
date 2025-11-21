@@ -1,16 +1,63 @@
+/* ==================================
+   RESULTS PAGE STYLES
+   ================================== */
+
 :root{
   --card-bg:#fff; --card-br:16px; --card-pad:1rem;
   --muted:#6b7280; --ring:#e5e7eb; --shadow:0 8px 20px rgba(0,0,0,.06);
 }
-.personal-info{background:#fff;border-radius:var(--card-br);box-shadow:var(--shadow);padding:1rem 1.25rem;margin-bottom:1rem;}
+
+.personal-info{
+    background:#fff;
+    border-radius:var(--card-br);
+    box-shadow:var(--shadow);
+    padding:1rem 1.25rem;
+    margin-bottom:1rem;
+}
+
+.people { 
+    list-style-type: none; 
+    padding: 0; 
+    margin: 0; 
+}
 
 /* Carousel shell */
-#plans-carousel{position:relative;margin-block:1rem;}
-.carousel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;}
-.controls{display:flex;align-items:center;gap:.5rem}
-.nav-btn{border:1px solid var(--ring);background:#fff;border-radius:999px;padding:.25rem .6rem;cursor:pointer}
-.index{font-size:.9rem;color:var(--muted)}
-.helper{font-size:.85rem;color:var(--muted);margin-top:.25rem}
+#plans-carousel{
+    position:relative;
+    margin-block:1rem;
+}
+
+.carousel-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:.5rem;
+}
+
+.controls{
+    display:flex;
+    align-items:center;
+    gap:.5rem
+}
+
+.nav-btn{
+    border:1px solid var(--ring);
+    background:#fff;
+    border-radius:999px;
+    padding:.25rem .6rem;
+    cursor:pointer
+}
+
+.index{
+    font-size:.9rem;
+    color:var(--muted)
+}
+
+.helper{
+    font-size:.85rem;
+    color:var(--muted);
+    margin-top:.25rem
+}
 
 /* Horizontal card rail with snap */
 .cards{
@@ -23,10 +70,25 @@
   scroll-snap-type:x mandatory;
   padding-bottom:.5rem;
 }
-.cards:focus{outline:2px solid var(--ring);outline-offset:2px}
-.cards::-webkit-scrollbar{height:10px}
-.cards::-webkit-scrollbar-track{background:#f3f4f6;border-radius:6px}
-.cards::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:6px}
+
+.cards:focus{
+    outline:2px solid var(--ring);
+    outline-offset:2px
+}
+
+.cards::-webkit-scrollbar{
+    height:10px
+}
+
+.cards::-webkit-scrollbar-track{
+    background:#f3f4f6;
+    border-radius:6px
+}
+
+.cards::-webkit-scrollbar-thumb{
+    background:#d1d5db;
+    border-radius:6px
+}
 
 .plan-card{
   scroll-snap-align:start;
@@ -34,26 +96,394 @@
   border-radius:var(--card-br);
   box-shadow:var(--shadow);
   padding:var(--card-pad);
-  display:flex; flex-direction:column; justify-content:space-between;
+  display:flex; 
+  flex-direction:column; 
+  justify-content:space-between;
   min-height:220px;
 }
-.plan-card h3{margin:0 0 .5rem 0;font-size:1.05rem}
-.rank-pill{font-size:.8rem;background:#eef2ff;border:1px solid #e5e7eb;border-radius:999px;padding:.1rem .5rem;margin-right:.5rem}
-.kv{display:grid;grid-template-columns:auto 1fr;gap:.25rem .75rem;margin-top:.5rem}
-.kv .k{color:var(--muted)}
-.kv .v{font-weight:600}
 
-/* Responsive number of visible cards */
-@media (max-width:1023px){ .cards{ grid-auto-columns:minmax(280px, 48%);} }  /* ~2 visible */
-@media (max-width:639px){  .cards{ grid-auto-columns:minmax(260px, 90%);} }   /* ~1 visible */
+.plan-card h3{
+    margin:0 0 .5rem 0;
+    font-size:1.05rem
+}
+
+.rank-pill{
+    font-size:.8rem;
+    background:#eef2ff;
+    border:1px solid #e5e7eb;
+    border-radius:999px;
+    padding:.1rem .5rem;
+    margin-right:.5rem
+}
+
+.kv{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:.25rem .75rem;
+    margin-top:.5rem
+}
+
+.kv .k{
+    color:var(--muted)
+}
+
+.kv .v{
+    font-weight:600
+}
 
 /* Hide/show table */
-.is-hidden{display:none}
-
-/* Print-friendly */
-@media print{
-  .cards{grid-auto-columns:48%; gap:.5rem; overflow:visible}
-  .plan-card{box-shadow:none; border:1px solid #ddd}
-  .controls,.helper,.table-toggle{display:none}
+.is-hidden{
+    display:none
 }
-.people { list-style-type: none; padding: 0; margin: 0; }
+
+/* ==================================
+   LARGE SCREEN OPTIMIZATIONS
+   ================================== */
+
+/* Extra large screens (1400px+) */
+@media (min-width: 1400px) {
+    .personal-info {
+        padding: 1.5rem 1.75rem;
+        border-radius: 18px;
+        margin-bottom: 1.5rem;
+    }
+    
+    #plans-carousel {
+        margin-block: 1.5rem;
+    }
+    
+    .carousel-header {
+        margin-bottom: 0.75rem;
+    }
+    
+    .cards {
+        grid-auto-columns: minmax(320px, 28%);
+        gap: 1.25rem;
+    }
+    
+    .cards::-webkit-scrollbar {
+        height: 12px;
+    }
+    
+    .plan-card {
+        padding: 1.25rem;
+        min-height: 240px;
+    }
+    
+    .plan-card h3 {
+        font-size: 1.15rem;
+        margin-bottom: 0.625rem;
+    }
+    
+    .rank-pill {
+        font-size: 0.85rem;
+        padding: 0.125rem 0.625rem;
+    }
+    
+    .kv {
+        gap: 0.3rem 0.875rem;
+        font-size: 0.95rem;
+    }
+    
+    .nav-btn {
+        padding: 0.3rem 0.75rem;
+    }
+    
+    .index {
+        font-size: 0.95rem;
+    }
+    
+    .helper {
+        font-size: 0.9rem;
+    }
+}
+
+/* Large screens (1200px - 1399px) */
+@media (min-width: 1200px) and (max-width: 1399px) {
+    .personal-info {
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .cards {
+        grid-auto-columns: minmax(300px, 30%);
+        gap: 1.125rem;
+    }
+    
+    .plan-card {
+        padding: 1.125rem;
+        min-height: 230px;
+    }
+    
+    .plan-card h3 {
+        font-size: 1.1rem;
+    }
+}
+
+/* Medium laptops (992px - 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .cards {
+        grid-auto-columns: minmax(280px, 48%);
+        gap: 1rem;
+    }
+    
+    .plan-card {
+        min-height: 220px;
+    }
+}
+
+/* ==================================
+   TABLET & MOBILE RESPONSIVE STYLES
+   ================================== */
+
+/* Tablets (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .personal-info {
+        padding: 0.875rem 1.125rem;
+        border-radius: 14px;
+        margin-bottom: 0.875rem;
+    }
+    
+    #plans-carousel {
+        margin-block: 0.875rem;
+    }
+    
+    .carousel-header {
+        margin-bottom: 0.5rem;
+    }
+    
+    .cards {
+        grid-auto-columns: minmax(280px, 48%);
+        gap: 0.875rem;
+    }
+    
+    .cards::-webkit-scrollbar {
+        height: 9px;
+    }
+    
+    .plan-card {
+        padding: 0.875rem;
+        min-height: 200px;
+    }
+    
+    .plan-card h3 {
+        font-size: 1rem;
+        margin-bottom: 0.45rem;
+    }
+    
+    .rank-pill {
+        font-size: 0.75rem;
+        padding: 0.08rem 0.45rem;
+    }
+    
+    .kv {
+        gap: 0.2rem 0.65rem;
+        font-size: 0.875rem;
+    }
+    
+    .nav-btn {
+        padding: 0.2rem 0.55rem;
+    }
+    
+    .index {
+        font-size: 0.85rem;
+    }
+    
+    .helper {
+        font-size: 0.8rem;
+    }
+}
+
+/* Mobile devices (480px - 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+    .personal-info {
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        margin-bottom: 0.75rem;
+    }
+    
+    #plans-carousel {
+        margin-block: 0.75rem;
+    }
+    
+    .carousel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin-bottom: 0.625rem;
+    }
+    
+    .controls {
+        align-self: flex-end;
+    }
+    
+    .cards {
+        grid-auto-columns: minmax(260px, 90%);
+        gap: 0.75rem;
+    }
+    
+    .cards::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .plan-card {
+        padding: 0.875rem;
+        min-height: 200px;
+    }
+    
+    .plan-card h3 {
+        font-size: 1rem;
+        margin-bottom: 0.45rem;
+    }
+    
+    .rank-pill {
+        font-size: 0.75rem;
+        padding: 0.08rem 0.4rem;
+    }
+    
+    .kv {
+        gap: 0.2rem 0.6rem;
+        font-size: 0.85rem;
+    }
+    
+    .nav-btn {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .index {
+        font-size: 0.8rem;
+    }
+    
+    .helper {
+        font-size: 0.8rem;
+    }
+}
+
+/* Small mobile devices (below 480px) */
+@media (max-width: 479px) {
+    .personal-info {
+        padding: 0.65rem 0.875rem;
+        border-radius: 10px;
+        margin-bottom: 0.65rem;
+    }
+    
+    #plans-carousel {
+        margin-block: 0.65rem;
+    }
+    
+    .carousel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .controls {
+        align-self: flex-end;
+    }
+    
+    .cards {
+        grid-auto-columns: minmax(240px, 95%);
+        gap: 0.625rem;
+    }
+    
+    .cards::-webkit-scrollbar {
+        height: 6px;
+    }
+    
+    .plan-card {
+        padding: 0.75rem;
+        min-height: 180px;
+    }
+    
+    .plan-card h3 {
+        font-size: 0.95rem;
+        margin-bottom: 0.4rem;
+    }
+    
+    .rank-pill {
+        font-size: 0.7rem;
+        padding: 0.05rem 0.35rem;
+    }
+    
+    .kv {
+        gap: 0.15rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .nav-btn {
+        padding: 0.15rem 0.45rem;
+        font-size: 0.85rem;
+    }
+    
+    .index {
+        font-size: 0.75rem;
+    }
+    
+    .helper {
+        font-size: 0.75rem;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .nav-btn {
+        min-height: 36px;
+        min-width: 36px;
+        padding: 0.25rem 0.6rem;
+    }
+    
+    .plan-card {
+        min-height: 200px;
+    }
+}
+
+/* Landscape mobile orientation */
+@media (max-width: 767px) and (orientation: landscape) {
+    .carousel-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .cards {
+        grid-auto-columns: minmax(260px, 48%);
+    }
+    
+    .plan-card {
+        min-height: 180px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .personal-info,
+    .plan-card {
+        border: 2px solid #333;
+    }
+    
+    .rank-pill {
+        border-width: 2px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .cards {
+        scroll-behavior: auto;
+    }
+}
+
+/* Responsive number of visible cards - consolidated */
+@media (max-width: 1023px) {
+    .cards {
+        grid-auto-columns: minmax(280px, 48%);
+    }
+}
+
+@media (max-width: 639px) {
+    .cards {
+        grid-auto-columns: minmax(260px, 90%);
+    }
+}

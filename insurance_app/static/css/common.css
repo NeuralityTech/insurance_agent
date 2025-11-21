@@ -588,7 +588,6 @@ select.input-error {
     border-color: #004085;
 }
 
-/* Hide navigation buttons on first/last tabs as needed */
 .tab-navigation-buttons .btn-back[data-hidden="true"],
 .tab-navigation-buttons .btn-next[data-hidden="true"] {
     visibility: hidden;
@@ -598,6 +597,7 @@ select.input-error {
    PROGRESS BAR STYLES
    ================================== */
 
+/* Container */
 .progress-bar-container {
     width: 100%;
     max-width: 900px;
@@ -607,27 +607,28 @@ select.input-error {
     border-bottom: solid 1px #e0e0e0;
 }
 
+/* Wrapper stacks from the top  */
 .progress-bar-wrapper {
     position: relative;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 0 2rem;
+    align-items: flex-start;
+    padding: 20px 2rem 12px 2rem;
+    box-sizing: border-box;
 }
 
-/* The progress line */
+/* Progress line */
 .progress-line {
     position: absolute;
-    top: 50%;
+    top: 34px;          
     left: 2rem;
     right: 2rem;
     height: 4px;
     background-color: #e0e0e0;
-    transform: translateY(-50%);
     z-index: 1;
 }
 
-/* The filled portion of the line */
+/* Filled portion */
 .progress-line-fill {
     position: absolute;
     top: 0;
@@ -638,18 +639,20 @@ select.input-error {
     z-index: 2;
 }
 
-/* Progress step container */
+/* Each step */
 .progress-step {
     position: relative;
     z-index: 3;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-start;
     flex: 1;
-    min-height: 70px; /* Ensure consistent height */
+    min-height: 110px;
+    box-sizing: border-box;
 }
 
-/* The dot/circle */
+/* Dot */
 .progress-dot {
     width: 20px;
     height: 20px;
@@ -657,15 +660,16 @@ select.input-error {
     background-color: #ffffff;
     border: 4px solid #e0e0e0;
     transition: all 0.3s ease;
+    box-sizing: content-box;
+    margin: 0;
+    z-index: 3;
 }
 
-/* Completed step dot */
 .progress-step.completed .progress-dot {
     background-color: #007bff;
     border-color: #007bff;
 }
 
-/* Active/current step dot */
 .progress-step.active .progress-dot {
     background-color: #ffffff;
     border-color: #007bff;
@@ -673,30 +677,80 @@ select.input-error {
     box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.2);
 }
 
-/* Step label */
+.progress-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px; /* space between dot/line and label area */
+    text-align: center;
+    width: 100%;
+}
+
+.progress-step > .progress-label,
+.progress-step > .progress-timestamp {
+    display: block;
+    text-align: center;
+    width: 100%;
+}
+
+:root {
+  --label-line-height: 1.3;    
+  --label-font-size: 0.85rem;  
+}
+
 .progress-label {
-    margin-top: 1.25rem;
-    font-size: 0.85rem;
+    font-size: var(--label-font-size);
+    line-height: var(--label-line-height);
     color: #666;
+    font-weight: 500;
     text-align: center;
     max-width: 120px;
-    line-height: 1.3;
-    font-weight: 500;
+    margin: 0; /* spacing handled in .progress-meta */
+    box-sizing: border-box;
+
+    /* clamp to 2 lines */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    /* reserve space equal to two text lines so timestamps align */
+    min-height: calc(var(--label-line-height) * 2em); /* 2 lines */
 }
 
-.progress-step.completed .progress-label {
-    color: #007bff;
-    font-weight: 600;
-}
-
+/* Completed / active label color */
+.progress-step.completed .progress-label,
 .progress-step.active .progress-label {
     color: #007bff;
     font-weight: 600;
 }
 
-.progress-dot[data-tooltip] {
-    position: relative;
+/* ============================
+   TIMESTAMP 
+   ============================ */
+
+.progress-timestamp {
+    font-size: 0.7rem;
+    color: #666;
+    margin: 0;               /* spacing controlled via .progress-meta gap */
+    white-space: nowrap;
+    font-weight: 400;
+    line-height: 1.2;
+    box-sizing: border-box;
 }
+
+/* Completed / active timestamp */
+.progress-step.completed .progress-timestamp,
+.progress-step.active .progress-timestamp {
+    color: #007bff;
+    font-weight: 500;
+}
+
+/* Tooltip */
+.progress-dot[data-tooltip] { position: relative; }
 
 .progress-dot[data-tooltip]:hover::after {
     content: attr(data-tooltip);
@@ -726,6 +780,64 @@ select.input-error {
     border-top-color: #333;
     z-index: 1000;
 }
+
+/* ===========================
+   RESPONSIVE TUNING
+   =========================== */
+
+@media (min-width: 1400px) {
+    .progress-bar-wrapper { padding-top: 24px; padding-bottom: 14px; }
+    .progress-line { top: 38px; }
+    .progress-step { min-height: 120px; }
+}
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+    .progress-bar-wrapper { padding-top: 22px; }
+    .progress-line { top: 36px; }
+    .progress-step { min-height: 115px; }
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+    .progress-bar-wrapper { padding-top: 20px; }
+    .progress-line { top: 34px; }
+    .progress-step { min-height: 110px; }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+    .progress-bar-wrapper { padding-top: 18px; }
+    .progress-line { top: 32px; }
+    .progress-step { min-height: 125px; }
+
+    /* on narrower widths labels take less horizontal space, so keep clamp but increase label height slightly */
+    .progress-label { min-height: calc(var(--label-line-height) * 2em); max-width: 100px; white-space: normal; }
+    .progress-timestamp { white-space: normal; max-width: 100px; }
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+    .progress-bar-wrapper { padding-top: 16px; }
+    .progress-line { top: 30px; }
+    .progress-step { min-height: 135px; }
+    .progress-label { min-height: calc(var(--label-line-height) * 2em); max-width: 80px; }
+    .progress-timestamp { font-size: 0.6rem; white-space: normal; max-width: 80px; line-height: 1.1; }
+}
+
+@media (max-width: 479px) {
+    .progress-bar-wrapper { padding-top: 14px; }
+    .progress-line { top: 28px; }
+    .progress-step { min-height: 145px; }
+    .progress-label { min-height: calc(var(--label-line-height) * 2em); max-width: 70px; }
+    .progress-timestamp { font-size: 0.55rem; white-space: normal; max-width: 70px; line-height: 1.1; }
+}
+
+/* landscape mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .progress-bar-wrapper { padding-top: 16px; }
+    .progress-line { top: 30px; }
+    .progress-step { min-height: 115px; }
+}
+
+
+
 
 /* --- Save Button Styling --- */
 .btn-save {
@@ -941,9 +1053,7 @@ select.input-error {
     .form-row.compact-row {
         gap: 1.25rem;
     }
-    
-    /* Tab styles already handled in existing media query */
-    
+        
     .tab-content-wrapper {
         padding: 1.75rem 1.25rem;
     }

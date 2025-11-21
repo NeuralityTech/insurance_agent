@@ -1,4 +1,8 @@
-/* Styles for the Proposed Plans page */
+/* ==================================
+   PROPOSED PLANS PAGE STYLES
+   Styles for the Proposed Plans page
+   ================================== */
+
 body {
     font-family: Arial, sans-serif;
 }
@@ -43,4 +47,226 @@ body {
 
 .form-actions.disabled .btn:hover {
     opacity: 1; /* Keep stable on hover when disabled */
+}
+
+/* ==================================
+   LARGE SCREEN OPTIMIZATIONS
+   ================================== */
+
+/* Extra large screens (1400px+) */
+@media (min-width: 1400px) {
+    .page-header {
+        padding: 1.5rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+    }
+    
+    .page-header h1 {
+        font-size: 2.5rem;
+    }
+    
+    .form-actions .btn {
+        padding: 0.875rem 2rem;
+        font-size: 1.125rem;
+    }
+}
+
+/* Large screens (1200px - 1399px) */
+@media (min-width: 1200px) and (max-width: 1399px) {
+    .page-header {
+        padding: 1.25rem 1.75rem;
+        border-radius: 18px;
+        margin-bottom: 1.75rem;
+    }
+    
+    .page-header h1 {
+        font-size: 2.25rem;
+    }
+    
+    .form-actions .btn {
+        padding: 0.8rem 1.75rem;
+        font-size: 1.05rem;
+    }
+}
+
+/* Medium laptops (992px - 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .page-header {
+        padding: 1.125rem 1.5rem;
+        border-radius: 16px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-header h1 {
+        font-size: 2rem;
+    }
+    
+    .form-actions .btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+    }
+}
+
+/* ==================================
+   TABLET & MOBILE RESPONSIVE STYLES
+   ================================== */
+
+/* Tablets (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .page-header {
+        padding: 1rem 1.25rem;
+        border-radius: 14px;
+        margin-bottom: 1.25rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.875rem;
+    }
+    
+    .form-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: center;
+    }
+    
+    .form-actions .btn {
+        padding: 0.7rem 1.5rem;
+        font-size: 0.975rem;
+        flex: 1 1 auto;
+        min-width: 140px;
+    }
+}
+
+/* Mobile devices (480px - 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+    .page-header {
+        padding: 0.875rem 1rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.5rem;
+        text-align: center;
+    }
+    
+    .form-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 0.975rem;
+        text-align: center;
+        justify-content: center;
+    }
+}
+
+/* Small mobile devices (below 480px) */
+@media (max-width: 479px) {
+    .page-header {
+        padding: 0.75rem 0.875rem;
+        border-radius: 10px;
+        margin-bottom: 0.875rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.25rem;
+        text-align: center;
+    }
+    
+    .form-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.625rem;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        font-size: 0.95rem;
+        text-align: center;
+        justify-content: center;
+        border-radius: 6px;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .form-actions .btn {
+        min-height: 48px;
+        font-size: 1rem;
+    }
+    
+    /* Remove hover effect on touch devices */
+    .form-actions .btn:hover {
+        opacity: 1;
+    }
+    
+    .form-actions .btn:active {
+        opacity: 0.85;
+        transform: scale(0.98);
+    }
+    
+    /* Keep disabled state stable on touch */
+    .form-actions.disabled .btn:active {
+        transform: none;
+        opacity: 0.6;
+    }
+}
+
+/* Landscape mobile orientation */
+@media (max-width: 767px) and (orientation: landscape) {
+    .page-header {
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.875rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.375rem;
+    }
+    
+    .form-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .form-actions .btn {
+        width: auto;
+        flex: 1 1 auto;
+        min-width: 140px;
+        max-width: 250px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .page-header {
+        border: 2px solid #ffffff;
+    }
+    
+    .form-actions .btn {
+        border-width: 2px;
+        font-weight: 600;
+    }
+    
+    .form-actions.disabled .btn {
+        border-color: #999999 !important;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .form-actions .btn {
+        transition: none;
+    }
+    
+    .form-actions .btn:active {
+        transform: none;
+    }
 }

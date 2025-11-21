@@ -1,66 +1,368 @@
-        /* Additional styles specific to super admin dashboard */
-        .dashboard-nav {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
+/* ==================================
+   SUPER ADMIN DASHBOARD STYLES
+   Additional styles specific to super admin dashboard
+   ================================== */
 
-        .nav-card {
-            display: block;
-            padding: 2rem;
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            text-decoration: none;
-            color: inherit;
-            transition: all 0.3s ease;
-            border: 1px solid #e5e7eb;
-            position: relative;
-            overflow: hidden;
-        }
+.dashboard-nav {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
 
-        .nav-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-        }
+.nav-card {
+    display: block;
+    padding: 2rem;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    position: relative;
+    overflow: hidden;
+}
 
-        .nav-card-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 123, 255, 0.2));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-            font-size: 1.75rem;
-            color: #007bff;
-        }
+.nav-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
 
-        .nav-card h2 {
-            font-size: 1.25rem;
-            color: #1f2937;
-            margin: 0 0 0.75rem 0;
-            font-weight: 600;
-        }
+.nav-card-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 123, 255, 0.2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.75rem;
+    color: #007bff;
+}
 
-        .nav-card p {
-            font-size: 0.9rem;
-            color: #6b7280;
-            line-height: 1.6;
-            margin: 0;
-        }
+.nav-card h2 {
+    font-size: 1.25rem;
+    color: #1f2937;
+    margin: 0 0 0.75rem 0;
+    font-weight: 600;
+}
 
-        @media (max-width: 768px) {
-            .dashboard-nav {
-                grid-template-columns: 1fr;
-            }
-            
-            .welcome-section {
-                padding: 1.5rem;
-            }
-            
-            .welcome-section h2 {
-                font-size: 1.5rem;
-            }
-        }
+.nav-card p {
+    font-size: 0.9rem;
+    color: #6b7280;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ==================================
+   LARGE SCREEN OPTIMIZATIONS
+   ================================== */
+
+/* Extra large screens (1400px+) */
+@media (min-width: 1400px) {
+    .dashboard-nav {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 2rem;
+    }
+    
+    .nav-card {
+        padding: 2.5rem;
+        border-radius: 14px;
+    }
+    
+    .nav-card-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 14px;
+        margin-bottom: 1.75rem;
+        font-size: 2rem;
+    }
+    
+    .nav-card h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .nav-card p {
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+    
+    .welcome-section {
+        padding: 2.5rem;
+    }
+    
+    .welcome-section h2 {
+        font-size: 2.25rem;
+    }
+}
+
+/* Large screens (1200px - 1399px) */
+@media (min-width: 1200px) and (max-width: 1399px) {
+    .dashboard-nav {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.75rem;
+    }
+    
+    .nav-card {
+        padding: 2.25rem;
+    }
+    
+    .nav-card-icon {
+        width: 65px;
+        height: 65px;
+        margin-bottom: 1.625rem;
+        font-size: 1.875rem;
+    }
+    
+    .nav-card h2 {
+        font-size: 1.375rem;
+        margin-bottom: 0.875rem;
+    }
+    
+    .nav-card p {
+        font-size: 0.95rem;
+    }
+    
+    .welcome-section {
+        padding: 2.25rem;
+    }
+    
+    .welcome-section h2 {
+        font-size: 2rem;
+    }
+}
+
+/* Medium laptops (992px - 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .dashboard-nav {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .nav-card {
+        padding: 2rem;
+    }
+    
+    .nav-card-icon {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 1.5rem;
+        font-size: 1.75rem;
+    }
+    
+    .nav-card h2 {
+        font-size: 1.3rem;
+    }
+    
+    .welcome-section {
+        padding: 2rem;
+    }
+    
+    .welcome-section h2 {
+        font-size: 1.875rem;
+    }
+}
+
+/* ==================================
+   TABLET & MOBILE RESPONSIVE STYLES
+   ================================== */
+
+/* Tablets (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .dashboard-nav {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+    
+    .nav-card {
+        padding: 1.75rem;
+        border-radius: 10px;
+    }
+    
+    .nav-card-icon {
+        width: 55px;
+        height: 55px;
+        border-radius: 10px;
+        margin-bottom: 1.25rem;
+        font-size: 1.5rem;
+    }
+    
+    .nav-card h2 {
+        font-size: 1.15rem;
+        margin-bottom: 0.65rem;
+    }
+    
+    .nav-card p {
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+    
+    .welcome-section {
+        padding: 1.75rem;
+    }
+    
+    .welcome-section h2 {
+        font-size: 1.75rem;
+    }
+}
+
+/* Mobile devices (480px - 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+    .dashboard-nav {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+    
+    .nav-card {
+        padding: 1.5rem;
+        border-radius: 10px;
+    }
+    
+    .nav-card-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        font-size: 1.375rem;
+    }
+    
+    .nav-card h2 {
+        font-size: 1.125rem;
+        margin-bottom: 0.6rem;
+    }
+    
+    .nav-card p {
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+    
+    .welcome-section {
+        padding: 1.5rem;
+    }
+    
+    .welcome-section h2 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Small mobile devices (below 480px) */
+@media (max-width: 479px) {
+    .dashboard-nav {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .nav-card {
+        padding: 1.25rem;
+        border-radius: 8px;
+    }
+    
+    .nav-card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        margin-bottom: 0.875rem;
+        font-size: 1.25rem;
+    }
+    
+    .nav-card h2 {
+        font-size: 1.05rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .nav-card p {
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+    
+    .welcome-section {
+        padding: 1.25rem;
+    }
+    
+    .welcome-section h2 {
+        font-size: 1.375rem;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .nav-card {
+        min-height: 160px;
+    }
+    
+    /* Remove hover effect on touch devices */
+    .nav-card:hover {
+        transform: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .nav-card:active {
+        transform: scale(0.98);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* Landscape mobile orientation */
+@media (max-width: 767px) and (orientation: landscape) {
+    .dashboard-nav {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .nav-card {
+        padding: 1.25rem;
+    }
+    
+    .nav-card-icon {
+        width: 45px;
+        height: 45px;
+        margin-bottom: 0.75rem;
+        font-size: 1.125rem;
+    }
+    
+    .nav-card h2 {
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .nav-card p {
+        font-size: 0.8rem;
+    }
+    
+    .welcome-section {
+        padding: 1.25rem;
+    }
+    
+    .welcome-section h2 {
+        font-size: 1.375rem;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .nav-card {
+        border-width: 2px;
+    }
+    
+    .nav-card-icon {
+        border: 2px solid #007bff;
+    }
+    
+    .nav-card h2 {
+        font-weight: 700;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .nav-card {
+        transition: none;
+    }
+    
+    .nav-card:hover,
+    .nav-card:active {
+        transform: none;
+    }
+}

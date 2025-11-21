@@ -828,6 +828,9 @@
                         userId: userId,
                         formData: formObj
                     };
+                    if (window.clearProgressTimestamps) {
+                        window.clearProgressTimestamps(formObj.unique_id);
+                    }
 
                     const resp = await fetch('/submit', {
                         method: 'POST',
