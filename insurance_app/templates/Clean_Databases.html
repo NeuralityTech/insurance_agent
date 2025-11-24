@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clean Databases</title>
+    <link rel="icon" href="/static/img/icon.png" type="image/png">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/sidebar.css">
+    <link rel="stylesheet" href="/static/css/create_user.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body data-sidebar="superadmin-dashboard">
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Header Section -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div>
+                    <h1 class="page-title">Clean Databases</h1>
+                    <p class="page-subtitle">Delete all data from selected system databases</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="user-badge">
+                    <i class="fas fa-user-shield"></i>
+                    <span id="loggedInUser">Super Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Form Section -->
+        <section class="form-section">
+            {% if error_message %}
+            <div class="error" id="message-container">{{ error_message }}</div>
+            {% elif success_message %}
+            <div class="success" id="message-container">{{ success_message }}</div>
+            {% else %}
+            <div id="message-container"></div>
+            {% endif %}
+
+            <form method="post" action="/superadmin/cleanup_databases">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Select databases to clean *</label>
+                        <div class="checkbox-group">
+                            <label>
+                                <input type="checkbox" name="databases" value="insurance_form">
+                                insurance_form.db (submissions, comments_noted)
+                            </label>
+                            <label>
+                                <input type="checkbox" name="databases" value="application_status">
+                                Application_Status.db (application_status_log)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a href="/superadmin/dashboard" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Dashboard
+                    </a>
+                    <div class="form-actions-right">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i>
+                            Delete data
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <!-- Load sidebar component -->
+    <script src="/static/js/sidebar.js"></script>
+</body>
+</html>
