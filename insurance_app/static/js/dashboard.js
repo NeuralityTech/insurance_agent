@@ -630,7 +630,7 @@ function updateStatCards() {
   const isSupervisor = userRole && userRole.toLowerCase() === 'supervisor';
 
   if (isSupervisor) {
-    // SUPERVISOR VIEW: Show system-wide statistics
+    // supervisor view
     
     // Count all proposals by status
     const statusCounts = {};
@@ -649,26 +649,26 @@ function updateStatCards() {
              approvedBy.toLowerCase().includes(userIdLower);
     }).length;
 
-    // Add Total Proposals card (system-wide)
+    // Add Total Proposals card 
     const totalCard = createStatCard('Total Proposals', totalCount, 'fa-folder', 'total', 'all');
     statsSection.appendChild(totalCard);
 
-    // Add With Open/Draft card (system-wide)
+    // Add With Open/Draft card 
     const openCount = statusCounts['Open/Draft'] || 0;
     const openCard = createStatCard('Open/Draft', openCount, 'fa-file-contract', 'open', 'Open/Draft');
     statsSection.appendChild(openCard);
 
-    // Add With Underwriter card (system-wide)
+    // Add With Underwriter card 
     const withUWCount = statusCounts['With Underwriter'] || 0;
     const uwCard = createStatCard('With Underwriter', withUWCount, 'fa-file-contract', 'with-underwriter', 'With Underwriter');
     statsSection.appendChild(uwCard);
 
-    // Add Completed card (system-wide) - includes Policy Created
+    // Add Completed card, includes Policy Created
     const completedCount = (statusCounts['Completed'] || 0) + (statusCounts['Policy Created'] || 0);
     const completedCard = createStatCard('Completed', completedCount, 'fa-check-circle', 'completed', 'completed-or-policy-created');
     statsSection.appendChild(completedCard);
 
-    // Add My Approvals card (personal count) - special filter
+    // Add My Approvals card (personal count) 
     const supApprovedCard = createStatCard(
       'My Approvals', 
       supervisorApprovedCount, 
@@ -679,7 +679,7 @@ function updateStatCards() {
     statsSection.appendChild(supApprovedCard);
 
   } else {
-    // AGENT VIEW: Show only their own proposals
+    // agent view
     const userIdLower = userId.toLowerCase();
     const userProposals = proposalsData.filter(p =>
       p.agent && p.agent.toLowerCase().includes(userIdLower)
@@ -699,12 +699,36 @@ function updateStatCards() {
     const totalCard = createStatCard('Total Proposals', totalCount, 'fa-folder', 'total', 'all');
     statsSection.appendChild(totalCard);
 
-    // Add cards for each status found in the data, ordered by our config
-    const orderedStatuses = Object.keys(STATUS_CONFIG);
+    // Always show all standard status cards, even with 0 count
+    // Define the standard statuses we want to always display for agents
+    const standardStatuses = [
+      { status: 'Open/Draft', icon: 'fa-file', color: 'open-draft' },
+      { status: 'Submitted for Review', icon: 'fa-clock', color: 'submitted-for-review' },
+      { status: 'Supervisor Rejected', icon: 'fa-times-circle', color: 'supervisor-rejected' },
+      { status: 'Pending Client Agreement', icon: 'fa-user-check', color: 'pending-client-agreement' },
+      { status: 'Client Agreed', icon: 'fa-handshake', color: 'client-agreed' },
+      { status: 'With Underwriter', icon: 'fa-file-contract', color: 'with-underwriter' },
+      { status: 'Completed', icon: 'fa-check-circle', color: 'completed' },
+      { status: 'Policy Denied', icon: 'fa-times-circle', color: 'policy-denied' }
+    ];
     
-    orderedStatuses.forEach(status => {
-      if (statusCounts[status]) {
-        const config = STATUS_CONFIG[status];
+    // Create cards for all standard statuses
+    standardStatuses.forEach(({ status, icon, color }) => {
+      const count = statusCounts[status] || 0;
+      const card = createStatCard(status, count, icon, color, status);
+      statsSection.appendChild(card);
+    });
+    
+    // Add any other statuses that exist in the data but aren't in our standard list
+    Object.keys(statusCounts).forEach(status => {
+      // Skip if already handled in standard statuses
+      if (standardStatuses.some(s => s.status === status)) {
+        return;
+      }
+      
+      // Add this non-standard status
+      const config = STATUS_CONFIG[status];
+      if (config) {
         const card = createStatCard(status, statusCounts[status], config.icon, config.color, status);
         statsSection.appendChild(card);
       }
