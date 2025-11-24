@@ -1,0 +1,42 @@
+{
+  "unique_id": "James_9123235654",
+  "proposed": {
+    "comprehensive_cover": {
+      "name": "comprehensive_cover",
+      "plans": [
+        "Star Health Assure",
+        "Star Micro Rural and Farmers Care",
+        "Smart Health Pro"
+      ]
+    },
+    "member1": {
+      "name": "James",
+      "plans": [
+        "Star Health Assure",
+        "Star Micro Rural and Farmers Care",
+        "Smart Health Pro"
+      ]
+    },
+    "member2": {
+      "name": "Jane",
+      "plans": [
+        "Star Women Care",
+        "Star Health Assure",
+        "Star Micro Rural and Farmers Care",
+        "Smart Health Pro"
+      ]
+    }
+  },
+  "agent_selected": [
+    "Star Women Care",
+    "Star Health Assure"
+  ],
+  "supervisor_selected": [
+    "Star Health Assure",
+    "Star Women Care"
+  ],
+  "client_agreed": [
+    "Star Health Assure",
+    "Star Women Care"
+  ]
+}

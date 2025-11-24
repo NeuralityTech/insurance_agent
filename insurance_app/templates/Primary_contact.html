@@ -15,7 +15,7 @@
             <div class="form-row" style="display:flex; gap:8px; align-items:center; font-size:0.9rem;">
                 <div class="form-group" style="display:flex; align-items:center; gap:8px; flex:2;">
                     <label for="unique-id" style="white-space:nowrap; min-width:80px;">UniqueID</label>
-                    <input type="text" id="unique-id" name="unique_id" pattern="^[a-zA-Z0-9']+_[6-9][0-9]{9}$" title="UniqueID must be in the format FullName_PhoneNumber (e.g., JohnDoe_9876543210)" readonly class="readonly-field" style="padding:4px 8px; height:32px; flex:1; min-width:0;" autocomplete="username">
+                    <input type="text" id="unique-id" name="unique_id" pattern="^[a-zA-Z0-9']+_[0-9]{5}$" title="UniqueID must be in the format FullName_AadhaarLast5Digits (e.g., JohnDoe_12345)" readonly class="readonly-field" style="padding:4px 8px; height:32px; flex:1; min-width:0;" autocomplete="username">
                     <span class="error-message" id="unique-id-error"></span>
                     <span class="status-message" id="unique-id-status"></span>
                 </div>
@@ -66,26 +66,77 @@
                     <input type="date" id="self-dob" name="self-dob" required>
                     <span class="error-message" id="self-dob-error"></span>
                 </div>
+
                 <div class="form-group fixed-width-group">
-                    <label for="self-height">Height (cm) *</label>
-                    <input type="text" id="self-height" name="self-height" placeholder="e.g., 175" pattern="[0-9.]*" title="Please enter only numbers." min="0" required>
-                    <span class="error-message" id="self-height-error"></span>
+                    <label for="self-height-ft">Height *</label>
+
+                    <!-- Visible feet/inches dropdowns -->
+                    <div class="height-input-wrapper" style="display:flex; align-items:center; gap:4px;">
+                        <select
+                            id="self-height-ft"
+                            name="self-height-ft"
+                            required
+                            title="Please select feet."
+                            style="width: 4.5em;"
+                        >
+                            <option value="">ft</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                        </select>
+
+                        <select
+                            id="self-height-in"
+                            name="self-height-in"
+                            required
+                            title="Please select inches."
+                            style="width: 4.5em;"
+                        >
+                            <option value="">in</option>
+                            <option value="1">0</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                        </select>
+                    </div>
+
+                    <!-- Hidden cm field used by calculations + backend -->
+                    <input type="hidden" id="self-height" name="self-height">
+
+                    <!-- Per-field errors for dropdowns -->
+                    <span class="error-message" id="self-height-ft-error"></span>
+                    <span class="error-message" id="self-height-in-error"></span>
                 </div>
+
                 <div class="form-group fixed-width-group">
                     <label for="self-weight">Weight (kg) *</label>
                     <input type="text" id="self-weight" name="self-weight" placeholder="e.g., 70" pattern="[0-9.]*" title="Please enter only numbers." min="0" required>
                     <span class="error-message" id="self-weight-error"></span>
                 </div>
+
                 <div class="form-group fixed-width-group">
                     <label for="self-age">Age</label>
                     <input type="text" id="self-age" name="self-age" readonly class="readonly-field">
                     <div id="self-age-error" class="error-message" style="display:none;color:red;font-size:0.9em;margin-top:4px;"></div>
                 </div>
+
                 <div class="form-group fixed-width-group">
                     <label for="self-bmi">BMI</label>
                     <input type="text" id="self-bmi" name="self-bmi" readonly class="readonly-field">
                 </div>
             </div>
+
 
             <div class="form-row">
                 <div class="form-group">
@@ -97,6 +148,11 @@
                     <label for="phone">Phone *</label>
                     <input type="tel" id="phone" name="phone" required pattern="[6-9][0-9]{9}" maxlength="10" title="Please enter a valid 10-digit Indian phone number." autocomplete="tel">
                     <span class="error-message" id="phone-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="aadhaar-last5">Aadhaar Last 5 Digits *</label>
+                    <input type="text" id="aadhaar-last5" name="aadhaar_last5" required pattern="[0-9]{5}" maxlength="5" inputmode="numeric" title="Please enter exactly 5 digits." autocomplete="off">
+                    <span class="error-message" id="aadhaar-last5-error"></span>
                 </div>
             </div>
 

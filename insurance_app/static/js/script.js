@@ -313,7 +313,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 errors.push('Phone must be valid');
             }
         }
-        
+
+        if (!primaryContactData['aadhaar_last5'] || !primaryContactData['aadhaar_last5'].trim()) {
+            errors.push('Aadhaar Last 5 Digits is required');
+        } else {
+            const aadhaarPattern = /^[0-9]{5}$/;
+            if (!aadhaarPattern.test(primaryContactData['aadhaar_last5'])) {
+                errors.push('Aadhaar must be exactly 5 digits');
+            }
+        }
+
         if (!primaryContactData['address'] || !primaryContactData['address'].trim()) {
             errors.push('Address is required');
         }
@@ -385,13 +394,48 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Handle Continue button click
-    function handleContinueClick() {
+    async function handleContinueClick() {
         const errors = validateRequiredFields();
         
         if (errors.length > 0) {
-            // This shouldn't happen since button is disabled, but just in case
+            // just in case
             alert('Please complete all required fields:\n\n• ' + errors.join('\n• '));
             return;
+        }
+        
+        // Check for duplicate email/phone before proceeding
+        const primaryContactData = getSectionData('primary-contact');
+        const email = primaryContactData['email'];
+        const phone = primaryContactData['phone'];
+        
+        try {
+            const response = await fetch('/check_duplicates', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, phone })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to check duplicates');
+            }
+            
+            const result = await response.json();
+            
+            // Check if either email or phone has exceeded the limit
+            if (result.email_exceeded) {
+                alert('This email address has already been used 5 times. Please use a different email address.');
+                return;
+            }
+            
+            if (result.phone_exceeded) {
+                alert('This phone number has already been used 5 times. Please use a different phone number.');
+                return;
+            }
+            
+        } catch (error) {
+            console.error('Error checking duplicates:', error);
         }
         
         // Validation passed - proceed with preview
@@ -504,7 +548,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Preview Functionality 
     const previewBtn = document.getElementById('preview-btn');
     if (previewBtn) {
-        previewBtn.addEventListener('click', function() {
+        previewBtn.addEventListener('click', async function() {
             // Validate all required fields before allowing preview
             const validationErrors = [];
             
@@ -539,11 +583,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
+            if (!primaryContactData['aadhaar_last5'] || !primaryContactData['aadhaar_last5'].trim()) {
+                validationErrors.push('Aadhaar Last 5 Digits is required');
+            } else {
+                const aadhaarPattern = /^[0-9]{5}$/;
+                if (!aadhaarPattern.test(primaryContactData['aadhaar_last5'])) {
+                    validationErrors.push('Aadhaar must be exactly 5 digits');
+                }
+            }
+            
             if (!primaryContactData['address'] || !primaryContactData['address'].trim()) {
                 validationErrors.push('Address is required');
             }
             
-            // Validate Health Vitals (now in Primary Contact)
+            // Validate Health Vitals
             if (!primaryContactData['self-dob'] || !primaryContactData['self-dob'].trim()) {
                 validationErrors.push('Date of Birth is required');
             }
@@ -592,7 +645,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     err.includes('Address') ||
                     err.includes('Date of Birth') ||
                     err.includes('Height') ||
-                    err.includes('Weight')
+                    err.includes('Weight') ||
+                    err.includes('Aadhaar')
                 )) {
                     errorTab = 0; // Primary Contact tab
                 } else if (validationErrors.some(err => err.includes('Sum Insured') || err.includes('Budget'))) {
@@ -616,6 +670,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 300);
                 
                 return; // Stop preview
+            }
+
+            // Check for duplicate email/phone before proceeding
+            const email = primaryContactData['email'];
+            const phone = primaryContactData['phone'];
+            
+            try {
+                const response = await fetch('/check_duplicates', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, phone })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to check duplicates');
+                }
+                
+                const result = await response.json();
+                
+                // Check if either email or phone has exceeded the limit
+                if (result.email_exceeded) {
+                    alert('This email address has already been used 5 times. Please use a different email address.');
+                    return;
+                }
+                
+                if (result.phone_exceeded) {
+                    alert('This phone number has already been used 5 times. Please use a different phone number.');
+                    return;
+                }
+                
+            } catch (error) {
+                console.error('Error checking duplicates:', error);
+                // Graceful degradation: allow proceed if check fails
             }
 
             // All validation passed - proceed with preview

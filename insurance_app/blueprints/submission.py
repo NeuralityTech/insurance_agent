@@ -254,3 +254,62 @@ def add_comment(unique_id):
         }), 201
     finally:
         conn.close()
+@submission_bp.route('/check_duplicates', methods=['POST'])
+def check_duplicates():
+    """Check if email or phone has been used 5 or more times across all submissions."""
+    try:
+        data = request.get_json()
+        email = data.get('email', '').strip()
+        phone = data.get('phone', '').strip()
+        
+        if not email and not phone:
+            return jsonify({'error': 'Email or phone required'}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        email_count = 0
+        phone_count = 0
+        
+        # Count submissions with this email using JSON extraction
+        if email:
+            try:
+                email_count = cursor.execute(
+                    """
+                    SELECT COUNT(*) FROM submissions 
+                    WHERE json_extract(form_summary, '$.primaryContact.email') = ?
+                       OR json_extract(form_summary, '$.email') = ?
+                    """,
+                    (email, email)
+                ).fetchone()[0]
+            except Exception as e:
+                current_app.logger.error(f"Error counting email duplicates: {e}")
+                email_count = 0
+        
+        # Count submissions with this phone using JSON extraction
+        if phone:
+            try:
+                phone_count = cursor.execute(
+                    """
+                    SELECT COUNT(*) FROM submissions 
+                    WHERE json_extract(form_summary, '$.primaryContact.phone') = ?
+                       OR json_extract(form_summary, '$.phone') = ?
+                    """,
+                    (phone, phone)
+                ).fetchone()[0]
+            except Exception as e:
+                current_app.logger.error(f"Error counting phone duplicates: {e}")
+                phone_count = 0
+        
+        conn.close()
+        
+        return jsonify({
+            'email_count': email_count,
+            'phone_count': phone_count,
+            'email_exceeded': email_count >= 5,
+            'phone_exceeded': phone_count >= 5
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Error in check_duplicates: {e}")
+        return jsonify({'error': 'Server error occurred'}), 500

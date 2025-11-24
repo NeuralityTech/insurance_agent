@@ -150,6 +150,10 @@
       
       // Use section-specific data
       setFields('primary-contact-content', primaryContactData);
+      // After primary contact height is restored (in cm), sync visible feet/inches if helper exists
+      if (typeof window.updateHeightFeetInchesFromCm === "function") {
+          window.updateHeightFeetInchesFromCm();
+      }
       setFields('health-history-content', healthHistoryData);
       setFields('cover-cost-content', coverCostData);
       setFields('existing-coverage-content', existingCoverageData);

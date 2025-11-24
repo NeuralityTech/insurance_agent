@@ -1,0 +1,37 @@
+{
+  "unique_id": "Kenny_9123124914",
+  "proposed": {
+    "comprehensive_cover": {
+      "name": "comprehensive_cover",
+      "plans": [
+        "Medi Classic Standard Plan",
+        "Medi Classic Gold Plan",
+        "Arogya Sanjeevani Policy",
+        "Star Micro Rural and Farmers Care",
+        "Smart Health Pro"
+      ]
+    },
+    "member1": {
+      "name": "Kenny",
+      "plans": [
+        "Medi Classic Standard Plan",
+        "Medi Classic Gold Plan",
+        "Arogya Sanjeevani Policy",
+        "Star Micro Rural and Farmers Care",
+        "Smart Health Pro"
+      ]
+    }
+  },
+  "agent_selected": [
+    "Star Micro Rural and Farmers Care",
+    "Smart Health Pro"
+  ],
+  "supervisor_selected": [
+    "Star Micro Rural and Farmers Care",
+    "Smart Health Pro"
+  ],
+  "client_agreed": [
+    "Star Micro Rural and Farmers Care",
+    "Smart Health Pro"
+  ]
+}

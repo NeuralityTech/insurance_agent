@@ -26,7 +26,11 @@ function populateForm(data) {
     try {
         // Handle direct field mapping first (flat structure)
         populateDirectFields(data);
-        
+        // After basic fields are in place, if we have a hidden cm height field,
+        // sync visible ft/in inputs for height
+        if (typeof window.updateHeightFeetInchesFromCm === "function") {
+            window.updateHeightFeetInchesFromCm();
+        }
         // Handle nested sections
         for (const sectionKey in data) {
             if (!data.hasOwnProperty(sectionKey)) continue;

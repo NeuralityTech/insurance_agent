@@ -7,8 +7,8 @@
 /**
  * Initializes the event listeners for disease checkboxes.
  * Behavior:
- *  - Checked: show details container and enable textarea
- *  - Unchecked: hide details, clear textarea value, disable it
+ *  - Checked: show details container, enable date input and textarea, make date required
+ *  - Unchecked: hide details, clear values, disable fields, remove required
  */
 function initializeDiseaseDetails(root) {
     const container = root || document.getElementById('disease-list')
@@ -16,14 +16,25 @@ function initializeDiseaseDetails(root) {
         || document.getElementById('health-history-content');
     if (!container) return;
 
+    // Get today's date in YYYY-MM-DD format for max attribute
+    const today = new Date().toISOString().split('T')[0];
+
     function setEntryState(entry, checked) {
         const details = entry.querySelector('.disease-details-container');
+        const dateInput = details && details.querySelector('.disease-date-input');
         const textarea = details && details.querySelector('textarea');
-        if (!details || !textarea) return;
+        const errorSpan = dateInput && document.getElementById(dateInput.id + '-error');
 
-        // If textarea already has data (e.g., loaded from DB), ensure checkbox is checked
-        if (!checked && textarea.value && textarea.value.toString().trim() !== '') {
-            const cb = entry.querySelector('input[type="checkbox"][name="disease"]') || entry.querySelector('input[type="checkbox"]');
+        if (!details || !dateInput || !textarea) return;
+
+        // Set max date to today
+        dateInput.setAttribute('max', today);
+
+        // If textarea already has data, ensure checkbox is checked
+        if (!checked && ((textarea.value && textarea.value.toString().trim() !== '') || 
+                         (dateInput.value && dateInput.value.toString().trim() !== ''))) {
+            const cb = entry.querySelector('input[type="checkbox"][name="disease"]') || 
+                      entry.querySelector('input[type="checkbox"]');
             if (cb) {
                 cb.checked = true;
                 checked = true;
@@ -31,27 +42,118 @@ function initializeDiseaseDetails(root) {
         }
 
         if (checked) {
+            // Show and enable fields
             details.style.display = 'flex';
+            dateInput.disabled = false;
+            dateInput.required = true;
             textarea.disabled = false;
+            
+            // Add validation listener for date
+            if (!dateInput.dataset.listenerAdded) {
+                dateInput.addEventListener('change', function() {
+                    validateDateField(dateInput, errorSpan);
+                });
+                dateInput.addEventListener('blur', function() {
+                    validateDateField(dateInput, errorSpan);
+                });
+                dateInput.dataset.listenerAdded = 'true';
+            }
+            
+            // Validate immediately if there's a value
+            if (dateInput.value) {
+                validateDateField(dateInput, errorSpan);
+            }
         } else {
+            // Hide and disable fields
             details.style.display = 'none';
+            dateInput.value = '';
+            dateInput.disabled = true;
+            dateInput.required = false;
             textarea.value = '';
             textarea.disabled = true;
             textarea.required = false;
+            
+            // Clear error states
+            if (dateInput.classList) dateInput.classList.remove('input-error');
             if (textarea.classList) textarea.classList.remove('error', 'is-invalid');
-            if (textarea.removeAttribute) textarea.removeAttribute('aria-invalid');
+            if (errorSpan) {
+                errorSpan.textContent = '';
+                errorSpan.style.display = 'none';
+            }
         }
     }
 
+    function validateDateField(dateInput, errorSpan) {
+        if (!dateInput || !errorSpan) return true;
+
+        let isValid = true;
+        let message = '';
+
+        if (!dateInput.disabled && dateInput.required) {
+            if (!dateInput.value || dateInput.value.trim() === '') {
+                isValid = false;
+                message = 'Disease start date is required';
+            } else {
+                const selectedDate = new Date(dateInput.value);
+                const todayDate = new Date(today);
+                
+                if (selectedDate > todayDate) {
+                    isValid = false;
+                    message = 'Disease start date cannot be in the future';
+                }
+            }
+        }
+
+        errorSpan.textContent = message;
+        errorSpan.style.display = isValid ? 'none' : 'block';
+        dateInput.classList.toggle('input-error', !isValid);
+
+        return isValid;
+    }
+
+    // Initialize all disease entries
     container.querySelectorAll('.disease-entry').forEach(entry => {
         const checkbox = entry.querySelector('input[type="checkbox"][name="disease"]')
             || entry.querySelector('input[type="checkbox"]');
         if (!checkbox) return;
-        // initialize (also accounts for prefilled textarea values)
+        
+        // Initialize state 
         setEntryState(entry, checkbox.checked);
-        // listen for changes
+        
+        // Listen for changes
         checkbox.addEventListener('change', () => setEntryState(entry, checkbox.checked));
     });
+
+    // Add global validation for form submission
+    const form = document.getElementById('insurance-form');
+    if (form && !form.dataset.diseaseValidationAdded) {
+        form.addEventListener('submit', (e) => {
+            let hasErrors = false;
+            
+            container.querySelectorAll('.disease-entry').forEach(entry => {
+                const checkbox = entry.querySelector('input[type="checkbox"][name="disease"]');
+                if (checkbox && checkbox.checked) {
+                    const dateInput = entry.querySelector('.disease-date-input');
+                    const errorSpan = dateInput && document.getElementById(dateInput.id + '-error');
+                    
+                    if (dateInput && !validateDateField(dateInput, errorSpan)) {
+                        hasErrors = true;
+                    }
+                }
+            });
+            
+            if (hasErrors) {
+                e.preventDefault();
+                // Scroll to first error
+                const firstError = container.querySelector('.input-error');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstError.focus();
+                }
+            }
+        });
+        form.dataset.diseaseValidationAdded = 'true';
+    }
 }
 
 // Auto-init when DOM is ready on pages that include this script directly
@@ -60,13 +162,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof initializeOccupationalRisk === 'function') initializeOccupationalRisk();
 });
 
-// Expose for manual re-init (e.g., dynamic content)
+// Expose for manual re-init 
 window.initializeDiseaseDetails = initializeDiseaseDetails;
 
-/**
- * Initializes the Occupational Risk toggle behavior.
- * Shows the details textarea only when "occupational-risk" is Yes.
- */
 function initializeOccupationalRisk(root) {
     const container = root || document;
     const yes = container.querySelector('input[type="radio"][name="occupational-risk"][value="yes"]');

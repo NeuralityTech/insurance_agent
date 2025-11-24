@@ -20,6 +20,10 @@
     "Star Cardiac Care Gold",
     "Platinum Sec 2 (Cardiac Ailments)"
   ],
-  "supervisor_selected": [],
-  "client_agreed": []
+  "supervisor_selected": [
+    "Star Cardiac Care Gold"
+  ],
+  "client_agreed": [
+    "Star Cardiac Care Gold"
+  ]
 }

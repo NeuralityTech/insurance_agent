@@ -1,0 +1,34 @@
+{
+  "unique_id": "Vinny_9123923583",
+  "proposed": {
+    "comprehensive_cover": {
+      "name": "comprehensive_cover",
+      "plans": [
+        "Young Star Silver Plan",
+        "Young Star Gold Plan",
+        "Medi Classic Standard Plan",
+        "Medi Classic Gold Plan",
+        "Arogya Sanjeevani Policy"
+      ]
+    },
+    "member1": {
+      "name": "Vinny",
+      "plans": [
+        "Young Star Silver Plan",
+        "Young Star Gold Plan",
+        "Medi Classic Standard Plan",
+        "Medi Classic Gold Plan",
+        "Arogya Sanjeevani Policy"
+      ]
+    }
+  },
+  "agent_selected": [
+    "Young Star Gold Plan"
+  ],
+  "supervisor_selected": [
+    "Young Star Gold Plan"
+  ],
+  "client_agreed": [
+    "Young Star Gold Plan"
+  ]
+}

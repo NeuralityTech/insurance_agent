@@ -1,0 +1,64 @@
+{
+    "detailed_justification": [
+        {
+            "plan_name": "Star Cardiac Care Gold",
+            "policy_code": "IND_1_0",
+            "proposed_for": [
+                "Vince"
+            ],
+            "reason_for_proposal": "Proposed for members with needs: CARD",
+            "family_fit_check_result": "Not Applicable (Individual Plan)",
+            "ailment_score": 1.0,
+            "member_specific_scores": {
+                "Vince": 1.0
+            },
+            "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
+            "ai_reasoning": "This individual plan provides a perfect match for Vince's cardiac needs."
+        },
+        {
+            "plan_name": "Platinum Sec 2 (Cardiac Ailments)",
+            "policy_code": "IND_1_0",
+            "proposed_for": [
+                "Vince"
+            ],
+            "reason_for_proposal": "Proposed for members with needs: CARD",
+            "family_fit_check_result": "Not Applicable (Individual Plan)",
+            "ailment_score": 1.0,
+            "member_specific_scores": {
+                "Vince": 1.0
+            },
+            "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
+            "ai_reasoning": "This individual plan offers a perfect match for Vince's cardiac requirements."
+        },
+        {
+            "plan_name": "Young Star Silver Plan",
+            "policy_code": "MIX_1_1",
+            "proposed_for": [],
+            "reason_for_proposal": "Proposed for members with needs: GENERAL",
+            "family_fit_check_result": "Passed",
+            "ailment_score": 0.6,
+            "member_specific_scores": {
+                "Vince": 0.6
+            },
+            "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
+            "ai_reasoning": "This plan is proposed for general health needs and offers a partial match for Vince, as it does not specifically cover his cardiac condition. The family structure fits."
+        },
+        {
+            "plan_name": "Young Star Gold Plan",
+            "policy_code": "MIX_1_1",
+            "proposed_for": [],
+            "reason_for_proposal": "Proposed for members with needs: GENERAL",
+            "family_fit_check_result": "Passed",
+            "ailment_score": 0.6,
+            "member_specific_scores": {
+                "Vince": 0.6
+            },
+            "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
+            "ai_reasoning": "This plan is proposed for general health needs and offers a partial match for Vince, as it does not specifically cover his cardiac condition. The family structure fits."
+        }
+    ],
+    "family_composition": {
+        "num_adults": 1,
+        "num_children": 0
+    }
+}
