@@ -290,10 +290,54 @@
                             <span class="error-message member-dob-error"></span>
                         </div>
                         <div class="form-group fixed-width-group">
-                            <label>Height (cm) *</label>
-                            <input type="text" class="member-height" name="member-height" placeholder="e.g., 175" pattern="[0-9.]*" title="Please enter only numbers." required>
-                            <span class="error-message member-height-error"></span>
+                            <label>Height *</label>
+                            <!-- Visible feet/inches dropdowns -->
+                            <div class="height-input-wrapper" style="display:flex; align-items:center; gap:4px;">
+                                <select
+                                    class="member-height-ft"
+                                    name="member-height-ft"
+                                    required
+                                    title="Please select feet."
+                                    style="width: 4.5em;"
+                                >
+                                    <option value="">ft</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                </select>
+                                <span>ft</span>
+
+                                <select
+                                    class="member-height-in"
+                                    name="member-height-in"
+                                    required
+                                    title="Please select inches."
+                                    style="width: 4.5em;"
+                                >
+                                    <option value="">in</option>
+                                    <option value="1">0</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                </select>
+                                <span>in</span>
+                            </div>
+                            <input type="hidden" class="member-height" name="member-height">
+                            <span class="error-message member-height-ft-error"></span>
+                            <span class="error-message member-height-in-error"></span>
                         </div>
+
                         <div class="form-group fixed-width-group">
                             <label>Weight (kg) *</label>
                             <input type="text" class="member-weight" name="member-weight" placeholder="e.g., 70" pattern="[0-9.]*" title="Please enter only numbers." required>
@@ -326,7 +370,12 @@
                                         </label>
                                     </div>
                                     <div class="disease-details-container">
-                                        <textarea name="cardiac_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2"></textarea>
+                                        <div class="disease-date-group">
+                                            <label>Disease Start Date *</label>
+                                            <input type="date" name="cardiac_start_date" class="disease-date-input member-disease-date" disabled>
+                                            <span class="error-message cardiac-start-date-error"></span>
+                                        </div>
+                                        <textarea name="cardiac_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2" disabled></textarea>
                                     </div>
                                 </div>
 
@@ -339,7 +388,30 @@
                                         </label>
                                     </div>
                                     <div class="disease-details-container">
-                                        <textarea name="diabetes_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2"></textarea>
+                                        <div class="disease-date-group">
+                                            <label>Disease Start Date *</label>
+                                            <input type="date" name="diabetes_start_date" class="disease-date-input member-disease-date" disabled>
+                                            <span class="error-message diabetes-start-date-error"></span>
+                                        </div>
+                                        <textarea name="diabetes_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2" disabled></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Hypertension -->
+                                <div class="disease-entry">
+                                    <div class="disease-header">
+                                        <label class="checkbox-container">
+                                            <input type="checkbox" name="disease" value="hypertension">
+                                            Hypertension
+                                        </label>
+                                    </div>
+                                    <div class="disease-details-container">
+                                        <div class="disease-date-group">
+                                            <label>Disease Start Date *</label>
+                                            <input type="date" name="hypertension_start_date" class="disease-date-input member-disease-date" disabled>
+                                            <span class="error-message hypertension-start-date-error"></span>
+                                        </div>
+                                        <textarea name="hypertension_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2" disabled></textarea>
                                     </div>
                                 </div>
 
@@ -352,7 +424,12 @@
                                         </label>
                                     </div>
                                     <div class="disease-details-container">
-                                        <textarea name="cancer_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2"></textarea>
+                                        <div class="disease-date-group">
+                                            <label>Disease Start Date *</label>
+                                            <input type="date" name="cancer_start_date" class="disease-date-input member-disease-date" disabled>
+                                            <span class="error-message cancer-start-date-error"></span>
+                                        </div>
+                                        <textarea name="cancer_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2" disabled></textarea>
                                     </div>
                                 </div>
 
@@ -365,7 +442,12 @@
                                         </label>
                                     </div>
                                     <div class="disease-details-container">
-                                        <textarea name="critical_illness_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2"></textarea>
+                                        <div class="disease-date-group">
+                                            <label>Disease Start Date *</label>
+                                            <input type="date" name="critical_illness_start_date" class="disease-date-input member-disease-date" disabled>
+                                            <span class="error-message critical-illness-start-date-error"></span>
+                                        </div>
+                                        <textarea name="critical_illness_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2" disabled></textarea>
                                     </div>
                                 </div>
 
@@ -378,7 +460,12 @@
                                         </label>
                                     </div>
                                     <div class="disease-details-container">
-                                        <textarea name="other_details" class="disease-details-textarea" placeholder="Please specify and provide details..." rows="2"></textarea>
+                                        <div class="disease-date-group">
+                                            <label>Disease Start Date *</label>
+                                            <input type="date" name="other_start_date" class="disease-date-input member-disease-date" disabled>
+                                            <span class="error-message other-start-date-error"></span>
+                                        </div>
+                                        <textarea name="other_details" class="disease-details-textarea" placeholder="Please specify and provide details..." rows="2" disabled></textarea>
                                     </div>
                                 </div>
                             </div>

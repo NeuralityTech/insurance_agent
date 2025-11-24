@@ -161,20 +161,98 @@
         const container = formContainer.querySelector('.member-disease-list');
         if (!container) return;
 
+        // Get today's date in YYYY-MM-DD format for max attribute
+        const today = new Date().toISOString().split('T')[0];
+
         function setEntryState(entry, checked) {
             const details = entry.querySelector('.disease-details-container');
+            const dateInput = details && details.querySelector('.disease-date-input');
             const textarea = details && details.querySelector('textarea');
-            if (!details || !textarea) return;
+            const errorSpan = dateInput && entry.querySelector('.error-message');
+
+            if (!details || !dateInput || !textarea) return;
+
+            // Set max date to today (prevent future dates)
+            dateInput.setAttribute('max', today);
+
+            // If textarea already has data (e.g., loaded from storage), ensure checkbox is checked
+            if (!checked && ((textarea.value && textarea.value.toString().trim() !== '') || 
+                            (dateInput.value && dateInput.value.toString().trim() !== ''))) {
+                const cb = entry.querySelector('input[type="checkbox"][name="disease"]');
+                if (cb) {
+                    cb.checked = true;
+                    checked = true;
+                }
+            }
 
             if (checked) {
+                // Show and enable fields
                 details.style.display = 'flex';
+                dateInput.disabled = false;
+                dateInput.required = true;
                 textarea.disabled = false;
+                
+                // Add validation listener for date
+                if (!dateInput.dataset.listenerAdded) {
+                    dateInput.addEventListener('change', function() {
+                        validateMemberDateField(dateInput, errorSpan);
+                    });
+                    dateInput.addEventListener('blur', function() {
+                        validateMemberDateField(dateInput, errorSpan);
+                    });
+                    dateInput.dataset.listenerAdded = 'true';
+                }
+                
+                // Validate immediately if there's a value
+                if (dateInput.value) {
+                    validateMemberDateField(dateInput, errorSpan);
+                }
             } else {
+                // Hide and disable fields
                 details.style.display = 'none';
+                dateInput.value = '';
+                dateInput.disabled = true;
+                dateInput.required = false;
                 textarea.value = '';
                 textarea.disabled = true;
                 textarea.required = false;
+                
+                // Clear error states
+                if (dateInput.classList) dateInput.classList.remove('input-error');
+                if (textarea.classList) textarea.classList.remove('error', 'is-invalid');
+                if (errorSpan) {
+                    errorSpan.textContent = '';
+                    errorSpan.style.display = 'none';
+                }
             }
+        }
+
+        function validateMemberDateField(dateInput, errorSpan) {
+            if (!dateInput || !errorSpan) return true;
+
+            let isValid = true;
+            let message = '';
+
+            if (!dateInput.disabled && dateInput.required) {
+                if (!dateInput.value || dateInput.value.trim() === '') {
+                    isValid = false;
+                    message = 'Disease start date is required';
+                } else {
+                    const selectedDate = new Date(dateInput.value);
+                    const todayDate = new Date(today);
+                    
+                    if (selectedDate > todayDate) {
+                        isValid = false;
+                        message = 'Disease start date cannot be in the future';
+                    }
+                }
+            }
+
+            errorSpan.textContent = message;
+            errorSpan.style.display = isValid ? 'none' : 'block';
+            dateInput.classList.toggle('input-error', !isValid);
+
+            return isValid;
         }
 
         container.querySelectorAll('.disease-entry').forEach(entry => {
@@ -264,15 +342,27 @@
 
         // Collect health history
         const healthHistory = {};
+        const diseaseStartDates = {};
+
         formContainer.querySelectorAll('.member-disease-list input[name="disease"]').forEach(checkbox => {
             if (!checkbox.checked) return;
             const key = checkbox.value;
+            
+            // Get details textarea
             const detailsTextarea = formContainer.querySelector(`.member-disease-list textarea[name="${key}_details"]`);
             const detailsValue = detailsTextarea ? detailsTextarea.value.trim() : '';
-            // If checkbox is checked but details are empty, use "None"
             healthHistory[key] = detailsValue || "None";
+            
+            // Get start date
+            const dateInput = formContainer.querySelector(`.member-disease-list input[name="${key}_start_date"]`);
+            if (dateInput && dateInput.value) {
+                diseaseStartDates[`${key}_start_date`] = dateInput.value;
+            }
         });
+
         data.healthHistory = healthHistory;
+        // Merge start dates into data object at root level
+        Object.assign(data, diseaseStartDates);
 
         // Add disease keys array for backend compatibility (same as Health History tab)
         try {
@@ -312,6 +402,9 @@
         formContainer.querySelector('.member-height').value = memberData.height || '';
         formContainer.querySelector('.member-weight').value = memberData.weight || '';
         formContainer.querySelector('.member-bmi').value = memberData.bmi || '';
+        if (typeof updateMemberHeightFeetInchesFromCm === 'function') {
+            updateMemberHeightFeetInchesFromCm(formContainer);
+        }
         formContainer.querySelector('.member-planned-surgeries').value = memberData.plannedSurgeries || '';
 
         // Set radio buttons
@@ -351,6 +444,15 @@
                     if (detailsTextarea) {
                         // If details are "None", show empty field for user convenience
                         detailsTextarea.value = details === 'None' ? '' : details;
+                    }
+                    
+                    // Restore start date if it exists
+                    const startDateKey = `${key}_start_date`;
+                    if (memberData[startDateKey]) {
+                        const dateInput = formContainer.querySelector(`.member-disease-list input[name="${key}_start_date"]`);
+                        if (dateInput) {
+                            dateInput.value = memberData[startDateKey];
+                        }
                     }
                 }
             }
@@ -539,10 +641,59 @@
         const errorDiv = formContainer.querySelector('.member-error');
         const data = getFormData(formContainer);
 
+        const heightFtSelect = formContainer.querySelector('.member-height-ft');
+        const heightInSelect = formContainer.querySelector('.member-height-in');
+
+        if (heightFtSelect && heightInSelect && (!heightFtSelect.value || !heightInSelect.value)) {
+            if (errorDiv) {
+                errorDiv.textContent = 'Please select both feet and inches for height.';
+                errorDiv.style.display = 'block';
+            }
+            return;
+        }
+
+
         // Validate required fields
         if (!data.name || !data.relationship || !data.gender || !data.dob || !data.height || !data.weight) {
             if (errorDiv) {
                 errorDiv.textContent = 'Please fill in all required fields marked with *';
+                errorDiv.style.display = 'block';
+            }
+            return;
+        }
+        // Validate disease start dates
+        let hasDateErrors = false;
+        formContainer.querySelectorAll('.member-disease-list .disease-entry').forEach(entry => {
+            const checkbox = entry.querySelector('input[type="checkbox"][name="disease"]');
+            if (checkbox && checkbox.checked) {
+                const dateInput = entry.querySelector('.disease-date-input');
+                const errorSpan = entry.querySelector('.error-message');
+                
+                if (dateInput && errorSpan) {
+                    if (!dateInput.value || dateInput.value.trim() === '') {
+                        hasDateErrors = true;
+                        errorSpan.textContent = 'Disease start date is required';
+                        errorSpan.style.display = 'block';
+                        dateInput.classList.add('input-error');
+                    } else {
+                        const today = new Date().toISOString().split('T')[0];
+                        const selectedDate = new Date(dateInput.value);
+                        const todayDate = new Date(today);
+                        
+                        if (selectedDate > todayDate) {
+                            hasDateErrors = true;
+                            errorSpan.textContent = 'Disease start date cannot be in the future';
+                            errorSpan.style.display = 'block';
+                            dateInput.classList.add('input-error');
+                        }
+                    }
+                }
+            }
+        });
+
+        if (hasDateErrors) {
+            if (errorDiv) {
+                errorDiv.textContent = 'Please provide valid start dates for all selected diseases';
                 errorDiv.style.display = 'block';
             }
             return;
@@ -708,6 +859,34 @@
         tabsContainer.appendChild(tab);
     }
 
+    // Convert stored cm height into feet/inches dropdown values for a given member form
+    function updateMemberHeightFeetInchesFromCm(container) {
+        if (!container) return;
+
+        const cmInput  = container.querySelector('.member-height');
+        const ftSelect = container.querySelector('.member-height-ft');
+        const inSelect = container.querySelector('.member-height-in');
+
+        if (!cmInput || !ftSelect || !inSelect) return;
+
+        const cm = parseFloat(cmInput.value);
+        if (!cm || cm <= 0) return;
+
+        let totalInches = cm / 2.54;
+        let feet = Math.floor(totalInches / 12);
+        let inches = Math.round(totalInches - feet * 12);
+
+        // Handle rounding edge case
+        if (inches === 12) {
+            feet += 1;
+            inches = 0;
+        }
+
+        ftSelect.value = feet ? String(feet) : '';
+        inSelect.value = inches ? String(inches) : '';
+    }
+
+
     // Initialize age calculation
     function initializeAgeCalculation(contentDiv) {
         const dobInput = contentDiv.querySelector('.member-dob');
@@ -725,21 +904,73 @@
     }
 
     // Initialize BMI calculation
+    // Initialize BMI calculation (members use ft/in on UI, cm internally)
     function initializeBmiCalculation(contentDiv) {
-        const heightInput = contentDiv.querySelector('.member-height');
-        const weightInput = contentDiv.querySelector('.member-weight');
-        const bmiInput = contentDiv.querySelector('.member-bmi');
+        const heightInput    = contentDiv.querySelector('.member-height');      // hidden cm
+        const heightFtSelect = contentDiv.querySelector('.member-height-ft');   // visible ft
+        const heightInSelect = contentDiv.querySelector('.member-height-in');   // visible in
+        const weightInput    = contentDiv.querySelector('.member-weight');
+        const bmiInput       = contentDiv.querySelector('.member-bmi');
 
-        if (heightInput && weightInput && bmiInput && typeof calculateBmi === 'function') {
-            function updateBmi() {
-                const bmi = calculateBmi(heightInput.value, weightInput.value);
-                bmiInput.value = bmi !== null ? bmi : '';
+        if (!heightInput || !weightInput || !bmiInput || typeof calculateBmi !== 'function') {
+            return;
+        }
+
+        // Recalculate BMI using whatever cm value is currently in the hidden field
+        function recalcFromCurrentHeight() {
+            const cm = parseFloat(heightInput.value);
+            const weight = parseFloat(weightInput.value);
+            const bmi = calculateBmi(cm, weight);
+            bmiInput.value = bmi !== null ? bmi : '';
+        }
+
+        // Read ft/in dropdowns → convert to cm → store → recalc BMI
+        function syncHeightFromFtInAndRecalc() {
+            if (!heightFtSelect || !heightInSelect) {
+                recalcFromCurrentHeight();
+                return;
             }
 
-            heightInput.addEventListener('input', updateBmi);
-            weightInput.addEventListener('input', updateBmi);
+            let feet = parseFloat(heightFtSelect.value);
+            let inches = parseFloat(heightInSelect.value);
+
+            if (isNaN(feet)) feet = 0;
+            if (isNaN(inches)) inches = 0;
+
+            // If both are empty/zero, clear height + BMI
+            if (feet <= 0 && inches <= 0) {
+                heightInput.value = '';
+                bmiInput.value = '';
+                return;
+            }
+
+            // Normalize inches >= 12 into extra feet
+            if (inches >= 12) {
+                feet += Math.floor(inches / 12);
+                inches = inches % 12;
+
+                heightFtSelect.value = feet ? String(feet) : '';
+                heightInSelect.value = inches ? String(inches) : '';
+            }
+
+            const cm = feet * 30.48 + inches * 2.54;
+            heightInput.value = cm.toFixed(1);
+            recalcFromCurrentHeight();
         }
+
+        // When user changes ft/in, recompute cm + BMI
+        if (heightFtSelect) {
+            heightFtSelect.addEventListener('change', syncHeightFromFtInAndRecalc);
+        }
+        if (heightInSelect) {
+            heightInSelect.addEventListener('change', syncHeightFromFtInAndRecalc);
+        }
+
+        // Existing behavior: recalc if cm or weight changes
+        heightInput.addEventListener('input', recalcFromCurrentHeight);
+        weightInput.addEventListener('input', recalcFromCurrentHeight);
     }
+
 
     // Load all existing members into tabs
     function loadExistingMembers() {
