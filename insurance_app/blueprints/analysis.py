@@ -282,21 +282,14 @@ def _run_full_analysis(client_data, derived_features, current_app):
 
 def _get_ai_enhanced_report(justification_report, current_app):
     """Calls the Gemini model to enhance the report with a narrative and per-plan reasoning."""
+    # STUB: Skip actual AI generation to save cost/time
     try:
-        prompt_path = os.path.join(current_app.root_path, 'prompt2.txt')
-        with open(prompt_path, 'r') as f:
-            system_prompt = f.read()
+        # Simply attach "NA" reasoning to each item and return the structure
+        for item in justification_report:
+            item['ai_reasoning'] = "NA"
         
-        # The AI is now expected to return a full JSON object.
-        # We wrap the justification data in a temporary object for the prompt.
-        prompt_data = {'detailed_justification': justification_report}
-        ai_response_text = generate(
-            text=json.dumps(prompt_data),
-            system_prompt_text=system_prompt
-        )
-        
-        # Clean and parse the JSON response from the AI
-        return clean_and_parse(ai_response_text)
+        return {'detailed_justification': justification_report}
+
     except Exception as e:
         current_app.logger.error(f"Failed to generate narrative summary: {e}")
         return "Narrative summary could not be generated due to an error."
