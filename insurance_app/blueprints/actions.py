@@ -171,7 +171,7 @@ def update_approval_status(unique_id):
     if new_status and str(new_status).lower() in ['approved', 'rejected', 'sup_approved', 'sup_rejected'] and not comments:
         return jsonify({'error': 'Supervisor comments are required.'}), 400
     elif new_status and str(new_status).lower() == 'sup_review' and not comments:
-        comments = 'Resubmitted by agent; awaiting supervisor review.'
+        comments = 'Submitted by agent; awaiting supervisor review.'
 
     conn = None
     try:

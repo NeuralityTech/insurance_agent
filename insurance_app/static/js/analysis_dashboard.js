@@ -207,7 +207,9 @@ function renderCombinationPackages(combos, container) {
 
         // 3) Build body rows: for each member, find plan in each package
         const bodyRows = members.map(memberName => {
-            const cells = packages.map(pkg => {
+            const memberKey = memberName.replace(/[^a-zA-Z0-9]/g, '_');
+
+            const cells = packages.map((pkg, pkgIndex) => {
                 const plans = Array.isArray(pkg?.plans) ? pkg.plans : [];
                 // Find a plan that applies to this member
                 const plan = plans.find(p => {
@@ -217,15 +219,27 @@ function renderCombinationPackages(combos, container) {
                     return false;
                 });
                 if (!plan) return '<td></td>';
-                const planName = (plan.plan || plan.plan_name || '').replace(/\"/g,'&quot;');
-                const comboId = `combo-${memberName.replace(/[^a-zA-Z0-9]/g, '_')}-${planName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+                const rawName = (plan.plan || plan.plan_name || '');
+                const planName = rawName.replace(/\"/g,'&quot;');
+                const planKey = planName.replace(/[^a-zA-Z0-9]/g, '_');
+
+                // IMPORTANT: include pkgIndex so ID is unique per column
+                const comboId = `combo-${pkgIndex}-${memberKey}-${planKey}`;
+
                 return `<td>
                     <label for="${comboId}" style="display:flex; align-items:center; gap:6px;">
-                        <input type="checkbox" id="${comboId}" name="${comboId}" class="plan-checkbox" data-plan-name="${planName}" aria-label="Select ${planName}">
+                        <input type="checkbox"
+                               id="${comboId}"
+                               name="${comboId}"
+                               class="plan-checkbox"
+                               data-plan-name="${planName}"
+                               aria-label="Select ${planName}">
                         <span>${planName || '—'}</span>
                     </label>
                 </td>`;
             }).join('');
+
             return `<tr><th style="text-align:left;">${memberName}</th>${cells}</tr>`;
         }).join('');
 
@@ -244,16 +258,22 @@ function renderCombinationPackages(combos, container) {
     // Gather packages from preferred/legacy shapes
     const packages = [];
     if (combos && Array.isArray(combos.ranked_packages) && combos.ranked_packages.length) {
-        combos.ranked_packages.forEach(pkg => { if (Array.isArray(pkg?.plans) && pkg.plans.length) packages.push(pkg); });
+        combos.ranked_packages.forEach(pkg => {
+            if (Array.isArray(pkg?.plans) && pkg.plans.length) packages.push(pkg);
+        });
     }
     if (!packages.length && combos && combos.best_individual_combo && Array.isArray(combos.best_individual_combo.plans) && combos.best_individual_combo.plans.length) {
         packages.push(combos.best_individual_combo);
     }
     if (!packages.length && combos && Array.isArray(combos.hybrid_combos) && combos.hybrid_combos.length) {
-        combos.hybrid_combos.forEach(hybrid => { const plans = Array.isArray(hybrid?.package) ? hybrid.package : []; if (plans.length) packages.push({ plans, total_score: hybrid.total_score || hybrid.score || 0 }); });
+        combos.hybrid_combos.forEach(hybrid => {
+            const plans = Array.isArray(hybrid?.package) ? hybrid.package : [];
+            if (plans.length) packages.push({ plans, total_score: hybrid.total_score || hybrid.score || 0 });
+        });
     }
 
-    container.innerHTML = packages.length ? buildMatrix(packages) : '<p>No combination packages could be generated.</p>';
+    container.innerHTML = packages.length ? buildMatrix(packages)
+                                          : '<p>No combination packages could be generated.</p>';
 }
 
 
