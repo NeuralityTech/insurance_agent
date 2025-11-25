@@ -360,6 +360,46 @@ document.addEventListener('DOMContentLoaded', function() {
         if (budgetEl && budgetEl.value.trim() && !budgetEl.value.trim().match(/^[0-9]+$/)) {
             errors.push('Annual Budget must be numeric');
         }
+
+        // ✅ Validate Disease start dates for PRIMARY APPLICANT
+        const healthHistoryContent = document.getElementById('health-history-content');
+        if (healthHistoryContent) {
+            const diseaseEntries = healthHistoryContent.querySelectorAll('.disease-entry');
+
+            diseaseEntries.forEach(entry => {
+                const checkbox = entry.querySelector('input[type="checkbox"][name="disease"], input[type="checkbox"]');
+                const dateInput = entry.querySelector('.disease-date-input');
+                const errorSpan = entry.querySelector('.error-message');
+
+                if (!checkbox || !dateInput) return;
+
+                // Clear any previous error state
+                if (errorSpan) {
+                    errorSpan.textContent = '';
+                    errorSpan.style.display = 'none';
+                }
+                dateInput.classList.remove('input-error');
+
+                // Only validate if disease is selected
+                if (checkbox.checked) {
+                    if (!dateInput.value || dateInput.value.trim() === '') {
+                        // Friendly label from the disease header
+                        const headerLabel = entry.querySelector('.disease-header label');
+                        const diseaseLabel = headerLabel ? headerLabel.textContent.trim() : 'the selected disease';
+
+                        // Add to the same errors array used for height/DOB/etc.
+                        errors.push(`Disease start date for ${diseaseLabel} is required`);
+
+                        if (errorSpan) {
+                            errorSpan.textContent = 'Disease start date is required';
+                            errorSpan.style.display = 'block';
+                        }
+                        dateInput.classList.add('input-error');
+                    }
+                }
+            });
+        }
+
         
         return errors;
     }
