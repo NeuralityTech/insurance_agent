@@ -631,6 +631,11 @@
                     } else {
                         statusEl.textContent = 'Prefill function not available.';
                     }
+                    if (window.initializeDiseaseDetails) {
+                        setTimeout(() => {
+                            window.initializeDiseaseDetails();
+                        }, 500);
+                    }
 
                     localStorage.setItem('currentUniqueId', uid);
                     if (window.initializeCommentsNoted) {
@@ -750,6 +755,21 @@
                 await loadById(idInput.value);
             });
 
+            if (previewBtn) {
+                previewBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation(); // ✅ ADD THIS - stops other handlers from running
+                    
+                    // Trigger form submission which will run all validation
+                    const submitEvent = new Event('submit', {
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    form.dispatchEvent(submitEvent);
+                });
+            }
+
+
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
 
@@ -760,10 +780,88 @@
                 if (resetBtn) resetBtn.disabled = true;
 
                 try {
+                    const healthHistoryContent = document.getElementById('health-history-content');
+                    if (healthHistoryContent) {
+                        const diseaseEntries = healthHistoryContent.querySelectorAll('.disease-entry');
+                        const diseaseErrors = [];
+
+                        diseaseEntries.forEach(entry => {
+                            const checkbox = entry.querySelector('input[type="checkbox"][name="disease"], input[type="checkbox"]');
+                            const dateInput = entry.querySelector('.disease-date-input');
+                            const errorSpan = entry.querySelector('.error-message');
+
+                            if (!checkbox || !dateInput) return;
+
+                            // Clear any previous error state
+                            if (errorSpan) {
+                                errorSpan.textContent = '';
+                                errorSpan.style.display = 'none';
+                            }
+                            dateInput.classList.remove('input-error');
+
+                            // Only validate if disease is selected
+                            if (checkbox.checked) {
+                                if (!dateInput.value || dateInput.value.trim() === '') {
+                                    // Get friendly label from the disease header
+                                    const headerLabel = entry.querySelector('.disease-header label');
+                                    const diseaseLabel = headerLabel ? headerLabel.textContent.trim() : 'the selected disease';
+
+                                    diseaseErrors.push(`Disease start date for ${diseaseLabel} is required`);
+
+                                    if (errorSpan) {
+                                        errorSpan.textContent = 'Disease start date is required';
+                                        errorSpan.style.display = 'block';
+                                    }
+                                    dateInput.classList.add('input-error');
+                                } else {
+                                    // Also validate date is not in the future
+                                    const selectedDate = new Date(dateInput.value);
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    
+                                    if (selectedDate > today) {
+                                        const headerLabel = entry.querySelector('.disease-header label');
+                                        const diseaseLabel = headerLabel ? headerLabel.textContent.trim() : 'the selected disease';
+                                        
+                                        diseaseErrors.push(`Disease start date for ${diseaseLabel} cannot be in the future`);
+                                        
+                                        if (errorSpan) {
+                                            errorSpan.textContent = 'Date cannot be in the future';
+                                            errorSpan.style.display = 'block';
+                                        }
+                                        dateInput.classList.add('input-error');
+                                    }
+                                }
+                            }
+                        });
+
+                        // If there are disease date errors, stop submission
+                        if (diseaseErrors.length > 0) {
+                            alert('Please fix the following errors before submitting:\n\n• ' + diseaseErrors.join('\n• '));
+                            
+                            if (previewBtn) {
+                                previewBtn.textContent = "Proceed";
+                                previewBtn.disabled = false;
+                            }
+                            if (resetBtn) resetBtn.disabled = false;
+                            
+                            // Scroll to first error
+                            const firstError = healthHistoryContent.querySelector('.input-error');
+                            if (firstError) {
+                                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                setTimeout(() => firstError.focus(), 300);
+                            }
+                            
+                            return false;
+                        }
+                    }
+
                     const uniqueId = (idInput?.value || '').trim();
                     
                     const formObj = {};
                     const allInputs = form.querySelectorAll('input, select, textarea');
+                    
+                    // ... rest of your existing code continues here ...
                     
                     allInputs.forEach(el => {
                         if (!el.name) return;

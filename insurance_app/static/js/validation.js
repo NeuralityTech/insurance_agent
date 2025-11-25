@@ -280,6 +280,6 @@ window.updateHeightFeetInchesFromCm = function () {
         inches = 0;
     }
 
-    heightFeetInput.value = feet ? String(feet) : '';
-    heightInchesInput.value = inches ? String(inches) : '';
+    heightFeetInput.value = String(feet);
+    heightInchesInput.value = String(inches);
 };

@@ -124,7 +124,7 @@ function initializeDiseaseDetails(root) {
         checkbox.addEventListener('change', () => setEntryState(entry, checkbox.checked));
     });
 
-    // Add global validation for form submission
+    /* Add global validation for form submission
     const form = document.getElementById('insurance-form');
     if (form && !form.dataset.diseaseValidationAdded) {
         form.addEventListener('submit', (e) => {
@@ -158,6 +158,7 @@ function initializeDiseaseDetails(root) {
         });
         form.dataset.diseaseValidationAdded = 'true';
     }
+    */
 }
 
 // Auto-init when DOM is ready on pages that include this script directly

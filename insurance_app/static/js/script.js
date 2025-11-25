@@ -271,7 +271,6 @@ document.addEventListener('DOMContentLoaded', function() {
         newContinueBtn.id = 'continue-btn';
         newContinueBtn.className = 'btn';
         newContinueBtn.textContent = 'Proceed';
-        newContinueBtn.disabled = true; // Start disabled
         
         // Insert before Save button
         const saveBtn = document.getElementById('save-btn');
@@ -408,22 +407,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return errors;
     }
 
-    // Function to update Continue button state
-    function updateContinueButtonState() {
-        const continueBtn = document.getElementById('continue-btn');
-        if (!continueBtn) return;
-        
-        const errors = validateRequiredFields();
-        
-        if (errors.length > 0) {
-            continueBtn.disabled = true;
-            continueBtn.title = 'Please complete all required fields:\n• ' + errors.join('\n• ');
-        } else {
-            continueBtn.disabled = false;
-            continueBtn.title = 'Continue to preview your application';
-        }
-    }
-
     // Function to setup validation
     function setupFormValidation() {
         const form = document.getElementById('insurance-form');
@@ -442,9 +425,43 @@ document.addEventListener('DOMContentLoaded', function() {
         const errors = validateRequiredFields();
         
         if (errors.length > 0) {
-            // just in case
-            alert('Please complete all required fields:\n\n• ' + errors.join('\n• '));
-            return;
+            // Show alert with all errors
+            alert('Please fix the following errors before proceeding:\n\n• ' + errors.join('\n• '));
+            
+            // Find which tab has the first error and switch to it
+            let errorTab = 0; // Default to Primary Contact tab
+            
+            if (errors.some(err => 
+                err.includes('Full Name') || 
+                err.includes('Gender') || 
+                err.includes('Email') || 
+                err.includes('Phone') || 
+                err.includes('Address') ||
+                err.includes('Date of Birth') ||
+                err.includes('Height') ||
+                err.includes('Weight') ||
+                err.includes('Aadhaar')
+            )) {
+                errorTab = 0; // Primary Contact tab
+            } else if (errors.some(err => err.includes('Disease start date'))) {
+                errorTab = 1; // Health History tab
+            } else if (errors.some(err => err.includes('Sum Insured') || err.includes('Budget'))) {
+                errorTab = 3; // Cover & Cost tab
+            }
+            
+            // Switch to the tab with errors
+            switchTab(errorTab);
+            
+            // Scroll to first error field
+            setTimeout(() => {
+                const firstError = document.querySelector('.input-error');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => firstError.focus(), 300);
+                }
+            }, 300);
+            
+            return; // Stop here
         }
         
         // Check for duplicate email/phone before proceeding
