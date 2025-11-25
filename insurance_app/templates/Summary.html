@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Health Insurance Requirement Summary Preview</title>
     <link rel="icon" href="/static/img/icon.png" type="image/png">
-    <!-- Use the same relative CSS includes used by Existing_Applicant_Request_Form.html -->
     <link rel="stylesheet" href="../css/common.css">
     <link rel="stylesheet" href="../css/sidebar.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -132,29 +131,62 @@
             </div>
 
             <div class="form-actions">
-                <button type="button" id="btn-back" class="btn btn-secondary">Previous</button>
+                <button type="button" id="btn-back" class="btn btn-secondary">Back</button>
                 <button type="button" id="proposed-plans-btn" class="btn" style="display:none;">Proposed Plans</button>
             </div>
         </main>
     </div>
 
-    <!-- Sidebar script must be loaded so the site-wide sidebar is injected the same way as Existing_Applicant_Request_Form.html -->
     <script src="../js/sidebar.js"></script>
 
-    <!-- Keep the summary logic -->
     <script src="/static/js/summary.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const backBtn = document.getElementById('btn-back');
-            // Back button: close the preview window
-            if (backBtn) {
-                backBtn.style.display = 'inline-block';
-                backBtn.addEventListener('click', () => {
-                    window.location.href = "Preview.html";
-                });
+            if (!backBtn) return;
 
-            }
+            backBtn.style.display = 'inline-block';
+            backBtn.addEventListener('click', () => {
+                const ref = document.referrer || '';
+
+                // If we clearly came from Preview.html, just go back in history
+                if (ref && ref.indexOf('Preview.html') !== -1) {
+                    window.history.back();
+                    return;
+                }
+
+                let uniqueId = null;
+
+                // 1) Try query string
+                try {
+                    const params = new URLSearchParams(window.location.search);
+                    uniqueId = params.get('unique_id');
+                } catch (e) {}
+
+                // 2) Try localStorage summary
+                if (!uniqueId) {
+                    try {
+                        const summaryData = JSON.parse(localStorage.getItem('formSummary') || '{}');
+                        if (summaryData && summaryData.primaryContact) {
+                            uniqueId = summaryData.primaryContact['unique_id']
+                                || summaryData.primaryContact['Unique Id']
+                                || null;
+                        }
+                    } catch (e) {}
+                }
+
+                // 3) Navigate back to Preview, preserving unique_id when we can
+                if (uniqueId) {
+                    window.location.href = `Preview.html?unique_id=${encodeURIComponent(uniqueId)}`;
+                } else if (ref) {
+                    // Best effort: go back to where we came from
+                    window.location.href = ref;
+                } else {
+                    // Last fallback: bare Preview
+                    window.location.href = 'Preview.html';
+                }
+            });
         });
     </script>
 </body>

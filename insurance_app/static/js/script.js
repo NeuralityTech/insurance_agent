@@ -150,7 +150,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const nextBtn = document.createElement('button');
             nextBtn.type = 'button';
             nextBtn.className = 'btn tab-nav-btn btn-next';
-            nextBtn.textContent = index === sections.length - 1 ? 'Continue' : 'Next';
+            nextBtn.textContent = 'Next';
+            if(index === sections.length - 1)
+            {
+                nextBtn.style.display = 'none';
+            }
             nextBtn.addEventListener('click', () => {
                 if (index < sections.length - 1) {
                     switchTab(index + 1);

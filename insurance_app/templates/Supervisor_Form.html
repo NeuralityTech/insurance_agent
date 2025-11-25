@@ -635,17 +635,22 @@
                     try {
                         if (pendingDecision === 'sup_approved') {
                             const selectedPlans = collectSupervisorMatrixSelections();
-                            if (selectedPlans && selectedPlans.length) {
-                                await fetch(`/supervisor_selected_plans/${encodeURIComponent(uniqueId)}`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown')
-                                    },
-                                    body: JSON.stringify({ selected_plans: selectedPlans })
-                                });
+
+                            if (!selectedPlans || selectedPlans.length === 0) {
+                                showToast('Please select at least one plan before approving.');
+                                return;
                             }
+
+                            await fetch(`/supervisor_selected_plans/${encodeURIComponent(uniqueId)}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown')
+                                },
+                                body: JSON.stringify({ selected_plans: selectedPlans })
+                            });
                         }
+
                         await updateApprovalStatus(uniqueId, pendingDecision, comments);
                         lastFetchedStatus = normalizeStatus(pendingDecision);
                         setButtonsByStatus(lastFetchedStatus, true);
@@ -656,6 +661,7 @@
                     }
                 });
             }
+
 
             // Load dashboard stats for supervisor mini-cards
             fetch('/stats')

@@ -21,7 +21,7 @@ function initializePrimaryContactValidation() {
 
     function debounce(func, delay) {
         let timeout;
-        return function (...args) {
+        return function(...args) {
             clearTimeout(timeout);
             timeout = setTimeout(() => func.apply(this, args), delay);
         };
@@ -67,7 +67,10 @@ function initializePrimaryContactValidation() {
     const dobInput = form.querySelector('#self-dob');
     const ageInput = form.querySelector('#self-age');
 
-    const heightInput = form.querySelector('#self-height'); // hidden cm field
+    // Hidden cm field (internal storage used by calculations + backend)
+    const heightInput = form.querySelector('#self-height');
+
+    // New visible feet/inches dropdowns
     const heightFeetInput = form.querySelector('#self-height-ft');
     const heightInchesInput = form.querySelector('#self-height-in');
 
@@ -76,16 +79,19 @@ function initializePrimaryContactValidation() {
 
     if (dobInput && ageInput) {
         dobInput.addEventListener('change', () => {
+            // Convert from dd/mm/yyyy input to yyyy-mm-dd for calculation
             const inputValue = dobInput.value;
             let dateForCalculation = inputValue;
-
+            
+            // If the input is in dd/mm/yyyy format, convert it
             if (inputValue.includes('/')) {
                 const parts = inputValue.split('/');
                 if (parts.length === 3) {
+                    // Convert dd/mm/yyyy to yyyy-mm-dd
                     dateForCalculation = `${parts[2]}-${parts[1]}-${parts[0]}`;
                 }
             }
-
+            
             const age = calculateAge(dateForCalculation);
             if (age !== null) {
                 ageInput.value = age;
@@ -96,9 +102,12 @@ function initializePrimaryContactValidation() {
 
     if (heightInput && weightInput && bmiInput) {
         const syncHeightAndBmi = () => {
+            // If feet/inches inputs are not present, fall back to old behavior
             if (!heightFeetInput || !heightInchesInput) {
                 const bmi = calculateBmi(parseFloat(heightInput.value), parseFloat(weightInput.value));
-                if (bmi !== null) bmiInput.value = bmi;
+                if (bmi !== null) {
+                    bmiInput.value = bmi;
+                }
                 return;
             }
 
@@ -108,31 +117,48 @@ function initializePrimaryContactValidation() {
             if (isNaN(feet)) feet = 0;
             if (isNaN(inches)) inches = 0;
 
+            // If nothing entered, clear hidden height + BMI
             if (feet <= 0 && inches <= 0) {
                 heightInput.value = '';
                 bmiInput.value = '';
                 return;
             }
 
+            // Normalize inches >= 12 into feet
             if (inches >= 12) {
                 feet += Math.floor(inches / 12);
                 inches = inches % 12;
 
-                heightFeetInput.value = feet ? String(feet) : '';
-                heightInchesInput.value = inches ? String(inches) : '';
+                // Reflect normalization back in the UI so what user sees matches what we store
+                if (heightFeetInput) heightFeetInput.value = feet ? String(feet) : '';
+                if (heightInchesInput) heightInchesInput.value = inches ? String(inches) : '';
             }
 
+            // Convert to cm: cm = ft*30.48 + in*2.54
             const cm = feet * 30.48 + inches * 2.54;
+
+            // Store internally with one decimal place
             heightInput.value = cm.toFixed(1);
 
+            // calculateBmi from calculations.js expects height in **cm**
             const bmi = calculateBmi(cm, parseFloat(weightInput.value));
-            if (bmi !== null) bmiInput.value = bmi;
+            if (bmi !== null) {
+                bmiInput.value = bmi;
+            }
         };
 
-        if (heightFeetInput) heightFeetInput.addEventListener('change', syncHeightAndBmi);
-        if (heightInchesInput) heightInchesInput.addEventListener('change', syncHeightAndBmi);
-        if (weightInput) weightInput.addEventListener('input', syncHeightAndBmi);
+        // For selects, change event is appropriate
+        if (heightFeetInput) {
+            heightFeetInput.addEventListener('change', syncHeightAndBmi);
+        }
+        if (heightInchesInput) {
+            heightInchesInput.addEventListener('change', syncHeightAndBmi);
+        }
+        if (weightInput) {
+            weightInput.addEventListener('input', syncHeightAndBmi);
+        }
 
+        // On init, if cm already has a value, compute feet/inches for display.
         if (typeof window.updateHeightFeetInchesFromCm === 'function') {
             window.updateHeightFeetInchesFromCm();
         }
@@ -140,8 +166,11 @@ function initializePrimaryContactValidation() {
 
     // --- End of Health Vitals Calculations ---
 
+    // This is a critical fix. A faulty email pattern was causing a script-blocking error.
     const emailInput = form.querySelector('#email');
-    if (emailInput) emailInput.removeAttribute('pattern');
+    if (emailInput) {
+        emailInput.removeAttribute('pattern');
+    }
 
     const inputsToValidate = form.querySelectorAll('[required], [pattern]');
 
@@ -153,6 +182,7 @@ function initializePrimaryContactValidation() {
 
         if (!errorElement) return true;
 
+        // Determine a friendly label for this field
         let labelText = '';
         const labelEl = form.querySelector(`label[for="${input.id}"]`);
         if (labelEl && labelEl.textContent) {
@@ -164,6 +194,7 @@ function initializePrimaryContactValidation() {
         }
         const fieldName = labelText.replace(':', '').replace('*', '').trim();
 
+        // Check for validity
         if (input.validity.valueMissing) {
             isValid = false;
         } else if (input.validity.patternMismatch) {
@@ -182,6 +213,9 @@ function initializePrimaryContactValidation() {
             } else {
                 message = `Invalid length for ${fieldName}.`;
             }
+        } else {
+            isValid = true;
+            message = '';
         }
 
         errorElement.textContent = message;
@@ -191,143 +225,42 @@ function initializePrimaryContactValidation() {
         return isValid;
     }
 
+
     inputsToValidate.forEach(input => {
         input.addEventListener('blur', () => validateField(input));
         input.addEventListener('input', () => validateField(input));
     });
-}
 
-// --------------------------------------------
-// GLOBAL FORM VALIDATION (including disease dates)
-// --------------------------------------------
-
-document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("insurance-form");
-    if (!form) return;
-
-    form.addEventListener("submit", (e) => {
-        let isValid = true;
-        const messages = [];
-
-        // 1) Validate primary-contact required / pattern fields
-        const primarySection = document.getElementById('primary-contact-content');
-        if (primarySection) {
-            const requiredInputs = primarySection.querySelectorAll('[required], [pattern]');
-
-            requiredInputs.forEach(input => {
-                const errorMsgId = input.id + '-error';
-                const errorElement = document.getElementById(errorMsgId);
-
-                let fieldValid = true;
-                let msg = '';
-
-                if (input.validity.valueMissing) {
-                    fieldValid = false;
-                    msg = `${getFieldName(primarySection, input)} is required`;
-                } else if (input.validity.patternMismatch) {
-                    fieldValid = false;
-                    if (input.id === 'unique-id') {
-                        msg = 'UniqueID must be in the format: FullName_AadhaarLast5Digits.';
-                    } else if (input.id === 'aadhaar-last5') {
-                        msg = 'Aadhaar must be exactly 5 digits.';
-                    } else {
-                        msg = `Invalid format for ${getFieldName(primarySection, input)}.`;
-                    }
-                } else if (input.validity.tooShort || input.validity.tooLong) {
-                    fieldValid = false;
-                    if (input.id === 'aadhaar-last5') {
-                        msg = 'Aadhaar must be exactly 5 digits.';
-                    } else {
-                        msg = `Invalid length for ${getFieldName(primarySection, input)}.`;
-                    }
-                }
-
-                if (!fieldValid) {
-                    isValid = false;
-                    if (msg) messages.push(msg);
-                    if (errorElement) {
-                        errorElement.textContent = msg;
-                        errorElement.style.display = 'block';
-                    }
-                    input.classList.add('input-error');
-                } else {
-                    if (errorElement) {
-                        errorElement.textContent = '';
-                        errorElement.style.display = 'none';
-                    }
-                    input.classList.remove('input-error');
-                }
-            });
-        }
-
-        // 2) Validate disease start dates
-        document.querySelectorAll('#health-history-content .disease-entry').forEach(entry => {
-            const checkbox = entry.querySelector('input[type="checkbox"][name="disease"], input[type="checkbox"]');
-            const dateInput = entry.querySelector('.disease-date-input');
-            const errorSpan = entry.querySelector('.error-message');
-
-            if (checkbox && checkbox.checked) {
-                if (!dateInput || !dateInput.value || dateInput.value.trim() === '') {
-                    isValid = false;
-
-                    const headerLabel = entry.querySelector('.disease-header label');
-                    const diseaseLabel = headerLabel ? headerLabel.textContent.trim() : 'selected disease';
-                    const msg = `Disease start date for ${diseaseLabel} is required`;
-
-                    messages.push(msg);
-
-                    if (errorSpan) {
-                        errorSpan.textContent = 'Disease start date is required';
-                        errorSpan.style.display = 'block';
-                    }
-                    if (dateInput) dateInput.classList.add('input-error');
-                }
-            } else {
-                // Clear any stale error if disease not selected
-                if (dateInput) dateInput.classList.remove('input-error');
-                if (errorSpan) {
-                    errorSpan.textContent = '';
-                    errorSpan.style.display = 'none';
-                }
+    const mainForm = document.getElementById('insurance-form');
+    if (!mainForm) return;
+    mainForm.addEventListener('submit', (e) => {
+        let isFormValid = true;
+        inputsToValidate.forEach(input => {
+            if (!validateField(input)) {
+                isFormValid = false;
             }
         });
 
-        if (!isValid) {
+        if (!isFormValid) {
             e.preventDefault();
-
-            // Build bullet-list alert like your height message
-            if (messages.length) {
-                const bulletList = messages.map(m => `• ${m}`).join('\n');
-                alert(`Please complete all required fields:\n\n${bulletList}`);
+            const firstError = form.querySelector('.input-error');
+            if (firstError) {
+                firstError.focus();
             }
-
-            const firstError = document.querySelector('.input-error');
-            if (firstError) firstError.focus();
         }
     });
+}
 
-    // Helper: get human-friendly field name from label
-    function getFieldName(section, input) {
-        let labelText = '';
-        const labelEl = section.querySelector(`label[for="${input.id}"]`);
-        if (labelEl && labelEl.textContent) {
-            labelText = labelEl.textContent;
-        } else if (input.previousElementSibling && input.previousElementSibling.textContent) {
-            labelText = input.previousElementSibling.textContent;
-        } else {
-            labelText = input.id;
-        }
-        return labelText.replace(':', '').replace('*', '').trim();
-    }
-});
-
-
-// sync visible ft/in from the hidden cm field
+// sync visible ft/in from the hidden cm field on the Primary Contact tab
+/**
+ * Sync visible height dropdowns (ft/in) from the hidden cm field on the Primary Contact tab.
+ * This is used after prefill (existing user) and on initialization.
+ */
 window.updateHeightFeetInchesFromCm = function () {
     const form = document.getElementById('primary-contact-content');
     if (!form) return;
 
-    const heightInput = form.querySelector('#self-height');
+    const heightInput = form.querySelector('#self-height');      // cm (hidden)
     const heightFeetInput = form.querySelector('#self-height-ft');
     const heightInchesInput = form.querySelector('#self-height-in');
 
@@ -336,10 +269,12 @@ window.updateHeightFeetInchesFromCm = function () {
     const cm = parseFloat(heightInput.value);
     if (!cm || cm <= 0) return;
 
+    // Convert cm back to total inches, then to ft + in
     let totalInches = cm / 2.54;
     let feet = Math.floor(totalInches / 12);
     let inches = Math.round(totalInches - feet * 12);
 
+    // Handle rounding pushing inches to 12
     if (inches === 12) {
         feet += 1;
         inches = 0;

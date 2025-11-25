@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Health Insurance Requirement Summary Preview</title>
     <link rel="icon" href="/static/img/icon.png" type="image/png">
-    <!-- Match the same relative CSS includes used by Existing_Applicant_Request_Form.html -->
     <link rel="stylesheet" href="../css/common.css">
     <link rel="stylesheet" href="../css/sidebar.css">
     <link rel="stylesheet" href="../css/health_history.css">
@@ -66,8 +65,6 @@
             font-weight: 900;
             margin-right: 0.5rem;
         }
-
-        /* More subtle icon for other sections can be overridden by JS if needed, but this keeps a consistent look */
 
         #summary-container .summary-grid,
         #summary-container .summary-member-card {
@@ -152,10 +149,8 @@
         </main>
     </div>
 
-    <!-- Sidebar script must be loaded so the site-wide sidebar is injected the same way as Existing_Applicant_Request_Form.html -->
     <script src="../js/sidebar.js"></script>
 
-    <!-- Keep your summary logic -->
     <script src="/static/js/summary.js"></script>
 
     <script>
@@ -163,16 +158,101 @@
             const backBtn = document.getElementById('btn-back');
             const submitBtn = document.getElementById('submit-btn');
 
-            // Back button functionality
-            if (backBtn) {
-                backBtn.style.display = 'inline-block';
-                backBtn.addEventListener('click', () => {
-                    window.location.href = "New_Applicant_Request_Form.html";
-                });
+            const ORIGIN_URL_KEY = 'previewOriginUrl';
+            const ORIGIN_TYPE_KEY = 'previewOriginType';
 
+            /**
+             * Decide and remember where Preview was originally opened from.
+             * This runs on every load, but only sets the origin once per tab.
+             */
+            function getPreviewOrigin() {
+                let originUrl = null;
+                let originType = null;
+
+                try {
+                    originUrl = sessionStorage.getItem(ORIGIN_URL_KEY);
+                    originType = sessionStorage.getItem(ORIGIN_TYPE_KEY);
+                } catch (e) {
+                    // ignore sessionStorage errors
+                }
+
+                if (!originUrl) {
+                    const ref = document.referrer || '';
+
+                    if (ref.includes('Existing_Applicant_Request_Form.html')) {
+                        // Existing applicant flow, keep full URL including uid
+                        originUrl = ref;
+                        originType = 'existing';
+                    } else if (
+                        ref.includes('New_Applicant_Request_Form.html') ||
+                        ref.includes('Health_Insurance_Proposal_Request')
+                    ) {
+                        // New applicant flow
+                        originUrl = ref || '/html/New_Applicant_Request_Form.html';
+                        originType = 'new';
+                    } else {
+                        // Something else (maybe direct hit or opened from Summary)
+                        originUrl = ref || '';
+                        originType = 'unknown';
+                    }
+
+                    if (originUrl) {
+                        try {
+                            sessionStorage.setItem(ORIGIN_URL_KEY, originUrl);
+                            sessionStorage.setItem(ORIGIN_TYPE_KEY, originType);
+                        } catch (e) {
+                            // ignore
+                        }
+                    }
+                }
+
+                return { originUrl, originType };
             }
 
-            // Submit button functionality
+            const previewOrigin = getPreviewOrigin();
+
+            // --- Back ---
+            if (backBtn) {
+                backBtn.style.display = 'inline-block';
+                backBtn.addEventListener('click', function () {
+                    // If opened as a popup from another window, close it
+                    if (window.opener && !window.opener.closed) {
+                        window.close();
+                        return;
+                    }
+
+                    const ref = document.referrer || '';
+                    const originUrl = previewOrigin.originUrl;
+                    const cameFromSummaryOrAnalysisOrPlans =
+                        ref.includes('Summary.html') ||
+                        ref.includes('Analysis_Dashboard.html') ||
+                        ref.includes('Proposed_Plans.html');
+
+                    // If came here from Summary / Analysis / Proposed Plans,
+                    // then "back" should mean "go back to the original form"
+                    if (cameFromSummaryOrAnalysisOrPlans && originUrl) {
+                        window.location.href = originUrl;
+                        return;
+                    }
+
+                    // Otherwise, if we have a sensible referrer, just use it
+                    if (ref) {
+                        window.location.href = ref;
+                        return;
+                    }
+
+                    // If referrer is empty but we still know our origin, go there
+                    if (originUrl) {
+                        window.location.href = originUrl;
+                        return;
+                    }
+
+                    // Absolute last fallback: send to the new applicant form
+                    window.location.href = '/html/New_Applicant_Request_Form.html';
+                });
+            }
+
+            // --- Submit button functionality (unchanged) ---
             if (submitBtn) {
                 submitBtn.addEventListener('click', async function() {
                     // Prevent double submission
@@ -182,7 +262,7 @@
                     submitBtn.textContent = 'Submitting...';
 
                     try {
-                        // Get the form data from localStorage (saved by Preview button)
+                        // Get the form data from localStorage 
                         const summaryDataStr = localStorage.getItem('formSummary');
                         if (!summaryDataStr) {
                             throw new Error('No form data found. Please go back and preview again.');

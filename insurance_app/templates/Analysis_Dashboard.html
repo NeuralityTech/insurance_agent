@@ -132,34 +132,112 @@
             const loggedInUserEl = document.getElementById('logged-in-user');
             const logoutBtn = document.getElementById('logout-btn');
             const homeBtn = document.getElementById('btn-home');
+
+            // --- Safe top-bar wiring ---
             const userId = localStorage.getItem('loggedInUserId');
             if (userId) {
-                loggedInUserEl.textContent = userId;
+                if (loggedInUserEl) {
+                    loggedInUserEl.textContent = userId;
+                }
             } else {
                 // Use absolute path to avoid 404s from relative redirects
                 window.location.href = '/';
-            }
-            logoutBtn.addEventListener('click', function() {
-                localStorage.removeItem('loggedInUserId');
-                // Hit the Flask logout endpoint which redirects to '/'
-                window.location.href = '/logout';
-            });
-            if (homeBtn) {
-                homeBtn.addEventListener('click', () => window.location.href = '/html/Health_Insurance_Proposal_Request.html');
+                return;
             }
 
-            // Back button: set a flag so Proposed_Plans disables Select Plan when returning from here
-            (function(){
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function() {
+                    localStorage.removeItem('loggedInUserId');
+                    // Hit the Flask logout endpoint which redirects to '/'
+                    window.location.href = '/logout';
+                });
+            }
+
+            if (homeBtn) {
+                homeBtn.addEventListener('click', () => {
+                    window.location.href = '/html/Health_Insurance_Proposal_Request.html';
+                });
+            }
+
+            // --- Back button: go back to Proposed Plans for this unique_id when possible ---
+            (function () {
                 const backBtn = document.getElementById('back-btn');
-                if (backBtn) {
-                    backBtn.addEventListener('click', () => {
-                        window.location.href = "Previeww.html";
-                    });
-                }
+                if (!backBtn) return;
+
+                backBtn.addEventListener('click', () => {
+                    let uniqueId = null;
+
+                    // 1) Try query string
+                    try {
+                        const params = new URLSearchParams(window.location.search);
+                        uniqueId = params.get('unique_id');
+                    } catch (e) {
+                        // ignore
+                    }
+
+                    // 2) Try to read from page title: "Plan Analysis Dashboard - <unique_id>"
+                    if (!uniqueId) {
+                        try {
+                            const match = document.title && document.title.match(/-\s*(.+)$/);
+                            if (match && match[1]) {
+                                uniqueId = match[1].trim();
+                            }
+                        } catch (e) {
+                            // ignore
+                        }
+                    }
+
+                    // 3) Try last path segment: /proposed_plans/<unique_id>
+                    if (!uniqueId) {
+                        try {
+                            const parts = window.location.pathname.split('/').filter(Boolean);
+                            if (parts.length) {
+                                uniqueId = decodeURIComponent(parts[parts.length - 1]);
+                            }
+                        } catch (e) {
+                            // ignore
+                        }
+                    }
+
+                    // 4) Fallback: try localStorage formSummary if present
+                    if (!uniqueId) {
+                        try {
+                            const summary = JSON.parse(localStorage.getItem('formSummary') || '{}');
+                            if (summary && summary.primaryContact) {
+                                uniqueId =
+                                    summary.primaryContact['unique_id'] ||
+                                    summary.primaryContact['Unique Id'] ||
+                                    null;
+                            }
+                        } catch (e) {
+                            // ignore
+                        }
+                    }
+
+                    // Mark that we came from the analysis dashboard so Proposed_Plans
+                    // can disable "Select Plan" when appropriate.
+                    try {
+                        sessionStorage.setItem('fromAnalysisDashboard', '1');
+                    } catch (e) {
+                        // ignore
+                    }
+
+                    if (uniqueId) {
+                        // IMPORTANT: use the correct absolute path to the static HTML
+                        window.location.href =
+                            `/html/Proposed_Plans.html?unique_id=${encodeURIComponent(uniqueId)}`;
+                    } else if (document.referrer) {
+                        // Fallback: use the browser referrer if available
+                        window.location.href = document.referrer;
+                    } else {
+                        // Last fallback: browser history
+                        window.history.back();
+                    }
+                });
             })();
 
-            // Show supervisor status summary (mirroring Existing_Applicant_Request_Form.html)
-            (function(){
+            // --- Supervisor status summary (unchanged) ---
+            (function () {
                 const supSection = document.getElementById('supervisor-meta');
                 const supSummary = document.getElementById('sup-summary');
                 if (!supSummary) return;
@@ -168,17 +246,16 @@
                     const commentsJsonEl = document.getElementById('supervisor-comments-json');
                     const modifiedAtJsonEl = document.getElementById('supervisor-modified-at-json');
                     const modifiedByJsonEl = document.getElementById('supervisor-modified-by-json');
-                    
+
                     const statusRaw = supJsonEl ? JSON.parse(supJsonEl.textContent) : null;
                     const commentsRaw = commentsJsonEl ? JSON.parse(commentsJsonEl.textContent) : null;
                     const modifiedAtRaw = modifiedAtJsonEl ? JSON.parse(modifiedAtJsonEl.textContent) : null;
                     const modifiedByRaw = modifiedByJsonEl ? JSON.parse(modifiedByJsonEl.textContent) : null;
-                    
+
                     const statusDisp = (statusRaw && String(statusRaw).trim()) ? statusRaw : 'Open';
                     const comments = (commentsRaw && String(commentsRaw).trim()) ? commentsRaw : 'No comments';
-                    let by = '—';
-                    
-                    // Use the timestamp from the template data
+                    let by = modifiedByRaw || '—';
+
                     let tsStr = '—';
                     if (modifiedAtRaw) {
                         const isoTry = new Date(modifiedAtRaw);
@@ -195,13 +272,13 @@
                             }
                         }
                     }
-                    
-                    // Use the modified by from template data
-                    by = modifiedByRaw || '—';
-                    
-                    const summaryHtml = '<strong>Application Status:</strong> ' + statusDisp + '<br>' +
-                                       '<strong>Comments:</strong> ' + comments + '<br>' +
-                                       '<strong>Last Updated by:</strong> ' + by + ' <strong>Last Updated at:</strong> ' + tsStr;
+
+                    const summaryHtml =
+                        '<strong>Application Status:</strong> ' + statusDisp + '<br>' +
+                        '<strong>Comments:</strong> ' + comments + '<br>' +
+                        '<strong>Last Updated by:</strong> ' + by +
+                        ' <strong>Last Updated at:</strong> ' + tsStr;
+
                     supSummary.innerHTML = summaryHtml;
                     if (supSection) supSection.style.display = '';
                 } catch (e) {
@@ -210,6 +287,7 @@
             })();
         });
     </script>
+
 
     <div id="confirmationModal" class="modal-overlay is-hidden">
         <div class="modal-content" style="max-width:900px; width:90vw; max-height:80vh; display:flex; flex-direction:column;">

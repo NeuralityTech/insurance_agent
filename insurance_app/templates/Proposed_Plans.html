@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proposed Plans</title>
     <link rel="icon" href="/static/img/icon.png" type="image/png">
-    <!-- keep existing CSS includes -->
     <link rel="stylesheet" href="../static/css/common.css">
     <link rel="stylesheet" href="../static/css/top_bar.css">
     <link rel="stylesheet" href="/static/css/proposed_plans.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- sidebar styling (inserted to match Existing_Applicant_Request_Form.html) -->
     <link rel="stylesheet" href="../css/sidebar.css">
 </head>
 <body data-sidebar="existing-applicant">
@@ -21,12 +19,12 @@
         </header>
         <main>
             <div id="proposed-container" class="form-container">
-                <!-- Proposed plans will be injected here by proposed_plans.js -->
+                <!-- Proposed plans will be injected here by proposed_plans_v2.js -->
             </div>
             <div class="form-actions">
-                <button type="button" id="btn-previous" class="btn btn-secondary">Previous</button>
+                <button type="button" id="btn-previous" class="btn btn-secondary">Back</button>
                 <button type="button" id="analysis-btn" class="btn btn-info">Select Plan</button>
-                </div>
+            </div>
         </main>
     </div>
 
@@ -43,25 +41,49 @@
             const analysisBtn = document.getElementById('analysis-btn');
 
             const userId = localStorage.getItem('loggedInUserId');
-            if (userId) {
-                loggedInUserEl.textContent = userId;
-            } else {
+            // If not logged in at all, bounce to login page
+            if (!userId) {
                 window.location.href = 'Main_login.html';
+                return;
             }
 
-            logoutBtn.addEventListener('click', function() {
-                localStorage.removeItem('loggedInUserId');
-                window.location.href = 'Main_login.html';
-            });
+            // Only touch these elements if they actually exist on this page
+            if (loggedInUserEl) {
+                loggedInUserEl.textContent = userId;
+            }
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function() {
+                    localStorage.removeItem('loggedInUserId');
+                    window.location.href = 'Main_login.html';
+                });
+            }
 
-            // Derive unique_id from URL or localStorage
-            const urlParams = new URLSearchParams(window.location.search);
-            let uniqueId = urlParams.get('unique_id');
+            // Derive unique_id from URL, path, or localStorage
+            let uniqueId = null;
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                uniqueId = urlParams.get('unique_id');
+            } catch(e) {}
+
+            // Fallback: /proposed_plans/<unique_id> style path
+            if (!uniqueId) {
+                try {
+                    const parts = window.location.pathname.split('/').filter(Boolean);
+                    const idx = parts.indexOf('proposed_plans');
+                    if (idx !== -1 && parts.length > idx + 1) {
+                        uniqueId = decodeURIComponent(parts[idx + 1]);
+                    }
+                } catch(e) {}
+            }
+
+            // Fallback: localStorage summary (for brand-new applicants)
             if (!uniqueId) {
                 try {
                     const summary = JSON.parse(localStorage.getItem('formSummary'));
                     if (summary && summary.primaryContact) {
-                        uniqueId = summary.primaryContact['unique_id'] || summary.primaryContact['Unique Id'] || null;
+                        uniqueId = summary.primaryContact['unique_id']
+                            || summary.primaryContact['Unique Id']
+                            || null;
                     }
                 } catch (e) {}
             }
@@ -70,10 +92,11 @@
             if (prevBtn) {
                 prevBtn.addEventListener('click', function() {
                     if (uniqueId) {
-                        // Mark return path for Summary back button to preserve state
+                        // Mark return path for Summary back button to preserve state (if you ever use it)
                         try { sessionStorage.setItem('previousFormPage', window.location.pathname); } catch(e) {}
                         window.location.href = `Summary.html?unique_id=${encodeURIComponent(uniqueId)}`;
                     } else {
+                        // Last resort: browser history
                         window.history.back();
                     }
                 });
@@ -128,38 +151,46 @@
                     // One-time flag; clear it so future visits behave normally
                     sessionStorage.removeItem('fromAnalysisDashboard');
                 }
-            } catch (e) {}
+            } catch (e) {
+                // ignore
+            }
         });
     </script>
+
     <script>
-        document.getElementById('analysis-btn').addEventListener('click', function() {
-            // Prevent double-clicks
-            if (this.dataset.clicked === 'true') return;
-            this.dataset.clicked = 'true';
+        // Select Plan button → /proposed_plans/<unique_id> (unchanged)
+        (function() {
+            const analysisBtn = document.getElementById('analysis-btn');
+            if (!analysisBtn) return;
 
-            // Disable this button and show progress text
-            this.disabled = true;
-            this.textContent = 'Selecting plans...';
+            analysisBtn.addEventListener('click', function() {
+                if (this.dataset.clicked === 'true') return;
+                this.dataset.clicked = 'true';
 
-            // Extract unique_id from the current URL, assuming it's a query parameter
-            const urlParams = new URLSearchParams(window.location.search);
-            const uniqueId = urlParams.get('unique_id');
-            if (uniqueId) {
-                window.location.href = `/proposed_plans/${uniqueId}`;
-            } else {
-                alert('Could not find a unique ID to analyze.');
-                // Re-enable if navigation is not possible
-                this.disabled = false;
-                this.textContent = 'Select Plan';
-                this.dataset.clicked = 'false';
-            }
-        });
-        // Home button
-        (function(){
-            const homeBtn = document.getElementById('btn-home');
-            if (homeBtn) {
-                homeBtn.addEventListener('click', () => window.location.href = '/html/Health_Insurance_Proposal_Request.html');
-            }
+                this.disabled = true;
+                this.textContent = 'Selecting plans...';
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const uniqueId = urlParams.get('unique_id');
+
+                if (uniqueId) {
+                    window.location.href = `/proposed_plans/${uniqueId}`;
+                } else {
+                    alert('Could not find a unique ID to analyze.');
+                    // Re-enable if navigation is not possible
+                    this.disabled = false;
+                    this.textContent = 'Select Plan';
+                    this.dataset.clicked = 'false';
+                }
+            });
+
+            // Home button
+            (function(){
+                const homeBtn = document.getElementById('btn-home');
+                if (homeBtn) {
+                    homeBtn.addEventListener('click', () => window.location.href = '/html/Health_Insurance_Proposal_Request.html');
+                }
+            })();
         })();
     </script>
 </body>
