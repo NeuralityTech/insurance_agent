@@ -150,7 +150,10 @@
             // Back button: close the preview window
             if (backBtn) {
                 backBtn.style.display = 'inline-block';
-                backBtn.addEventListener('click', () => window.close());
+                backBtn.addEventListener('click', () => {
+                    window.location.href = "Preview.html";
+                });
+
             }
         });
     </script>

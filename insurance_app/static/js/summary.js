@@ -43,12 +43,17 @@ document.addEventListener('DOMContentLoaded', function() {
     function createSection(title, data) {
         let sectionHtml = `<fieldset><legend>${title}</legend><div class="summary-grid">`;
         for (const [key, value] of Object.entries(data)) {
-            if (!value) continue; // Only display if there is a value
+            let displayValue = value;
+            if ((key === 'planned-surgeries' || key === 'plannedSurgeries') && (!value || String(value).trim() === '')) {
+                displayValue = 'None';
+            } else if (!value) {
+                continue; // Skip other empty fields
+            }
             // Skip internal-only fields that should not be shown
             if (key === 'occupation_value' || key === 'occupationValue') continue;
             // Replace underscores and hyphens for nicer labels
             const formattedKey = key.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${value}</div>`;
+            sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${displayValue}</div>`;
         }
         sectionHtml += `</div></fieldset>`;
         return sectionHtml;

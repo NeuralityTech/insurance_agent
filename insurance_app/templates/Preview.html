@@ -166,7 +166,10 @@
             // Back button functionality
             if (backBtn) {
                 backBtn.style.display = 'inline-block';
-                backBtn.addEventListener('click', () => window.close());
+                backBtn.addEventListener('click', () => {
+                    window.location.href = "New_Applicant_Request_Form.html";
+                });
+
             }
 
             // Submit button functionality

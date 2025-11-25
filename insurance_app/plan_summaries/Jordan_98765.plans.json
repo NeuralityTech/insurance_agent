@@ -1,0 +1,40 @@
+{
+  "unique_id": "Jordan_98765",
+  "proposed": {
+    "comprehensive_cover": {
+      "name": "comprehensive_cover",
+      "plans": [
+        "Star Health Assure",
+        "Star Micro Rural and Farmers Care",
+        "Smart Health Pro"
+      ]
+    },
+    "member1": {
+      "name": "Jordan",
+      "plans": [
+        "Star Health Assure",
+        "Star Micro Rural and Farmers Care",
+        "Smart Health Pro"
+      ]
+    },
+    "member2": {
+      "name": "Maria",
+      "plans": [
+        "Star Cardiac Care Gold",
+        "Platinum Sec 2 (Cardiac Ailments)"
+      ]
+    }
+  },
+  "agent_selected": [
+    "Star Health Assure",
+    "Star Cardiac Care Gold"
+  ],
+  "supervisor_selected": [
+    "Star Health Assure",
+    "Star Cardiac Care Gold"
+  ],
+  "client_agreed": [
+    "Star Health Assure",
+    "Star Cardiac Care Gold"
+  ]
+}

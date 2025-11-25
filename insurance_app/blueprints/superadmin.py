@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, render_template, jsonify, request, current_app
+from flask import Blueprint, render_template, jsonify, request
 from ..database import (
     get_user_db_connection,
     get_db_connection,
@@ -82,6 +82,26 @@ def cleanup_databases_action():
             return render_template(
                 'Clean_Databases.html',
                 error_message=f'Error cleaning Application_Status.db: {e}',
+            )
+        finally:
+            if conn:
+                conn.close()
+
+    if 'users' in selected:
+        conn = None
+        try:
+            conn = get_user_db_connection()
+            cursor = conn.cursor()
+            # Only delete Supervisors and Agents. Keep Admins/Superadmins intact.
+            for table in ['Supervisor', 'Agent']:
+                cursor.execute(f'DELETE FROM {table}')
+                cursor.execute(f"DELETE FROM sqlite_sequence WHERE name='{table}'")
+            conn.commit()
+            messages.append('Cleared Agents and Supervisors from users.db.')
+        except Exception as e:
+            return render_template(
+                'Clean_Databases.html',
+                error_message=f'Error cleaning users.db: {e}',
             )
         finally:
             if conn:

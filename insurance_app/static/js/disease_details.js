@@ -130,11 +130,12 @@ function initializeDiseaseDetails(root) {
         form.addEventListener('submit', (e) => {
             let hasErrors = false;
             
-            container.querySelectorAll('.disease-entry').forEach(entry => {
+            // Check all disease entries in the entire document (not just container)
+            document.querySelectorAll('.disease-entry').forEach(entry => {
                 const checkbox = entry.querySelector('input[type="checkbox"][name="disease"]');
                 if (checkbox && checkbox.checked) {
                     const dateInput = entry.querySelector('.disease-date-input');
-                    const errorSpan = dateInput && document.getElementById(dateInput.id + '-error');
+                    const errorSpan = dateInput && entry.querySelector('.error-message');
                     
                     if (dateInput && !validateDateField(dateInput, errorSpan)) {
                         hasErrors = true;
@@ -144,12 +145,15 @@ function initializeDiseaseDetails(root) {
             
             if (hasErrors) {
                 e.preventDefault();
+                e.stopPropagation();
+                alert('Please provide valid start dates for all selected diseases before continuing.');
                 // Scroll to first error
-                const firstError = container.querySelector('.input-error');
+                const firstError = document.querySelector('.input-error');
                 if (firstError) {
                     firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     firstError.focus();
                 }
+                return false;
             }
         });
         form.dataset.diseaseValidationAdded = 'true';
@@ -185,5 +189,36 @@ function initializeOccupationalRisk(root) {
     // Initial state
     render();
 }
+
+// VALIDATE PRIMARY APPLICANT DISEASE DATES
+window.validatePrimaryDiseaseDates = function () {
+    let isValid = true;
+
+    // Every disease checkbox container
+    document.querySelectorAll('.disease-entry').forEach(entry => {
+        const checkbox = entry.querySelector('input[type="checkbox"]');
+        const dateInput = entry.querySelector('.disease-date-input');
+        const errorSpan = entry.querySelector('.error-message');
+
+        if (checkbox && checkbox.checked) {
+            // If selected but date missing
+            if (!dateInput.value) {
+                isValid = false;
+                if (errorSpan) errorSpan.textContent = "Please enter a start date.";
+                dateInput.classList.add('input-error');
+            } else {
+                if (errorSpan) errorSpan.textContent = "";
+                dateInput.classList.remove('input-error');
+            }
+        } else {
+            // disease unselected — clear errors
+            if (errorSpan) errorSpan.textContent = "";
+            dateInput.classList.remove('input-error');
+        }
+    });
+
+    return isValid;
+};
+
 
 window.initializeOccupationalRisk = initializeOccupationalRisk;

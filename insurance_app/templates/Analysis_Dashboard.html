@@ -152,9 +152,8 @@
             (function(){
                 const backBtn = document.getElementById('back-btn');
                 if (backBtn) {
-                    backBtn.addEventListener('click', function(ev){
-                        try { sessionStorage.setItem('fromAnalysisDashboard', '1'); } catch(e) {}
-                        window.history.back();
+                    backBtn.addEventListener('click', () => {
+                        window.location.href = "Previeww.html";
                     });
                 }
             })();

@@ -363,7 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const supSummary = document.getElementById('sup-summary');
                         if (supSummary && res) {
                             const statusDisp = 'SUP_REVIEW';
-                            const comments = res.supervisor_comments || 'Resubmitted by agent; awaiting supervisor review.';
+                            const comments = res.supervisor_comments || 'Submitted by agent; awaiting supervisor review.';
                             const by = res.supervisor_modified_by || localStorage.getItem('loggedInUserId') || 'Unknown';
                             
                             // Format current timestamp

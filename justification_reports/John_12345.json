@@ -4,68 +4,68 @@
             "plan_name": "Star Women Care",
             "policy_code": "FLO_2_3",
             "proposed_for": [
-                "Jane"
+                "Kim"
             ],
             "reason_for_proposal": "Proposed for members with needs: GENERAL",
             "family_fit_check_result": "Passed",
             "ailment_score": 1.0,
             "member_specific_scores": {
-                "Jim": 1.0,
-                "Jane": 1.0
+                "John": 1.0,
+                "Kim": 1.0
             },
             "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
-            "ai_reasoning": "This plan offers a perfect match for the general health needs of both Jim and Jane, and it has passed the family fit check, making it suitable for the family."
+            "ai_reasoning": "This plan offers a perfect match for both John and Kim, and the family fit check has passed, indicating suitability for your general health needs."
         },
         {
             "plan_name": "Smart Health Pro",
             "policy_code": "MIX_2_3",
             "proposed_for": [
-                "Jim",
-                "Jane"
+                "John",
+                "Kim"
             ],
             "reason_for_proposal": "Proposed for members with needs: GENERAL",
             "family_fit_check_result": "Passed",
             "ailment_score": 1.0,
             "member_specific_scores": {
-                "Jim": 1.0,
-                "Jane": 1.0
+                "John": 1.0,
+                "Kim": 1.0
             },
             "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
-            "ai_reasoning": "Both Jim and Jane have a perfect match with this plan for their general health needs, and the family fit check has been passed."
+            "ai_reasoning": "Both John and Kim have achieved a perfect match with this plan, and the family fit check has passed, indicating strong alignment with your general health needs."
         },
         {
             "plan_name": "Star Health Assure",
             "policy_code": "FLO_6_3",
             "proposed_for": [
-                "Jim",
-                "Jane"
+                "John",
+                "Kim"
             ],
             "reason_for_proposal": "Proposed for members with needs: GENERAL",
             "family_fit_check_result": "Passed",
             "ailment_score": 1.0,
             "member_specific_scores": {
-                "Jim": 1.0,
-                "Jane": 1.0
+                "John": 1.0,
+                "Kim": 1.0
             },
             "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
-            "ai_reasoning": "This plan provides a perfect match for the general health requirements of Jim and Jane, with a passed family fit check."
+            "ai_reasoning": "This family cover also delivers a perfect match for both John and Kim, and passes the family-fit check, making it a strong option for your general health needs."
         },
         {
             "plan_name": "Star Micro Rural and Farmers Care",
             "policy_code": "MIX_2_2",
             "proposed_for": [
-                "Jim",
-                "Jane"
+                "John",
+                "Kim"
             ],
             "reason_for_proposal": "Proposed for members with needs: GENERAL",
             "family_fit_check_result": "Passed",
             "ailment_score": 1.0,
             "member_specific_scores": {
-                "Jim": 1.0,
-                "Jane": 1.0
+                "John": 1.0,
+                "Kim": 1.0
             },
             "final_status": "SCORED_AND_CONSIDERED_FOR_BUNDLING",
-            "ai_reasoning": "A perfect match has been achieved for Jim and Jane's general health needs with this plan, and it has passed the family fit check."
+            "ai_reasoning": "This plan provides a perfect match for both John and Kim, and the family fit check has passed, confirming its suitability for your general health needs."
         }
     ],
     "family_composition": {
