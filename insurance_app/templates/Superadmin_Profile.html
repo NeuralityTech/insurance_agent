@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Profile</title>
+    <link rel="icon" href="/static/img/icon.png" type="image/png">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/sidebar.css">
+    <link rel="stylesheet" href="/static/css/create_user.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body data-sidebar="superadmin-profile">
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Header Section -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div>
+                    <h1 class="page-title">Profile Management</h1>
+                    <p class="page-subtitle">Manage your account settings</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="user-badge">
+                    <i class="fas fa-user-shield"></i>
+                    <span id="loggedInUser">Super Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Form Section -->
+        <section class="form-section">
+            <form id="profile-form">
+                <div class="form-group">
+                    <label for="user_id">User ID</label>
+                    <input type="text" id="user_id" name="user_id" value="" readonly disabled style="background-color: #e9ecef;">
+                </div>
+
+                <div class="form-group">
+                    <label for="current_password">Current Password *</label>
+                    <input type="password" id="current_password" name="current_password" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="new_password">New Password *</label>
+                        <input type="password" id="new_password" name="new_password" required minlength="6">
+                        <small style="color: #6c757d; font-size: 0.85em;">Minimum 6 characters</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm New Password *</label>
+                        <input type="password" id="confirm_password" name="confirm_password" required>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a href="/superadmin/dashboard" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Dashboard
+                    </a>
+                    <div class="form-actions-right">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Update Password
+                        </button>
+                    </div>
+                </div>
+            </form>
+            
+            <div id="message-container" style="margin-top: 20px;"></div>
+        </section>
+    </main>
+
+    <!-- Load sidebar component -->
+    <script src="/static/js/sidebar.js"></script>
+    <script>
+        // Simple inline script for profile management
+        document.addEventListener('DOMContentLoaded', () => {
+            // Populate User ID from localStorage
+            const userId = localStorage.getItem('loggedInUserId');
+            if (userId) {
+                document.getElementById('user_id').value = userId;
+            } else {
+                window.location.href = '/'; // Redirect if not logged in
+            }
+
+            const form = document.getElementById('profile-form');
+            const messageContainer = document.getElementById('message-container');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                messageContainer.textContent = '';
+                messageContainer.className = '';
+
+                const currentPassword = document.getElementById('current_password').value;
+                const newPassword = document.getElementById('new_password').value;
+                const confirmPassword = document.getElementById('confirm_password').value;
+                const userIdVal = document.getElementById('user_id').value; // Get from input just in case
+
+                if (newPassword !== confirmPassword) {
+                    messageContainer.textContent = 'New passwords do not match.';
+                    messageContainer.className = 'error';
+                    messageContainer.style.color = 'red';
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/change_password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user_id: userIdVal,
+                            current_password: currentPassword,
+                            new_password: newPassword
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        messageContainer.textContent = result.message;
+                        messageContainer.className = 'success';
+                        messageContainer.style.color = 'green';
+                        form.reset();
+                        document.getElementById('user_id').value = userIdVal; // Restore ID
+                    } else {
+                        messageContainer.textContent = result.error || 'Failed to update password.';
+                        messageContainer.className = 'error';
+                        messageContainer.style.color = 'red';
+                    }
+                } catch (error) {
+                    messageContainer.textContent = 'An error occurred.';
+                    messageContainer.className = 'error';
+                    messageContainer.style.color = 'red';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

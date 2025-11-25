@@ -29,6 +29,10 @@
             <i class="fas fa-crown"></i>
             <span>Super Admin Dashboard</span>
           </a>
+          <a href="/superadmin/profile" class="nav-item ${activePage === 'superadmin-profile' ? 'active' : ''}">
+            <i class="fas fa-user-circle"></i>
+            <span>Profile</span>
+          </a>
           ` : isAdmin ? `
           <a href="/admin/dashboard" class="nav-item ${activePage === 'admin-dashboard' ? 'active' : ''}">
             <i class="fas fa-tools"></i>
