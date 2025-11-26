@@ -468,6 +468,14 @@
                     const lastMod = document.getElementById('last-modified-footer');
                     if (lastMod) lastMod.style.display = 'none';
 
+                    // Clear progress bar and its data
+                    try {
+                        window.currentSubmissionData = null;
+                        localStorage.removeItem('currentUniqueId');
+                        const progressBar = document.querySelector('.progress-bar-container');
+                        if (progressBar) progressBar.remove();
+                    } catch(e) { }
+
                     setActionButtonsEnabled(true);
                 } catch (e) {
                     console.warn('Hard reset encountered an issue:', e);
@@ -652,17 +660,49 @@
                     if (supSection) supSection.style.display = '';
                     if (supSummary) supSummary.textContent = 'Loading status...';
 
-                    setTimeout(() => {
+                    // Use an async IIFE to properly handle the progress bar update
+                    (async () => {
                         const statusDisp = (data.final_status && String(data.final_status).trim())
                             ? data.final_status
-                            : (data.supervisor_approval_status || 'Open');
+                            : (data.application_status || data.supervisor_approval_status || 'Open');
 
                         console.log("DEBUGGING: About to update progress bar with", statusDisp);
 
-                        if (window.updateProgressBar) {
-                            window.updateProgressBar(data.application_status);
-                        } else {
-                            console.warn("DEBUGGING: updateProgressBar not found");
+                        // Store submission data globally for progress bar to access timestamps
+                        window.currentSubmissionData = data;
+
+                        // Helper function to wait for progress bar script to load
+                        const waitForProgressBar = (maxWaitMs = 5000) => {
+                            return new Promise((resolve) => {
+                                if (typeof window.updateProgressBar === 'function') {
+                                    resolve(true);
+                                    return;
+                                }
+                                const startTime = Date.now();
+                                const checkInterval = setInterval(() => {
+                                    if (typeof window.updateProgressBar === 'function') {
+                                        clearInterval(checkInterval);
+                                        resolve(true);
+                                    } else if (Date.now() - startTime >= maxWaitMs) {
+                                        clearInterval(checkInterval);
+                                        console.warn("Progress bar script did not load in time");
+                                        resolve(false);
+                                    }
+                                }, 50);
+                            });
+                        };
+
+                        // Wait for progress bar to be available, then update it
+                        const progressBarReady = await waitForProgressBar();
+                        if (progressBarReady) {
+                            // Use application_status as primary, fall back to supervisor_approval_status
+                            const progressStatus = data.application_status || data.supervisor_approval_status || 'OPEN';
+                            try {
+                                await window.updateProgressBar(progressStatus);
+                                console.log("Progress bar updated successfully with status:", progressStatus);
+                            } catch (err) {
+                                console.error("Error updating progress bar:", err);
+                            }
                         }
 
                         const comments = (data.application_comments && String(data.application_comments).trim()) ? data.application_comments : 'No comments';
@@ -701,7 +741,7 @@
                                             <strong>Last Updated by:</strong> ${by} <strong>Last Updated at:</strong> ${tsStr}`;
                         if (supSummary) supSummary.innerHTML = summaryHtml;
 
-                    }, 1000);
+                    })();
 
                     if (!data.final_status) {
                         try {

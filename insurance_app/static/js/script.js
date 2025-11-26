@@ -569,7 +569,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         return data;
     };
-
+    window.getSectionData = getSectionData;
     // Utility to apply default values for empty or 'Select' fields
     function applyDefaults(target, defaults) {
         for (const key in defaults) {
