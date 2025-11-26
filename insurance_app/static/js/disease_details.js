@@ -31,15 +31,22 @@ function initializeDiseaseDetails(root) {
         dateInput.setAttribute('max', today);
 
         // If textarea already has data, ensure checkbox is checked
-        if (!checked && ((textarea.value && textarea.value.toString().trim() !== '') || 
-                         (dateInput.value && dateInput.value.toString().trim() !== ''))) {
-            const cb = entry.querySelector('input[type="checkbox"][name="disease"]') || 
-                      entry.querySelector('input[type="checkbox"]');
+        const txtRaw = textarea.value != null ? textarea.value.toString() : '';
+        const dateRaw = dateInput.value != null ? dateInput.value.toString() : '';
+
+        // Treat pure commas / whitespace as "no real data"
+        const hasMeaningfulText = txtRaw.replace(/,/g, '').trim() !== '';
+        const hasDateValue = dateRaw.trim() !== '';
+
+        if (!checked && (hasMeaningfulText || hasDateValue)) {
+            const cb = entry.querySelector('input[type="checkbox"][name="disease"]') ||
+                    entry.querySelector('input[type="checkbox"]');
             if (cb) {
                 cb.checked = true;
                 checked = true;
             }
         }
+
 
         if (checked) {
             // Show and enable fields

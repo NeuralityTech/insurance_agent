@@ -12,6 +12,38 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+    // --- NEW: Fallback to derive healthHistory from submissionData if missing/empty ---
+    try {
+        const hasHealthHistory =
+            summaryData.healthHistory &&
+            typeof summaryData.healthHistory === 'object' &&
+            Object.keys(summaryData.healthHistory).length > 0;
+
+        if (!hasHealthHistory) {
+            const submissionRaw = JSON.parse(localStorage.getItem('submissionData') || '{}');
+            const derived = {};
+
+            Object.entries(submissionRaw).forEach(([key, value]) => {
+                if (!value || String(value).trim() === '') return;
+
+                if (
+                    key.startsWith('medical-') || key.startsWith('medical_') ||
+                    key.startsWith('disease-') || key.startsWith('disease_') ||
+                    key === 'self-details' || key === 'self_details'
+                ) {
+                    derived[key] = value;
+                }
+            });
+
+            if (Object.keys(derived).length > 0) {
+                summaryData.healthHistory = derived;
+            }
+        }
+    } catch (e) {
+        console.warn('Health history fallback failed:', e);
+    }
+    // --- END NEW BLOCK ---
+
     // Fallbacks to ensure Preview shows data even before final submission
     try {
         if (!summaryData.members || !Array.isArray(summaryData.members) || summaryData.members.length === 0) {
@@ -41,6 +73,10 @@ document.addEventListener('DOMContentLoaded', function() {
      * @returns {string} The HTML string for the section.
      */
     function createSection(title, data) {
+        if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
+            return ''; // nothing to render
+        }
+
         let sectionHtml = `<fieldset><legend>${title}</legend><div class="summary-grid">`;
         for (const [key, value] of Object.entries(data)) {
             let displayValue = value;
@@ -122,8 +158,8 @@ document.addEventListener('DOMContentLoaded', function() {
         html += renderPrimaryContactSection(summaryData.primaryContact);
     }
 
-    // Self Health Details
-    if (summaryData.healthHistory) {
+    // Self Health Details (Proposer)
+    if (summaryData.healthHistory && Object.keys(summaryData.healthHistory || {}).length > 0) {
         html += createSection('Proposer\'s Health Details', summaryData.healthHistory);
     }
 

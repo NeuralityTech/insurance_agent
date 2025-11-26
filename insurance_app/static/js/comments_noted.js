@@ -74,6 +74,8 @@
         }
 
         if (!uid) {
+            commentsData = [];
+            try { localStorage.setItem('comments_noted', JSON.stringify([])); } catch(e) {} // Clear localStorage too
             renderCommentsTable();
             return;
         }
@@ -83,19 +85,18 @@
             if (response.ok) {
                 const data = await response.json();
                 commentsData = Array.isArray(data.comments) ? data.comments : [];
-                // Mirror to localStorage for Preview consumption
                 try { localStorage.setItem('comments_noted', JSON.stringify(commentsData)); } catch(e) {}
                 renderCommentsTable();
                 updateLastModifiedFooter();
             } else {
                 commentsData = [];
-                try { localStorage.setItem('comments_noted', JSON.stringify(commentsData)); } catch(e) {}
+                try { localStorage.setItem('comments_noted', JSON.stringify([])); } catch(e) {} 
                 renderCommentsTable();
             }
         } catch (e) {
             console.warn('Failed to load existing comments', e);
             commentsData = [];
-            try { localStorage.setItem('comments_noted', JSON.stringify(commentsData)); } catch(e) {}
+            try { localStorage.setItem('comments_noted', JSON.stringify([])); } catch(e) {} 
             renderCommentsTable();
         }
     }

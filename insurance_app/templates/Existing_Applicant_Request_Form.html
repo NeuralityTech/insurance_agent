@@ -860,15 +860,14 @@
                     
                     const formObj = {};
                     const allInputs = form.querySelectorAll('input, select, textarea');
-                    
-                    // ... rest of your existing code continues here ...
-                    
+
                     allInputs.forEach(el => {
                         if (!el.name) return;
-                        
+                        if (el.disabled) return; // ✅ skip disabled/read-only fields entirely
+
                         const k = el.name;
                         const v = el.value;
-                        
+
                         if (el.type === 'radio') {
                             if (el.checked) formObj[k] = v;
                         } else if (el.type === 'checkbox') {
@@ -877,13 +876,14 @@
                         } else {
                             if (k in formObj) {
                                 const cur = formObj[k];
-                                if (Array.isArray(cur)) cur.push(v); 
+                                if (Array.isArray(cur)) cur.push(v);
                                 else formObj[k] = [cur, v];
                             } else {
                                 formObj[k] = v;
                             }
                         }
                     });
+
 
                     if (!formObj.unique_id) {
                         if (uniqueId) formObj.unique_id = uniqueId;
@@ -964,32 +964,66 @@
                         commentsNoted: window.getCommentsData ? window.getCommentsData() : { comments_noted: [] }
                     };
 
-                    summaryData.primaryContact['unique_id'] = formObj.unique_id;
+                    // Prefer the same section-based logic used by the New Applicant flow
+                    if (typeof window.getSectionData === 'function') {
+                        // Primary Contact
+                        summaryData.primaryContact = window.getSectionData('primary-contact') || {};
+                        summaryData.primaryContact['unique_id'] = formObj.unique_id;
 
-                    Object.keys(formObj).forEach(key => {
-                        const value = formObj[key];
-                        
-                        if (key === 'unique_id') return;
-                        
-                        if (['applicant_name', 'gender', 'email', 'phone', 'address', 'self-dob', 'self-height', 'self-weight', 'self-age', 'occupation', 'city', 'hubs'].includes(key)) {
-                            summaryData.primaryContact[key] = value;
-                        }
-                        else if (key.startsWith('medical-') || key.startsWith('disease-') || key === 'self-details') {
-                            summaryData.healthHistory[key] = value;
-                        }
-                        else if (['policy-type', 'sum-insured', 'annual-budget', 'payment-mode', 'room-preference', 'co-pay', 'ncb-importance', 'maternity-cover', 'opd-cover', 'top-up'].includes(key)) {
-                            summaryData.coverAndCost[key] = value;
-                        }
-                        else if (['existing-policies', 'port-policy', 'critical-illness', 'worldwide-cover'].includes(key)) {
-                            summaryData.existingCoverage[key] = value;
-                        }
-                        else if (['past-claims', 'claim-issues', 'service-expectations', 'network-hospitals'].includes(key)) {
-                            summaryData.claimsAndService[key] = value;
-                        }
-                        else if (['tax-benefit', 'address_proof_details'].includes(key)) {
-                            summaryData.financeAndDocumentation[key] = value;
-                        }
-                    });
+                        // Health History
+                        summaryData.healthHistory = window.getSectionData('health-history') || {};
+
+                        // Other sections
+                        summaryData.coverAndCost = window.getSectionData('cover-cost') || {};
+                        summaryData.existingCoverage = window.getSectionData('existing-coverage') || {};
+                        summaryData.claimsAndService = window.getSectionData('claims-service') || {};
+                        summaryData.financeAndDocumentation = window.getSectionData('finance-documentation') || {};
+                    } else {
+                        // Fallback: legacy mapping if getSectionData is not available
+                        summaryData.primaryContact['unique_id'] = formObj.unique_id;
+
+                        Object.keys(formObj).forEach(key => {
+                            const value = formObj[key];
+
+                            if (key === 'unique_id') return;
+
+                            if ([
+                                'applicant_name', 'gender', 'email', 'phone', 'address',
+                                'self-dob', 'self-height', 'self-weight', 'self-age',
+                                'occupation', 'city', 'hubs'
+                            ].includes(key)) {
+                                summaryData.primaryContact[key] = value;
+                            }
+                            else if (
+                                key.startsWith('medical-') || key.startsWith('medical_') ||
+                                key.startsWith('disease-') || key.startsWith('disease_') ||
+                                key === 'self-details' || key === 'self_details'
+                            ) {
+                                summaryData.healthHistory[key] = value;
+                            }
+                            else if ([
+                                'policy-type', 'sum-insured', 'annual-budget', 'payment-mode',
+                                'room-preference', 'co-pay', 'ncb-importance', 'maternity-cover',
+                                'opd-cover', 'top-up'
+                            ].includes(key)) {
+                                summaryData.coverAndCost[key] = value;
+                            }
+                            else if ([
+                                'existing-policies', 'port-policy', 'critical-illness', 'worldwide-cover'
+                            ].includes(key)) {
+                                summaryData.existingCoverage[key] = value;
+                            }
+                            else if ([
+                                'past-claims', 'claim-issues', 'service-expectations', 'network-hospitals'
+                            ].includes(key)) {
+                                summaryData.claimsAndService[key] = value;
+                            }
+                            else if (['tax-benefit', 'address_proof_details'].includes(key)) {
+                                summaryData.financeAndDocumentation[key] = value;
+                            }
+                        });
+                    }
+
 
                     localStorage.setItem('formSummary', JSON.stringify(summaryData));
                     localStorage.setItem('submissionData', JSON.stringify(formObj));
