@@ -2,7 +2,7 @@
 // Exposes window.prefillExistingForm(data)
 (function(){
   async function waitForSections() {
-    // Wait until primary section content has inputs loaded by script.js
+    // Wait until primary section content has inputs by script.js
     const maxWaitMs = 8000;
     const interval = 100;
     let waited = 0;
@@ -118,10 +118,20 @@
             el.dispatchEvent(new Event('change', { bubbles: true }));
             console.log(`Set date ${name} to ${dateValue}`);
           } else {
-            el.value = val;
+            // Handle array values - convert to string properly
+            // Arrays should only be used for checkboxes, but if we get one for a text field,
+            // use the first value or join without trailing commas
+            let finalVal = val;
+            if (Array.isArray(val)) {
+              // Filter out empty values and join
+              const filtered = val.filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+              finalVal = filtered.length > 0 ? filtered[0] : ''; // Use first value for text inputs
+              console.log(`Array value for ${name}, using first value: ${finalVal}`);
+            }
+            el.value = finalVal;
             el.dispatchEvent(new Event('input', { bubbles: true }));
             el.dispatchEvent(new Event('change', { bubbles: true }));
-            console.log(`Set field ${name} to ${val}`);
+            console.log(`Set field ${name} to ${finalVal}`);
           }
           
           // Restore disabled state if it was disabled
@@ -137,16 +147,28 @@
 
   async function prefillExistingForm(data) {
     console.log('Starting prefill with data:', data);
+    
+    // Check if we have a unique_id to use as a guard
+    const uid = data.unique_id || (data.primaryContact && data.primaryContact.unique_id);
+    
+    // Guard against double population
+    if (uid && window._existingPrefillDone === uid) {
+      console.log('Prefill already done for this unique_id, skipping');
+      return;
+    }
+    
     await waitForSections();
     
     try {
       // Handle both nested and flat data structures
-      const primaryContactData = data.primaryContact || data;
-      const healthHistoryData = data.healthHistory || data;
-      const coverCostData = data.coverAndCost || data;
-      const existingCoverageData = data.existingCoverage || data;
-      const claimsServiceData = data.claimsAndService || data;
-      const financeDocData = data.financeAndDocumentation || data;
+      // IMPORTANT: Only use the specific section data, never fall back to the entire data object
+      // as that could include members' data which would corrupt the primary applicant's fields
+      const primaryContactData = data.primaryContact || {};
+      const healthHistoryData = data.healthHistory || {};
+      const coverCostData = data.coverAndCost || {};
+      const existingCoverageData = data.existingCoverage || {};
+      const claimsServiceData = data.claimsAndService || {};
+      const financeDocData = data.financeAndDocumentation || {};
       
       // Use section-specific data
       setFields('primary-contact-content', primaryContactData);
@@ -167,9 +189,10 @@
       }
 
       // Explicitly handle disease list to ensure details are revealed and values applied
-      const diseaseData = healthHistoryData.disease || data.disease;
+      // IMPORTANT: Only use healthHistoryData, never data.disease as that could include member data
+      const diseaseData = healthHistoryData.disease;
       if (diseaseData) {
-        const diseaseArr = Array.isArray(diseaseData) ? diseaseData : [];
+        const diseaseArr = Array.isArray(diseaseData) ? diseaseData : (diseaseData ? [diseaseData] : []);
         diseaseArr.forEach(val => {
           const cb = document.querySelector(`#health-history-content input[name="disease"][value="${CSS.escape(val)}"]`)
             || document.querySelector(`input[name="disease"][value="${CSS.escape(val)}"]`);
@@ -177,12 +200,38 @@
           cb.checked = true;
           cb.dispatchEvent(new Event('change', { bubbles: true }));
           
+          // Set disease details textarea
           const detailsKey = `${val}_details`;
-          const detailsValue = healthHistoryData[detailsKey] || data[detailsKey];
+          const detailsValue = healthHistoryData[detailsKey];
           const txt = document.querySelector(`#health-history-content textarea[name="${CSS.escape(detailsKey)}"]`)
             || document.querySelector(`textarea[name="${CSS.escape(detailsKey)}"]`);
           if (txt && typeof detailsValue !== 'undefined') {
-            txt.value = detailsValue;
+            // Handle array values - use first value if array
+            let finalDetailsValue = detailsValue;
+            if (Array.isArray(detailsValue)) {
+              const filtered = detailsValue.filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+              finalDetailsValue = filtered.length > 0 ? filtered[0] : '';
+            }
+            txt.disabled = false;
+            txt.value = finalDetailsValue;
+          }
+          
+          // Set disease start date
+          const dateKey = `${val}_start_date`;
+          let dateValue = healthHistoryData[dateKey];
+          if (dateValue) {
+            // Handle array values
+            if (Array.isArray(dateValue)) {
+              const filtered = dateValue.filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+              dateValue = filtered.length > 0 ? filtered[0] : '';
+            }
+            const dateInput = document.querySelector(`#health-history-content input[name="${CSS.escape(dateKey)}"]`)
+              || document.querySelector(`input[name="${CSS.escape(dateKey)}"]`);
+            if (dateInput && dateValue) {
+              dateInput.disabled = false;
+              dateInput.value = dateValue;
+              console.log(`Set disease date ${dateKey} to ${dateValue}`);
+            }
           }
         });
         
@@ -192,10 +241,12 @@
           const cb = entry.querySelector('input[type="checkbox"][name="disease"]');
           const details = entry.querySelector('.disease-details-container');
           const ta = details ? details.querySelector('textarea') : null;
-          if (cb && details && ta && (cb.checked || (ta.value && ta.value.trim() !== ''))) {
+          const dateInput = details ? details.querySelector('.disease-date-input') : null;
+          if (cb && details && (cb.checked || (ta && ta.value && ta.value.trim() !== ''))) {
             cb.checked = true;
             details.style.display = 'flex';
-            ta.disabled = false;
+            if (ta) ta.disabled = false;
+            if (dateInput) dateInput.disabled = false;
           }
         });
       }
@@ -241,6 +292,12 @@
       }
       
       console.log('Prefill completed successfully');
+      
+      // Mark as done to prevent double population
+      if (uid) {
+        window._existingPrefillDone = uid;
+        window._dataPopulated = uid; // Also set data_fetch.js guard
+      }
     } catch (e) {
       console.error('Prefill error', e);
     }

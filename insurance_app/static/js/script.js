@@ -2,7 +2,7 @@
  * This is the main controller script for the entire insurance requirement form.
  * It dynamically loads all form sections, initializes their respective JavaScript functionalities,
  * and handles the final form submission and preview generation.
- * It is used by: Health_Insurance_Requirement_Form.html
+ * It is used by: New_Applicant_Request_Form.html, Existing_Applicant_Request_Form.html
  */
 document.addEventListener('DOMContentLoaded', function() {
     // @Srihari
@@ -333,6 +333,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // Validate Health Vitals
         if (!primaryContactData['self-dob'] || !primaryContactData['self-dob'].trim()) {
             errors.push('Date of Birth is required');
+        } else {
+            // Validate DOB is not in future and within 100 years
+            const dobValue = primaryContactData['self-dob'];
+            const selectedDate = new Date(dobValue);
+            const today = new Date();
+            const hundredYearsAgo = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate());
+            
+            if (selectedDate > today) {
+                errors.push('Invalid Date of Birth');
+            } else if (selectedDate < hundredYearsAgo) {
+                errors.push('Invalid Date of Birth');
+            }
         }
         
         if (!primaryContactData['self-height'] || !primaryContactData['self-height'].trim()) {
@@ -348,8 +360,8 @@ document.addEventListener('DOMContentLoaded', function() {
             errors.push('Weight is required');
         } else {
             const weight = parseFloat(primaryContactData['self-weight']);
-            if (isNaN(weight) || weight <= 0) {
-                errors.push('Weight must be valid');
+            if (isNaN(weight) || weight < 1) {
+                errors.push('Weight must be at least 1 kg');
             }
         }
         
@@ -610,88 +622,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const previewBtn = document.getElementById('preview-btn');
     if (previewBtn) {
         previewBtn.addEventListener('click', async function() {
-            // Validate all required fields before allowing preview
-            const validationErrors = [];
-            
-            // Validate Primary Contact required fields
-            const primaryContactData = getSectionData('primary-contact');
-            
-            if (!primaryContactData['applicant_name'] || !primaryContactData['applicant_name'].trim()) {
-                validationErrors.push('Full Name is required');
-            }
-            
-            if (!primaryContactData['gender'] || primaryContactData['gender'] === 'Select') {
-                validationErrors.push('Gender is required');
-            }
-            
-            if (!primaryContactData['email'] || !primaryContactData['email'].trim()) {
-                validationErrors.push('Email is required');
-            } else {
-                // Basic email format validation
-                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailPattern.test(primaryContactData['email'])) {
-                    validationErrors.push('Email must be a valid email address');
-                }
-            }
-            
-            if (!primaryContactData['phone'] || !primaryContactData['phone'].trim()) {
-                validationErrors.push('Phone is required');
-            } else {
-                // Phone pattern validation (10 digits starting with 6-9)
-                const phonePattern = /^[6-9][0-9]{9}$/;
-                if (!phonePattern.test(primaryContactData['phone'])) {
-                    validationErrors.push('Phone must be a valid 10-digit Indian phone number');
-                }
-            }
-            
-            if (!primaryContactData['aadhaar_last5'] || !primaryContactData['aadhaar_last5'].trim()) {
-                validationErrors.push('Aadhaar Last 5 Digits is required');
-            } else {
-                const aadhaarPattern = /^[0-9]{5}$/;
-                if (!aadhaarPattern.test(primaryContactData['aadhaar_last5'])) {
-                    validationErrors.push('Aadhaar must be exactly 5 digits');
-                }
-            }
-            
-            if (!primaryContactData['address'] || !primaryContactData['address'].trim()) {
-                validationErrors.push('Address is required');
-            }
-            
-            // Validate Health Vitals
-            if (!primaryContactData['self-dob'] || !primaryContactData['self-dob'].trim()) {
-                validationErrors.push('Date of Birth is required');
-            }
-            
-            if (!primaryContactData['self-height'] || !primaryContactData['self-height'].trim()) {
-                validationErrors.push('Height is required');
-            } else {
-                // Validate height is numeric
-                const height = parseFloat(primaryContactData['self-height']);
-                if (isNaN(height) || height <= 0) {
-                    validationErrors.push('Height must be a valid number greater than 0');
-                }
-            }
-            
-            if (!primaryContactData['self-weight'] || !primaryContactData['self-weight'].trim()) {
-                validationErrors.push('Weight is required');
-            } else {
-                // Validate weight is numeric
-                const weight = parseFloat(primaryContactData['self-weight']);
-                if (isNaN(weight) || weight <= 0) {
-                    validationErrors.push('Weight must be a valid number greater than 0');
-                }
-            }
-            
-            // Validate Cover & Cost numeric fields
-            const coverCostData = getSectionData('cover-cost');
-            const sumEl = document.querySelector('#cover-cost-content input[name="sum-insured"]');
-            if (sumEl && sumEl.value.trim() && !sumEl.value.trim().match(/^[0-9]+$/)) {
-                validationErrors.push('Desired Sum Insured must be numeric');
-            }
-            const budgetEl = document.querySelector('#cover-cost-content input[name="annual-budget"]');
-            if (budgetEl && budgetEl.value.trim() && !budgetEl.value.trim().match(/^[0-9]+$/)) {
-                validationErrors.push('Annual Budget must be numeric');
-            }
+            // Use the centralized validation function
+            const validationErrors = validateRequiredFields();
 
             // If there are validation errors, show them and stop
             if (validationErrors.length > 0) {
@@ -710,6 +642,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     err.includes('Aadhaar')
                 )) {
                     errorTab = 0; // Primary Contact tab
+                } else if (validationErrors.some(err => err.includes('Disease start date'))) {
+                    errorTab = 1; // Health History tab
                 } else if (validationErrors.some(err => err.includes('Sum Insured') || err.includes('Budget'))) {
                     errorTab = 3; // Cover & Cost tab
                 }
@@ -724,15 +658,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Focus on the first error field if possible
                 setTimeout(() => {
-                    const firstErrorField = document.querySelector('#primary-contact-content input.input-error, #primary-contact-content select.input-error');
+                    const firstErrorField = document.querySelector('.input-error');
                     if (firstErrorField) {
-                        firstErrorField.focus();
+                        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        setTimeout(() => firstErrorField.focus(), 300);
                     }
                 }, 300);
                 
                 return; // Stop preview
             }
 
+            // Get primary contact data for duplicate check and summary
+            const primaryContactData = getSectionData('primary-contact');
+            
             // Check for duplicate email/phone before proceeding
             const email = primaryContactData['email'];
             const phone = primaryContactData['phone'];

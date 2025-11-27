@@ -80,6 +80,9 @@
                             style="width: 4.5em;"
                         >
                             <option value="">ft</option>
+                            <option value="0">0</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
                             <option value="3">3</option>
                             <option value="4">4</option>
                             <option value="5">5</option>
@@ -121,7 +124,7 @@
 
                 <div class="form-group fixed-width-group">
                     <label for="self-weight">Weight (kg) *</label>
-                    <input type="text" id="self-weight" name="self-weight" placeholder="e.g., 70" pattern="[0-9.]*" title="Please enter only numbers." min="0" required>
+                    <input type="number" id="self-weight" name="self-weight" placeholder="e.g., 70" min="1" step="0.1" title="Please enter weight in kg (minimum 1 kg)." required>
                     <span class="error-message" id="self-weight-error"></span>
                 </div>
 

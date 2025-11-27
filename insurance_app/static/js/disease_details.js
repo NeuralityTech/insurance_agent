@@ -1,6 +1,6 @@
 /*
  * This file handles the user interface logic for the Health History section.
- * It is used by: Health_Insurance_Requirement_Form.html
+ * It is used by: New_Applicant_Request_Form.html, Existing_Applicant_Request_Form.html, member_details.html
  * The main function is called from script.js when the Health History section is loaded.
  */ 
 
@@ -16,7 +16,7 @@ function initializeDiseaseDetails(root) {
         || document.getElementById('health-history-content');
     if (!container) return;
 
-    // Get today's date in YYYY-MM-DD format for max attribute
+    // Get todays date in YYYY-MM-DD format for max attribute
     const today = new Date().toISOString().split('T')[0];
 
     function setEntryState(entry, checked) {

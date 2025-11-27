@@ -12,7 +12,7 @@ function debounce(func, delay) {
     };
 }
 
-// Function to populate the form with fetched data
+// Function to populate form with fetched data
 function populateForm(data) {
     console.log('Populating form with data:', data);
     
@@ -221,21 +221,20 @@ function handleSpecialFields(data) {
 
 // Function to handle disease checkbox data
 function handleDiseaseData(data) {
-    // Look for disease data in multiple possible locations
+    // IMPORTANT: Only look for disease data in healthHistory to avoid accidentally
+    // using member data as primary applicant data
     let diseaseData = null;
     let diseaseArray = null;
     
-    // Check various possible data structures
+    // Check for disease data ONLY in healthHistory section
     if (data.healthHistory && data.healthHistory.disease) {
         diseaseArray = Array.isArray(data.healthHistory.disease) ? data.healthHistory.disease : [data.healthHistory.disease];
         diseaseData = data.healthHistory;
-    } else if (data.disease) {
-        diseaseArray = Array.isArray(data.disease) ? data.disease : [data.disease];
-        diseaseData = data;
     } else if (data.health_history && data.health_history.disease) {
         diseaseArray = Array.isArray(data.health_history.disease) ? data.health_history.disease : [data.health_history.disease];
         diseaseData = data.health_history;
     }
+    // NOTE: Removed fallback to data.disease as that could pick up member data
     
     if (diseaseArray && diseaseArray.length > 0) {
         console.log('Processing disease data:', diseaseArray);
@@ -252,7 +251,7 @@ function handleDiseaseData(data) {
             // Fire change so initializeDiseaseDetails toggles visibility and enables textarea
             cb.dispatchEvent(new Event('change', { bubbles: true }));
             
-            // Set textarea value if present
+            // Set textarea value if present - only look in diseaseData, not entire data object
             const detailsKey = `${val}_details`;
             const txt = document.querySelector(`textarea[name="${detailsKey}"]`);
             if (txt && diseaseData && diseaseData[detailsKey] !== undefined) {

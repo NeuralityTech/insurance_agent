@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let html = '';
 
-    // Function to create a summary section
+    // Function to create summary section
     /**
      * Creates an HTML fieldset section for a given part of the summary data.
      * @param {string} title - The title of the section.
@@ -356,9 +356,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     uniqueId = summary.primaryContact['unique_id'] || summary.primaryContact['Unique Id'];
                 }
                 if (uniqueId) {
-                    window.location.href = `Existing_User_Request_Page.html?unique_id=${encodeURIComponent(uniqueId)}`;
+                    window.location.href = `Existing_Applicant_Request_Form.html?uid=${encodeURIComponent(uniqueId)}`;
                 } else {
-                    window.location.href = 'Existing_User_Request_Page.html';
+                    window.location.href = 'Existing_Applicant_Request_Form.html';
                 }
             };
         }

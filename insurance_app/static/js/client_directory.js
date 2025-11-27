@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     return list.filter(c => {
       const matchUid = !q || (c.unique_id || '').toLowerCase().includes(q);
-      // Prefer application_status for filtering if present; fallback to supervisor_status
+      // Prefer application_status for filtering if present; fallback to supervisor_status otherwise
       const statusForFilter = (c.application_status != null && c.application_status !== '') ? c.application_status : c.supervisor_status;
       const matchStatus = !st || normalizeStatus(statusForFilter) === st;
       // No supervisor id on clients list; if available via Agent -> Supervisor mapping, extend later
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     filtered.forEach(c => {
       const tr = document.createElement('tr');
       const uid = c.unique_id || '';
-      const uidLink = uid ? `<a href="/html/Existing_User_Request_Page.html?uid=${encodeURIComponent(uid)}" class="link">${escapeHtml(uid)}</a>` : '';
+      const uidLink = uid ? `<a href="/html/Existing_Applicant_Request_Form.html?uid=${encodeURIComponent(uid)}" class="link">${escapeHtml(uid)}</a>` : '';
       const statusText = (c.application_status != null && c.application_status !== '') ? c.application_status : (c.supervisor_status || '');
       tr.innerHTML = `
         <td>${escapeHtml(c.name || '')}</td>

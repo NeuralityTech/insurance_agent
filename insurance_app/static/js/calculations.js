@@ -1,13 +1,11 @@
 /*
  * This file contains reusable calculation functions for the application.
- * It is used by: Health_Insurance_Requirement_Form.html
- * NOTE: The functions in this file are also declared in member_details.js. This is redundant and should be refactored.
+ * It is used by: New_Applicant_Request_Form.html, Existing_Applicant_Request_Form.html, member_details.html
  */
 
 /**
  * Calculates Body Mass Index (BMI) from height and weight.
- * This function is used in validation.js and member_details.js.
- * @param {number} height - Height in centimeters.
+ * @param {number} height - Height in centimeters
  * @param {number} weight - Weight in kilograms.
  * @returns {string|null} The calculated BMI, or null if inputs are invalid.
  */
@@ -20,7 +18,6 @@ function calculateBmi(height, weight) {
 
 /**
  * Calculates the age from a given date of birth.
- * This function is used in validation.js and member_details.js.
  * @param {string} dobString - The date of birth in 'YYYY-MM-DD' format.
  * @returns {number|null} The calculated age, or null if the input is invalid.
  */

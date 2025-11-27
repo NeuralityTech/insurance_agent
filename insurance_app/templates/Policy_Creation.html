@@ -574,15 +574,107 @@
         
         if (!summarySection || !summaryContent) return;
         
-        // Get plan benefits (placeholder for now - implement this properly later)
-        const planBenefits = getPlanBenefits(rows[0].plan);
+        // Build summary for ALL members/policies
+        let html = '';
         
-        let html = `
-          <div style="background: white; padding: 1rem; border-radius: 6px;">
-            <h3 style="margin-bottom: 0.5rem; color: #495057;">Plan Benefits</h3>
-            ${planBenefits}
+        // Policy overview table showing all members
+        html += `
+          <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+            <h3 style="margin-bottom: 1rem; color: #495057;">
+              <i class="fas fa-users"></i> Policy Members (${rows.length})
+            </h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: #f8f9fa;">
+                  <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left;">Member Name</th>
+                  <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left;">Policy Number</th>
+                  <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left;">Member Number</th>
+                  <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left;">Plan</th>
+                  <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left;">Start Date</th>
+                  <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left;">End Date</th>
+                  <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left;">Period</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+        
+        rows.forEach((row, index) => {
+          const periodText = row.policy_period_months === 12 ? '1 year' : 
+                            row.policy_period_months === 24 ? '2 years' : 
+                            row.policy_period_months === 36 ? '3 years' : 
+                            row.policy_period_months + ' months';
+          html += `
+            <tr style="${index % 2 === 1 ? 'background: #f8f9fa;' : ''}">
+              <td style="padding: 10px; border: 1px solid #dee2e6;">${escapeHtml(row.member_name) || '—'}</td>
+              <td style="padding: 10px; border: 1px solid #dee2e6;">${escapeHtml(row.policy_number) || '—'}</td>
+              <td style="padding: 10px; border: 1px solid #dee2e6;">${escapeHtml(row.member_number) || '—'}</td>
+              <td style="padding: 10px; border: 1px solid #dee2e6;"><strong>${escapeHtml(row.plan) || '—'}</strong></td>
+              <td style="padding: 10px; border: 1px solid #dee2e6;">${formatDate(row.policy_start_date)}</td>
+              <td style="padding: 10px; border: 1px solid #dee2e6;">${formatDate(row.policy_end_date)}</td>
+              <td style="padding: 10px; border: 1px solid #dee2e6;">${periodText}</td>
+            </tr>
+          `;
+        });
+        
+        html += `
+              </tbody>
+            </table>
           </div>
         `;
+        
+        // Group rows by plan to show benefits per plan
+        const planGroups = {};
+        rows.forEach(row => {
+          if (row.plan) {
+            if (!planGroups[row.plan]) {
+              planGroups[row.plan] = [];
+            }
+            planGroups[row.plan].push(row.member_name);
+          }
+        });
+        
+        // Show plan benefits for each unique plan
+        const uniquePlans = Object.keys(planGroups);
+        if (uniquePlans.length > 0) {
+          html += `
+            <div style="background: white; padding: 1rem; border-radius: 6px;">
+              <h3 style="margin-bottom: 1rem; color: #495057;">
+                <i class="fas fa-file-medical"></i> Plan Benefits
+              </h3>
+          `;
+          
+          uniquePlans.forEach((planName, idx) => {
+            const members = planGroups[planName];
+            const memberList = members.map(m => escapeHtml(m)).join(', ');
+            const planBenefits = getPlanBenefits(planName);
+            
+            html += `
+              <div style="margin-bottom: 1.5rem; ${idx > 0 ? 'border-top: 1px solid #dee2e6; padding-top: 1rem;' : ''}">
+                <h4 style="color: #28a745; margin-bottom: 0.5rem;">
+                  <i class="fas fa-check-circle"></i> ${escapeHtml(planName)}
+                </h4>
+                <p style="color: #6c757d; font-size: 0.9rem; margin-bottom: 0.75rem;">
+                  <strong>Members:</strong> ${memberList}
+                </p>
+                ${planBenefits}
+              </div>
+            `;
+          });
+          
+          html += `</div>`;
+        }
+        
+        // Add comments if present
+        if (payload.close_comments) {
+          html += `
+            <div style="background: white; padding: 1rem; border-radius: 6px; margin-top: 1rem;">
+              <h3 style="margin-bottom: 0.5rem; color: #495057;">
+                <i class="fas fa-comment"></i> Comments
+              </h3>
+              <p style="color: #495057;">${escapeHtml(payload.close_comments)}</p>
+            </div>
+          `;
+        }
         
         summaryContent.innerHTML = html;
         summarySection.style.display = 'block';
@@ -597,6 +689,14 @@
         
         // Scroll to summary
         summarySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      
+      // Helper function to escape HTML to prevent XSS
+      function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
       }
 
       function formatDate(dateStr) {

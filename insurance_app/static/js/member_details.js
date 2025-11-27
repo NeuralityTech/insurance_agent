@@ -3,40 +3,10 @@
  * It is responsible for populating the form for editing, saving new or updated member data to local storage,
  * and dynamically loading the health history section.
  * It is used by: member_details.html
+ * 
+ * NOTE: This script depends on calculations.js for calculateAge() and calculateBmi() functions.
  */
 document.addEventListener('DOMContentLoaded', () => {
-
-    // --- Utility Functions ---
-        /**
-     * Calculates age from a date of birth.
-     * NOTE: This function is a duplicate of the one in calculations.js
-     * and should be removed to avoid redundancy.
-     */
-    function calculateAge(dob) {
-        if (!dob) return null;
-        const birthDate = new Date(dob);
-        const today = new Date();
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDifference = today.getMonth() - birthDate.getMonth();
-        if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-        return age;
-    }
-
-        /**
-     * Calculates BMI from height and weight.
-     * NOTE: This function is a duplicate of the one in calculations.js 
-     * and should be removed to avoid redundancy.
-     */
-    function calculateBmi(heightCm, weightKg) {
-        if (!heightCm || !weightKg || heightCm <= 0 || weightKg <= 0) {
-            return '';
-        }
-        const heightM = heightCm / 100;
-        const bmi = (weightKg / (heightM * heightM)).toFixed(2);
-        return bmi;
-    }
 
     // --- Form Population for Editing ---
         /**
@@ -153,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
             occupationalRiskDetails: document.getElementById('occupational-risk-details')?.value || ''
         };
 
-        // Prevent duplicate members
+        // Prevent duplicates
         if (!editMemberId) {
             const duplicate = members.some(m => m.name === memberData.name && m.relationship === memberData.relationship && m.dob === memberData.dob);
             if (duplicate) {
@@ -215,11 +185,41 @@ document.addEventListener('DOMContentLoaded', () => {
      * Sets up the initial event listeners for the page, such as age and BMI calculation.
      */
     function initializePageLogic() {
-        // Age calculation
+        // Age calculation with DOB validation
         const dobInput = document.getElementById('self-dob');
+        const ageInput = document.getElementById('self-age');
+        
         if (dobInput) {
+            // Set DOB constraints: max = today, min = 100 years ago
+            const today = new Date();
+            const maxDate = today.toISOString().split('T')[0];
+            const minDate = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate())
+                .toISOString().split('T')[0];
+            
+            dobInput.setAttribute('max', maxDate);
+            dobInput.setAttribute('min', minDate);
+            
             dobInput.addEventListener('change', () => {
-                document.getElementById('self-age').value = calculateAge(dobInput.value) || '';
+                const selectedDate = new Date(dobInput.value);
+                const todayDate = new Date();
+                const hundredYearsAgo = new Date(todayDate.getFullYear() - 100, todayDate.getMonth(), todayDate.getDate());
+                
+                // Validate DOB
+                if (selectedDate > todayDate) {
+                    alert('Date of birth cannot be in the future');
+                    if (ageInput) ageInput.value = '';
+                    return;
+                }
+                
+                if (selectedDate < hundredYearsAgo) {
+                    alert('Date of birth must be within the last 100 years');
+                    if (ageInput) ageInput.value = '';
+                    return;
+                }
+                
+                if (ageInput) {
+                    ageInput.value = calculateAge(dobInput.value) || '';
+                }
             });
         }
 
@@ -230,7 +230,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function updateBmi() {
             if (bmiInput) {
-                bmiInput.value = calculateBmi(heightInput.value, weightInput.value);
+                const bmi = calculateBmi(parseFloat(heightInput.value), parseFloat(weightInput.value));
+                bmiInput.value = bmi !== null ? bmi : '';
             }
         }
 

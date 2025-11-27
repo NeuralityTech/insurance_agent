@@ -966,6 +966,36 @@
                         userId: userId,
                         formData: formObj
                     };
+                    
+                    // Build structured data format (same as Preview.html) before submission
+                    // This ensures members and sections are properly structured for the server
+                    const structuredData = {
+                        unique_id: formObj.unique_id,
+                        applicant_name: formObj.applicant_name,
+                        primaryContact: {},
+                        healthHistory: {},
+                        members: JSON.parse(localStorage.getItem('members')) || [],
+                        coverAndCost: {},
+                        existingCoverage: {},
+                        claimsAndService: {},
+                        financeAndDocumentation: {},
+                        commentsNoted: window.getCommentsData ? window.getCommentsData() : { comments_noted: [] }
+                    };
+                    
+                    // Populate structured sections using getSectionData if available
+                    if (typeof window.getSectionData === 'function') {
+                        structuredData.primaryContact = window.getSectionData('primary-contact') || {};
+                        structuredData.primaryContact['unique_id'] = formObj.unique_id;
+                        structuredData.healthHistory = window.getSectionData('health-history') || {};
+                        structuredData.coverAndCost = window.getSectionData('cover-cost') || {};
+                        structuredData.existingCoverage = window.getSectionData('existing-coverage') || {};
+                        structuredData.claimsAndService = window.getSectionData('claims-service') || {};
+                        structuredData.financeAndDocumentation = window.getSectionData('finance-documentation') || {};
+                    }
+                    
+                    // Use structured data as the primary submission format
+                    payload.formData = structuredData;
+                    
                     if (window.clearProgressTimestamps) {
                         window.clearProgressTimestamps(formObj.unique_id);
                     }
@@ -993,80 +1023,10 @@
 
                     const result = await resp.json().catch(() => ({}));
 
-                    const summaryData = {
-                        primaryContact: {},
-                        healthHistory: {},
-                        members: JSON.parse(localStorage.getItem('members')) || [],
-                        coverAndCost: {},
-                        existingCoverage: {},
-                        claimsAndService: {},
-                        financeAndDocumentation: {},
-                        commentsNoted: window.getCommentsData ? window.getCommentsData() : { comments_noted: [] }
-                    };
-
-                    // Prefer the same section-based logic used by the New Applicant flow
-                    if (typeof window.getSectionData === 'function') {
-                        // Primary Contact
-                        summaryData.primaryContact = window.getSectionData('primary-contact') || {};
-                        summaryData.primaryContact['unique_id'] = formObj.unique_id;
-
-                        // Health History
-                        summaryData.healthHistory = window.getSectionData('health-history') || {};
-
-                        // Other sections
-                        summaryData.coverAndCost = window.getSectionData('cover-cost') || {};
-                        summaryData.existingCoverage = window.getSectionData('existing-coverage') || {};
-                        summaryData.claimsAndService = window.getSectionData('claims-service') || {};
-                        summaryData.financeAndDocumentation = window.getSectionData('finance-documentation') || {};
-                    } else {
-                        // Fallback: legacy mapping if getSectionData is not available
-                        summaryData.primaryContact['unique_id'] = formObj.unique_id;
-
-                        Object.keys(formObj).forEach(key => {
-                            const value = formObj[key];
-
-                            if (key === 'unique_id') return;
-
-                            if ([
-                                'applicant_name', 'gender', 'email', 'phone', 'address',
-                                'self-dob', 'self-height', 'self-weight', 'self-age',
-                                'occupation', 'city', 'hubs'
-                            ].includes(key)) {
-                                summaryData.primaryContact[key] = value;
-                            }
-                            else if (
-                                key.startsWith('medical-') || key.startsWith('medical_') ||
-                                key.startsWith('disease-') || key.startsWith('disease_') ||
-                                key === 'self-details' || key === 'self_details'
-                            ) {
-                                summaryData.healthHistory[key] = value;
-                            }
-                            else if ([
-                                'policy-type', 'sum-insured', 'annual-budget', 'payment-mode',
-                                'room-preference', 'co-pay', 'ncb-importance', 'maternity-cover',
-                                'opd-cover', 'top-up'
-                            ].includes(key)) {
-                                summaryData.coverAndCost[key] = value;
-                            }
-                            else if ([
-                                'existing-policies', 'port-policy', 'critical-illness', 'worldwide-cover'
-                            ].includes(key)) {
-                                summaryData.existingCoverage[key] = value;
-                            }
-                            else if ([
-                                'past-claims', 'claim-issues', 'service-expectations', 'network-hospitals'
-                            ].includes(key)) {
-                                summaryData.claimsAndService[key] = value;
-                            }
-                            else if (['tax-benefit', 'address_proof_details'].includes(key)) {
-                                summaryData.financeAndDocumentation[key] = value;
-                            }
-                        });
-                    }
-
-
-                    localStorage.setItem('formSummary', JSON.stringify(summaryData));
-                    localStorage.setItem('submissionData', JSON.stringify(formObj));
+                    // Use the structured data we already built for localStorage
+                    // No need to rebuild it since structuredData already has all sections
+                    localStorage.setItem('formSummary', JSON.stringify(structuredData));
+                    localStorage.setItem('submissionData', JSON.stringify(structuredData));
                     if (result.plans) {
                         localStorage.setItem('plans', JSON.stringify(result.plans));
                     }
@@ -1261,7 +1221,7 @@
                                 </label>
                                 <textarea id="underwriter-comment" rows="3" 
                                         style="width: 100%; margin-bottom: 0.5rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;" 
-                                        placeholder="Enter your underwriter comments and decision rationale">${submissionData.underwriter_comments || ''}</textarea>
+                                        placeholder="Enter your underwriter comments">${submissionData.underwriter_comments || ''}</textarea>
 
                                 <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
                                     <button type="button" id="save-underwriter-decision" class="btn">Submit</button>

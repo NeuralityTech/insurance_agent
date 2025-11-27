@@ -351,8 +351,8 @@
     }
 
     function initializeFormProgressBar() {
-        // For new forms, step 0 (Opened) is completed, step 1 (Submitted) is active
-        initializeProgressBar('insurance-form', 0, 20);
+        // For new forms, step 0 (Opened) is completed, step 1 (Submitted) active
+        initializeProgressBar('insurance-form', 0, 25);
     }
 
     /**

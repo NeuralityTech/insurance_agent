@@ -1,6 +1,6 @@
 /*
  * This script provides validation logic for various sections of the insurance form.
- * It is used by: Health_Insurance_Requirement_Form.html
+ * It is used by: New_Applicant_Request_Form.html, Existing_Applicant_Request_Form.html
  * The functions are called dynamically from script.js when their respective sections are loaded.
  */
 
@@ -77,6 +77,17 @@ function initializePrimaryContactValidation() {
     const weightInput = form.querySelector('#self-weight');
     const bmiInput = form.querySelector('#self-bmi');
 
+    // Set DOB constraints: max = today, min = 100 years ago
+    if (dobInput) {
+        const today = new Date();
+        const maxDate = today.toISOString().split('T')[0]; // Today in YYYY-MM-DD
+        const minDate = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate())
+            .toISOString().split('T')[0]; // 100 years ago
+        
+        dobInput.setAttribute('max', maxDate);
+        dobInput.setAttribute('min', minDate);
+    }
+
     if (dobInput && ageInput) {
         dobInput.addEventListener('change', () => {
             // Convert from dd/mm/yyyy input to yyyy-mm-dd for calculation
@@ -91,6 +102,39 @@ function initializePrimaryContactValidation() {
                     dateForCalculation = `${parts[2]}-${parts[1]}-${parts[0]}`;
                 }
             }
+            
+            // Validate DOB is not in the future and within 100 years
+            const selectedDate = new Date(dateForCalculation);
+            const today = new Date();
+            const hundredYearsAgo = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate());
+            const dobError = document.getElementById('self-dob-error');
+            
+            if (selectedDate > today) {
+                if (dobError) {
+                    dobError.textContent = 'Date of birth cannot be in the future';
+                    dobError.style.display = 'block';
+                }
+                dobInput.classList.add('input-error');
+                ageInput.value = '';
+                return;
+            }
+            
+            if (selectedDate < hundredYearsAgo) {
+                if (dobError) {
+                    dobError.textContent = 'Date of birth must be within the last 100 years';
+                    dobError.style.display = 'block';
+                }
+                dobInput.classList.add('input-error');
+                ageInput.value = '';
+                return;
+            }
+            
+            // Clear error if valid
+            if (dobError) {
+                dobError.textContent = '';
+                dobError.style.display = 'none';
+            }
+            dobInput.classList.remove('input-error');
             
             const age = calculateAge(dateForCalculation);
             if (age !== null) {
