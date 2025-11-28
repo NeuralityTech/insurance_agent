@@ -419,6 +419,10 @@ select.input-error {
     width: 35ch;
 }
 
+/* helper class to make specific searchable dropdowns expand to fill their grid/flex column
+   without affecting the global dropdown width used in dashboards or other places */
+
+
 .searchable-dropdown-wrapper input[type="text"] {
     width: 100%;
 }

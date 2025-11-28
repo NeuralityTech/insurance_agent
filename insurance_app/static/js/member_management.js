@@ -12,6 +12,146 @@
     let hasUnsavedChanges = false;
     let originalFormData = {};
 
+    // Initialize disease details toggles for a form
+    function initializeMemberDiseaseDetails(formContainer) {
+        const container = formContainer.querySelector('.member-disease-list');
+        if (!container) return;
+
+        // Get today's date in YYYY-MM-DD format for max attribute
+        const today = new Date().toISOString().split('T')[0];
+
+        function setEntryState(entry, checked) {
+            const details = entry.querySelector('.disease-details-container');
+            const dateInput = details && details.querySelector('.disease-date-input');
+            const textarea = details && details.querySelector('textarea');
+            const errorSpan = dateInput && entry.querySelector('.error-message');
+
+            if (!details || !dateInput || !textarea) return;
+
+            // Set max date to today (prevent future dates)
+            dateInput.setAttribute('max', today);
+
+            // If textarea already has data (e.g., loaded from storage), ensure checkbox is checked
+            if (!checked && ((textarea.value && textarea.value.toString().trim() !== '') || 
+                            (dateInput.value && dateInput.value.toString().trim() !== ''))) {
+                const cb = entry.querySelector('input[type="checkbox"][name="disease"]');
+                if (cb) {
+                    cb.checked = true;
+                    checked = true;
+                }
+            }
+
+            if (checked) {
+                // Show and enable fields
+                details.style.display = 'flex';
+                dateInput.disabled = false;
+                dateInput.required = true;
+                textarea.disabled = false;
+                
+                // Add validation listener for date
+                if (!dateInput.dataset.listenerAdded) {
+                    dateInput.addEventListener('change', function() {
+                        validateMemberDateField(dateInput, errorSpan);
+                    });
+                    dateInput.addEventListener('blur', function() {
+                        validateMemberDateField(dateInput, errorSpan);
+                    });
+                    dateInput.dataset.listenerAdded = 'true';
+                }
+                
+                // Validate immediately if there's a value
+                if (dateInput.value) {
+                    validateMemberDateField(dateInput, errorSpan);
+                }
+            } else {
+                // Hide and disable fields
+                details.style.display = 'none';
+                dateInput.value = '';
+                dateInput.disabled = true;
+                dateInput.required = false;
+                textarea.value = '';
+                textarea.disabled = true;
+                textarea.required = false;
+                
+                // Clear error states
+                if (dateInput.classList) dateInput.classList.remove('input-error');
+                if (textarea.classList) textarea.classList.remove('error', 'is-invalid');
+                if (errorSpan) {
+                    errorSpan.textContent = '';
+                    errorSpan.style.display = 'none';
+                }
+            }
+        }
+
+        function validateMemberDateField(dateInput, errorSpan) {
+            if (!dateInput || !errorSpan) return true;
+
+            let isValid = true;
+            let message = '';
+
+            if (!dateInput.disabled && dateInput.required) {
+                if (!dateInput.value || dateInput.value.trim() === '') {
+                    isValid = false;
+                    message = 'Disease start date is required';
+                } else {
+                    const selectedDate = new Date(dateInput.value);
+                    const todayDate = new Date(today);
+                    
+                    if (selectedDate > todayDate) {
+                        isValid = false;
+                        message = 'Disease start date cannot be in the future';
+                    }
+                }
+            }
+
+            errorSpan.textContent = message;
+            errorSpan.style.display = isValid ? 'none' : 'block';
+            dateInput.classList.toggle('input-error', !isValid);
+
+            return isValid;
+        }
+
+        container.querySelectorAll('.disease-entry').forEach(entry => {
+            const checkbox = entry.querySelector('input[type="checkbox"][name="disease"]');
+            if (!checkbox) return;
+            setEntryState(entry, checkbox.checked);
+            checkbox.addEventListener('change', function() {
+                setEntryState(entry, checkbox.checked);
+                markFormAsModified();
+            });
+        });
+    }
+
+    // Initialize occupational risk toggle for a form
+    function initializeMemberOccupationalRisk(formContainer) {
+        const yesRadio = formContainer.querySelector('input[name="member-occupational-risk"][value="yes"]');
+        const noRadio = formContainer.querySelector('input[name="member-occupational-risk"][value="no"]');
+        const detailsGroup = formContainer.querySelector('.member-occupational-risk-details-group');
+
+        if (!detailsGroup || (!yesRadio && !noRadio)) return;
+
+        function render() {
+            const show = yesRadio && yesRadio.checked;
+            detailsGroup.style.display = show ? 'block' : 'none';
+            const textarea = detailsGroup.querySelector('textarea');
+            if (textarea) textarea.disabled = !show;
+        }
+
+        if (yesRadio) {
+            yesRadio.addEventListener('change', function() {
+                render();
+                markFormAsModified();
+            });
+        }
+        if (noRadio) {
+            noRadio.addEventListener('change', function() {
+                render();
+                markFormAsModified();
+            });
+        }
+        render();
+    }
+
     // Initialize member occupation dropdown for a specific form
     function initializeMemberOccupationDropdown(formContainer) {
         const input = formContainer.querySelector('.member-occupation');
@@ -156,145 +296,114 @@
         return { updateOccupationalRisk };
     }
 
-    // Initialize disease details toggles for a form
-    function initializeMemberDiseaseDetails(formContainer) {
-        const container = formContainer.querySelector('.member-disease-list');
-        if (!container) return;
+    // Initialize member secondary occupation dropdown for a specific form
+    function initializeMemberSecondaryOccupationDropdown(formContainer) {
+        const input = formContainer.querySelector('.member-secondary-occupation');
+        const hiddenInput = formContainer.querySelector('.member-secondary-occupation-value');
+        const dropdown = formContainer.querySelector('.member-secondary-occupation-list');
 
-        // Get today's date in YYYY-MM-DD format for max attribute
-        const today = new Date().toISOString().split('T')[0];
-
-        function setEntryState(entry, checked) {
-            const details = entry.querySelector('.disease-details-container');
-            const dateInput = details && details.querySelector('.disease-date-input');
-            const textarea = details && details.querySelector('textarea');
-            const errorSpan = dateInput && entry.querySelector('.error-message');
-
-            if (!details || !dateInput || !textarea) return;
-
-            // Set max date to today (prevent future dates)
-            dateInput.setAttribute('max', today);
-
-            // If textarea already has data (e.g., loaded from storage), ensure checkbox is checked
-            if (!checked && ((textarea.value && textarea.value.toString().trim() !== '') || 
-                            (dateInput.value && dateInput.value.toString().trim() !== ''))) {
-                const cb = entry.querySelector('input[type="checkbox"][name="disease"]');
-                if (cb) {
-                    cb.checked = true;
-                    checked = true;
-                }
-            }
-
-            if (checked) {
-                // Show and enable fields
-                details.style.display = 'flex';
-                dateInput.disabled = false;
-                dateInput.required = true;
-                textarea.disabled = false;
-                
-                // Add validation listener for date
-                if (!dateInput.dataset.listenerAdded) {
-                    dateInput.addEventListener('change', function() {
-                        validateMemberDateField(dateInput, errorSpan);
-                    });
-                    dateInput.addEventListener('blur', function() {
-                        validateMemberDateField(dateInput, errorSpan);
-                    });
-                    dateInput.dataset.listenerAdded = 'true';
-                }
-                
-                // Validate immediately if there's a value
-                if (dateInput.value) {
-                    validateMemberDateField(dateInput, errorSpan);
-                }
-            } else {
-                // Hide and disable fields
-                details.style.display = 'none';
-                dateInput.value = '';
-                dateInput.disabled = true;
-                dateInput.required = false;
-                textarea.value = '';
-                textarea.disabled = true;
-                textarea.required = false;
-                
-                // Clear error states
-                if (dateInput.classList) dateInput.classList.remove('input-error');
-                if (textarea.classList) textarea.classList.remove('error', 'is-invalid');
-                if (errorSpan) {
-                    errorSpan.textContent = '';
-                    errorSpan.style.display = 'none';
-                }
-            }
+        if (!input || !hiddenInput || !dropdown || typeof ALL_OCCUPATIONS === 'undefined') {
+            return null;
         }
 
-        function validateMemberDateField(dateInput, errorSpan) {
-            if (!dateInput || !errorSpan) return true;
+        let selectedIndex = -1;
+        let filteredOccupations = [];
 
-            let isValid = true;
-            let message = '';
+        function populateDropdown(occupations) {
+            dropdown.innerHTML = '';
 
-            if (!dateInput.disabled && dateInput.required) {
-                if (!dateInput.value || dateInput.value.trim() === '') {
-                    isValid = false;
-                    message = 'Disease start date is required';
+            const otherLi = document.createElement('li');
+            otherLi.textContent = 'Other';
+            otherLi.classList.add('other-option');
+            otherLi.addEventListener('click', () => selectOccupation('Other'));
+            dropdown.appendChild(otherLi);
+
+            occupations.forEach((occupation) => {
+                const li = document.createElement('li');
+                li.textContent = occupation;
+                li.addEventListener('click', () => selectOccupation(occupation));
+                dropdown.appendChild(li);
+            });
+
+            filteredOccupations = ['Other', ...occupations];
+        }
+
+        function filterOccupations(searchTerm) {
+            if (!searchTerm.trim()) {
+                return ALL_OCCUPATIONS;
+            }
+            const term = searchTerm.toLowerCase();
+            return ALL_OCCUPATIONS.filter(occupation =>
+                occupation.toLowerCase().includes(term)
+            );
+        }
+
+        function selectOccupation(occupation) {
+            input.value = occupation;
+            hiddenInput.value = occupation;
+            dropdown.classList.remove('show');
+            selectedIndex = -1;
+            markFormAsModified();
+        }
+
+        function highlightItem(index) {
+            const items = dropdown.querySelectorAll('li');
+            items.forEach((item, i) => {
+                if (i === index) {
+                    item.classList.add('highlighted');
+                    item.scrollIntoView({ block: 'nearest' });
                 } else {
-                    const selectedDate = new Date(dateInput.value);
-                    const todayDate = new Date(today);
-                    
-                    if (selectedDate > todayDate) {
-                        isValid = false;
-                        message = 'Disease start date cannot be in the future';
-                    }
+                    item.classList.remove('highlighted');
                 }
-            }
-
-            errorSpan.textContent = message;
-            errorSpan.style.display = isValid ? 'none' : 'block';
-            dateInput.classList.toggle('input-error', !isValid);
-
-            return isValid;
+            });
         }
 
-        container.querySelectorAll('.disease-entry').forEach(entry => {
-            const checkbox = entry.querySelector('input[type="checkbox"][name="disease"]');
-            if (!checkbox) return;
-            setEntryState(entry, checkbox.checked);
-            checkbox.addEventListener('change', function() {
-                setEntryState(entry, checkbox.checked);
-                markFormAsModified();
-            });
+        input.addEventListener('focus', function() {
+            const filtered = filterOccupations(input.value);
+            populateDropdown(filtered);
+            dropdown.classList.add('show');
+            selectedIndex = -1;
         });
-    }
 
-    // Initialize occupational risk toggle for a form
-    function initializeMemberOccupationalRisk(formContainer) {
-        const yesRadio = formContainer.querySelector('input[name="member-occupational-risk"][value="yes"]');
-        const noRadio = formContainer.querySelector('input[name="member-occupational-risk"][value="no"]');
-        const detailsGroup = formContainer.querySelector('.member-occupational-risk-details-group');
+        input.addEventListener('input', function(e) {
+            if (!e.isTrusted) return;
+            const filtered = filterOccupations(input.value);
+            populateDropdown(filtered);
+            dropdown.classList.add('show');
+            selectedIndex = -1;
+            markFormAsModified();
+        });
 
-        if (!detailsGroup || (!yesRadio && !noRadio)) return;
+        input.addEventListener('keydown', function(e) {
+            const items = dropdown.querySelectorAll('li');
 
-        function render() {
-            const show = yesRadio && yesRadio.checked;
-            detailsGroup.style.display = show ? 'block' : 'none';
-            const textarea = detailsGroup.querySelector('textarea');
-            if (textarea) textarea.disabled = !show;
-            if (!show && textarea) textarea.value = '';
-        }
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                highlightItem(selectedIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, 0);
+                highlightItem(selectedIndex);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (selectedIndex >= 0 && selectedIndex < filteredOccupations.length) {
+                    selectOccupation(filteredOccupations[selectedIndex]);
+                }
+            } else if (e.key === 'Escape') {
+                dropdown.classList.remove('show');
+                selectedIndex = -1;
+            }
+        });
 
-        if (yesRadio) {
-            yesRadio.addEventListener('change', function() {
-                render();
-                markFormAsModified();
-            });
-        }
-        if (noRadio) {
-            noRadio.addEventListener('change', function() {
-                render();
-                markFormAsModified();
-            });
-        }
-        render();
+        document.addEventListener('click', function(e) {
+            if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('show');
+                selectedIndex = -1;
+            }
+        });
+
+        return true;
     }
 
     // Mark form as modified
@@ -326,6 +435,7 @@
             name: formContainer.querySelector('.member-name').value.trim(),
             relationship: formContainer.querySelector('.relationship').value,
             occupation: formContainer.querySelector('.member-occupation').value.trim(),
+            secondary_occupation: formContainer.querySelector('.member-secondary-occupation')?.value.trim() || '',
             gender: formContainer.querySelector('.member-gender').value,
             dob: formContainer.querySelector('.member-dob').value,
             age: formContainer.querySelector('.member-age').value,
@@ -396,6 +506,14 @@
         formContainer.querySelector('.member-name').value = memberData.name || '';
         formContainer.querySelector('.relationship').value = memberData.relationship || '';
         formContainer.querySelector('.member-occupation').value = memberData.occupation || '';
+        if (formContainer.querySelector('.member-secondary-occupation')) {
+            formContainer.querySelector('.member-secondary-occupation').value = memberData.secondary_occupation || '';
+            const secondaryCheckbox = formContainer.querySelector('.member-secondary-occupation-checkbox');
+            if (secondaryCheckbox) {
+                secondaryCheckbox.checked = !!memberData.secondary_occupation;
+                secondaryCheckbox.dispatchEvent(new Event('change'));
+            }
+        }
         formContainer.querySelector('.member-gender').value = memberData.gender || '';
         formContainer.querySelector('.member-dob').value = memberData.dob || '';
         formContainer.querySelector('.member-age').value = memberData.age || '';
@@ -505,6 +623,16 @@
             occRiskDetails.style.display = 'none';
         }
 
+        // Hide secondary occupation
+        const secondarySection = formContainer.querySelector('.member-secondary-occupation-section');
+        if (secondarySection) {
+            secondarySection.style.display = 'none';
+            const secondaryCheckbox = formContainer.querySelector('.member-secondary-occupation-checkbox');
+            if (secondaryCheckbox) {
+                secondaryCheckbox.checked = false;
+            }
+        }
+
         // Clear readonly fields
         formContainer.querySelector('.member-age').value = '';
         formContainer.querySelector('.member-bmi').value = '';
@@ -572,9 +700,19 @@
         initializeMemberDiseaseDetails(contentDiv);
         initializeMemberOccupationalRisk(contentDiv);
         initializeMemberOccupationDropdown(contentDiv);
+        initializeMemberSecondaryOccupationDropdown(contentDiv);
+
+        const secondaryCheckbox = contentDiv.querySelector('.member-secondary-occupation-checkbox');
+        const secondarySection = contentDiv.querySelector('.member-secondary-occupation-section');
+        if (secondaryCheckbox && secondarySection) {
+            secondaryCheckbox.addEventListener('change', function() {
+                secondarySection.style.display = this.checked ? 'block' : 'none';
+            });
+        }
+        
         initializeAgeCalculation(contentDiv);
         initializeBmiCalculation(contentDiv);
-
+        
         // Add change listeners to all form inputs
         formContainer.querySelectorAll('input, select, textarea').forEach(input => {
             input.addEventListener('input', markFormAsModified);

@@ -253,21 +253,6 @@
                             <span class="error-message relationship-error"></span>
                         </div>
                         <div class="form-group">
-                            <label>Occupation</label>
-                            <div class="searchable-dropdown-wrapper">
-                                <input type="text" 
-                                    class="member-occupation" 
-                                    name="occupation" 
-                                    placeholder="Search or select occupation..."
-                                    autocomplete="off"
-                                    pattern="[A-Za-z\s]+" 
-                                    title="Please enter only letters and spaces.">
-                                <input type="hidden" class="member-occupation-value" name="occupation_value">
-                                <ul class="member-occupation-list dropdown-list" role="listbox"></ul>
-                            </div>
-                            <span class="error-message member-occupation-error"></span>
-                        </div>
-                        <div class="form-group">
                             <label>Gender *</label>
                             <select class="member-gender" name="gender" required>
                                 <option value="">Select Gender</option>
@@ -276,6 +261,44 @@
                                 <option value="other">Other</option>
                             </select>
                             <span class="error-message member-gender-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-row" style="display: flex; flex-wrap: nowrap;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Primary Occupation</label>
+                            <div class="searchable-dropdown-wrapper">
+                                <input type="text" 
+                                    class="member-occupation" 
+                                    name="occupation" 
+                                    placeholder="Search or select primary occupation..."
+                                    autocomplete="off"
+                                    pattern="[A-Za-z\s]+" 
+                                    title="Please enter only letters and spaces.">
+                                <input type="hidden" class="member-occupation-value" name="occupation_value">
+                                <ul class="member-occupation-list dropdown-list" role="listbox"></ul>
+                            </div>
+                            <span class="error-message member-occupation-error"></span>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <div class="form-group-checkbox" style="display: flex; align-items: center; gap: 5px; height: 21px; margin-bottom: 2px;">
+                                <input type="checkbox" class="member-secondary-occupation-checkbox" name="member_secondary_occupation_checkbox">
+                                <label class="member-secondary-occupation-label">Secondary Occupation</label>
+                            </div>
+                            <div class="member-secondary-occupation-section" style="display: none;">
+                                <div class="searchable-dropdown-wrapper">
+                                    <input type="text" 
+                                        class="member-secondary-occupation" 
+                                        name="member_secondary_occupation" 
+                                        placeholder="Search or select secondary occupation..."
+                                        autocomplete="off"
+                                        pattern="[A-Za-z\s]+" 
+                                        title="Please enter only letters and spaces.">
+                                    <input type="hidden" class="member-secondary-occupation-value" name="member_secondary_occupation_value">
+                                    <ul class="member-secondary-occupation-list dropdown-list" role="listbox"></ul>
+                                </div>
+                                <span class="error-message member-secondary-occupation-error"></span>
+                            </div>
                         </div>
                     </div>
                 </fieldset>

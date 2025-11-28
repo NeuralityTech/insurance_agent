@@ -42,13 +42,15 @@
                         <option value="other">Other</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="occupation">Occupation</label>
+            </div>
+            <div class="form-row">
+                <div class="form-group" style="flex: 1;">
+                    <label for="occupation">Primary Occupation</label>
                     <div class="searchable-dropdown-wrapper">
                         <input type="text" 
                             id="occupation" 
                             name="occupation" 
-                            placeholder="Search or select occupation..."
+                            placeholder="Search or select primary occupation..."
                             autocomplete="off"
                             aria-autocomplete="list"
                             aria-controls="occupation-list">
@@ -56,6 +58,26 @@
                         <ul id="occupation-list" class="dropdown-list" role="listbox"></ul>
                     </div>
                     <span class="error-message" id="occupation-error"></span>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <div class="form-group-checkbox" style="display: flex; align-items: center; gap: 5px; height: 21px; margin-bottom: 2px;">
+                        <input type="checkbox" id="secondary-occupation-checkbox" name="secondary_occupation_checkbox">
+                        <label for="secondary-occupation-checkbox">Secondary Occupation</label>
+                    </div>
+                    <div id="secondary-occupation-section" style="display: none;">
+                        <div class="searchable-dropdown-wrapper">
+                            <input type="text" 
+                                id="secondary-occupation" 
+                                name="secondary_occupation" 
+                                placeholder="Search or select secondary occupation..."
+                                autocomplete="off"
+                                aria-autocomplete="list"
+                                aria-controls="secondary-occupation-list">
+                            <input type="hidden" id="secondary-occupation-value" name="secondary_occupation_value">
+                            <ul id="secondary-occupation-list" class="dropdown-list" role="listbox"></ul>
+                        </div>
+                        <span class="error-message" id="secondary-occupation-error"></span>
+                    </div>
                 </div>
             </div>
 
