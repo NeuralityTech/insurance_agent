@@ -1,7 +1,6 @@
 /**
  * This script handles fetching existing user data from the database and populating the form.
  * It is triggered when an existing user enters their UniqueID.
- * FIXED: Disease handling now properly scoped to primary applicant only
  */
 
 // Debounce function to limit how often the fetch request is made
@@ -27,8 +26,6 @@ function populateForm(data) {
     try {
         // Handle direct field mapping first (flat structure)
         populateDirectFields(data);
-        // After basic fields are in place, if we have a hidden cm height field,
-        // sync visible ft/in inputs for height
         if (typeof window.updateHeightFeetInchesFromCm === "function") {
             window.updateHeightFeetInchesFromCm();
         }
@@ -55,7 +52,7 @@ function populateForm(data) {
                 if (value === undefined || value === null || value === '') continue;
                 
                 // Skip invalid field names and blacklisted fields
-                // FIXED: Also skip disease-related fields - handled separately by handleDiseaseData
+                // Also skip disease-related fields - handled separately by handleDiseaseData
                 if (!fieldName || typeof fieldName !== 'string' || /^\d+$/.test(fieldName) || 
                     FIELD_BLACKLIST.includes(fieldName) ||
                     fieldName === 'disease' || fieldName.endsWith('_details') || fieldName.endsWith('_start_date')) {
@@ -213,9 +210,9 @@ function handleSpecialFields(data) {
     handleDiseaseData(data);
 }
 
-// FIXED: Function to handle disease checkbox data for PRIMARY APPLICANT ONLY
+// Function to handle disease checkbox data for PRIMARY APPLICANT ONLY
 function handleDiseaseData(data) {
-    // IMPORTANT: Only look for disease data in healthHistory to avoid accidentally
+    // Only look for disease data in healthHistory to avoid accidentally
     // using member data as primary applicant data
     let diseaseData = null;
     let diseaseArray = null;
@@ -228,7 +225,6 @@ function handleDiseaseData(data) {
         diseaseArray = Array.isArray(data.health_history.disease) ? data.health_history.disease : [data.health_history.disease];
         diseaseData = data.health_history;
     }
-    // NOTE: Removed fallback to data.disease as that could pick up member data
     
     if (diseaseArray && diseaseArray.length > 0) {
         // Filter out empty values that might have accumulated from data corruption
@@ -239,7 +235,6 @@ function handleDiseaseData(data) {
         diseaseArray.forEach(val => {
             if (!val || val === '') return;
             
-            // FIXED: Only target disease checkboxes in the primary applicant's health-history-content
             // This prevents accidentally checking member disease checkboxes
             const healthHistoryContent = document.getElementById('health-history-content');
             if (!healthHistoryContent) {
@@ -349,7 +344,6 @@ function initializeDataFetch() {
                     if (window.updatePeopleCounter) window.updatePeopleCounter();
                     // Handle disease checkboxes specially
                     handleDiseaseData(data);
-                    // FIXED: Final safety sync - only for primary applicant section
                     (function syncDiseaseUI(){
                         const healthHistoryContent = document.getElementById('health-history-content');
                         if (!healthHistoryContent) return;
