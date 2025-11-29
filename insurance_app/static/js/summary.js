@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let html = '';
 
-    // Function to create summary section
+    // Function to create a summary section
     /**
      * Creates an HTML fieldset section for a given part of the summary data.
      * @param {string} title - The title of the section.
@@ -249,11 +249,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     summaryContainer.innerHTML = html;
-    // Ensure comments are rendered even if not present in local cache
-    renderCommentsSectionIfAvailable();
+    // Ensure notes are rendered even if not present in local cache
+    renderNotesSectionIfAvailable();
 
-    // Comments Noted table (with fallback fetch by unique_id if missing)
-    async function renderCommentsSectionIfAvailable() {
+    // Notes table (with fallback fetch by unique_id if missing)
+    async function renderNotesSectionIfAvailable() {
         let commentsArray = null;
         if (summaryData.commentsNoted && Array.isArray(summaryData.commentsNoted?.comments_noted) && summaryData.commentsNoted.comments_noted.length > 0) {
             commentsArray = summaryData.commentsNoted.comments_noted;
@@ -282,8 +282,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (commentsArray && commentsArray.length > 0) {
-            let cHtml = '<fieldset><legend>Comments Noted</legend>';
-            cHtml += '<table class="comments-table"><thead><tr><th>Date/Time</th><th>Author</th><th>Comment</th></tr></thead><tbody>';
+            let cHtml = '<fieldset><legend>Notes</legend>';
+            cHtml += '<table class="comments-table"><thead><tr><th>Date/Time</th><th>Author</th><th>Note</th></tr></thead><tbody>';
             commentsArray.forEach(c => {
                 const ts = formatTimestampSummary(c.created_at || c.timestamp);
                 const author = escapeHtmlSummary(c.author || c.user || 'User');
@@ -356,16 +356,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     uniqueId = summary.primaryContact['unique_id'] || summary.primaryContact['Unique Id'];
                 }
                 if (uniqueId) {
-                    window.location.href = `Existing_Applicant_Request_Form.html?uid=${encodeURIComponent(uniqueId)}`;
+                    window.location.href = `Existing_User_Request_Page.html?unique_id=${encodeURIComponent(uniqueId)}`;
                 } else {
-                    window.location.href = 'Existing_Applicant_Request_Form.html';
+                    window.location.href = 'Existing_User_Request_Page.html';
                 }
             };
         }
     }
 });
 
-// Helper functions for Comments Noted in summary
+// Helper functions for Notes in summary
 function escapeHtmlSummary(text) {
     const div = document.createElement('div');
     div.textContent = String(text || '');

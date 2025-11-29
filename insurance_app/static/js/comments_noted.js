@@ -1,6 +1,6 @@
 /*
- * Comments Noted functionality for insurance forms
- * Handles adding, displaying, and managing comments for submissions
+ * Notes functionality for insurance forms
+ * Handles adding, displaying, and managing notes for submissions
  */
 
 (function() {
@@ -22,7 +22,7 @@
     }
 
     function initializeCommentsNoted() {
-        console.log('Initializing Comments Noted...');
+        console.log('Initializing Notes...');
         
         // Clear any stale session data on initialization
         clearStaleSessionData();
@@ -31,11 +31,11 @@
         if (els.addCommentBtn) {
             els.addCommentBtn.removeEventListener('click', addNewComment);
             els.addCommentBtn.addEventListener('click', addNewComment);
-            console.log('Add Comment button event listener attached');
+            console.log('Add Note button event listener attached');
         } else {
-            console.log('Add Comment button not found!');
+            console.log('Add Note button not found!');
         }
-        loadExistingComments();
+        loadExistingNotes();
     }
 
     function clearStaleSessionData() {
@@ -56,7 +56,7 @@
         }
     }
 
-    async function loadExistingComments(uidOptional) {
+    async function loadExistingNotes(uidOptional) {
         let uid = uidOptional || null;
         if (!uid) {
             const urlUniqueId = new URLSearchParams(window.location.search).get('uid');
@@ -94,7 +94,7 @@
                 renderCommentsTable();
             }
         } catch (e) {
-            console.warn('Failed to load existing comments', e);
+            console.warn('Failed to load existing notes', e);
             commentsData = [];
             try { localStorage.setItem('comments_noted', JSON.stringify([])); } catch(e) {} 
             renderCommentsTable();
@@ -102,7 +102,7 @@
     }
 
     async function addNewComment() {
-        console.log('Add comment button clicked');
+        console.log('Add note button clicked');
         const els = ensureElements();
         if (!els.textarea) {
             console.log('Textarea not found');
@@ -110,9 +110,9 @@
         }
 
         const commentText = (els.textarea.value || '').trim();
-        console.log('Comment text:', commentText);
+        console.log('Note text:', commentText);
         if (!commentText) { 
-            alert('Please enter a comment.'); 
+            alert('Please enter a note.'); 
             return; 
         }
 
@@ -181,15 +181,15 @@
                 updateLastModifiedFooter();
                 updateMainPageLastModified(userId, newCommentLocal.timestamp);
             } else {
-                alert('Failed to save comment. Please try again.');
+                alert('Failed to save note. Please try again.');
             }
         } catch (e) {
-            console.error('Error saving comment', e);
-            alert('Error saving comment. Please try again.');
+            console.error('Error saving note', e);
+            alert('Error saving note. Please try again.');
         } finally {
             if (els.addCommentBtn) { 
                 els.addCommentBtn.disabled = false; 
-                els.addCommentBtn.textContent = 'Add Comment'; 
+                els.addCommentBtn.textContent = 'Add Note'; 
             }
         }
     }
@@ -199,7 +199,7 @@
         if (!els.countEl || !els.noMsg || !els.table || !els.tbody) return;
 
         const count = commentsData.length;
-        els.countEl.textContent = count === 0 ? 'No comments yet' : (count === 1 ? '1 comment' : `${count} comments`);
+        els.countEl.textContent = count === 0 ? 'No notes yet' : (count === 1 ? '1 note' : `${count} notes`);
 
         if (count === 0) {
             els.noMsg.style.display = 'block';
@@ -228,9 +228,9 @@
         if (!els.lastModifiedFooter || !els.lastModifiedBy || !els.lastModifiedDate) return;
 
         if (commentsData.length > 0) {
-            const latestComment = commentsData[0]; // First item is latest due to DESC order
-            els.lastModifiedBy.textContent = latestComment.modifier || '—';
-            els.lastModifiedDate.textContent = formatTimestamp(latestComment.timestamp);
+            const latestNote = commentsData[0]; // First item is latest due to DESC order
+            els.lastModifiedBy.textContent = latestNote.modifier || '—';
+            els.lastModifiedDate.textContent = formatTimestamp(latestNote.timestamp);
             els.lastModifiedFooter.style.display = 'block';
         } else {
             els.lastModifiedFooter.style.display = 'none';
@@ -286,27 +286,29 @@
     }
 
     // Export functions to global scope
+    // Keep old names for backward compatibility with existing code
     window.initializeCommentsNoted = initializeCommentsNoted;
-    window.loadExistingComments = loadExistingComments;
+    window.loadExistingComments = loadExistingNotes; // Backward compatible alias
+    window.loadExistingNotes = loadExistingNotes;    // New name
     window.getCommentsData = getCommentsData;
     window.clearCommentsSession = function() {
         sessionStorage.removeItem('currentUniqueId');
         currentUniqueId = null;
         commentsData = [];
         renderCommentsTable();
-        console.log('Comments session cleared manually');
+        console.log('Notes session cleared manually');
         try { localStorage.setItem('comments_noted', JSON.stringify(commentsData)); } catch(e) {}
     };
 
-    // Test function to manually trigger comment addition
-    window.testAddComment = function() {
+    // Test function to manually trigger note addition
+    window.testAddNote = function() {
         alert('Test function called');
         addNewComment();
     };
 
     // Auto-initialize when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Comments_Noted.js DOMContentLoaded fired');
+        console.log('Notes module DOMContentLoaded fired');
         initializeCommentsNoted();
     });
 })();

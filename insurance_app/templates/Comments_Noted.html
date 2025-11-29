@@ -5,7 +5,7 @@
     <script defer src="/static/js/logo.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comments Noted</title>
+    <title>Notes</title>
     <link rel="stylesheet" href="../css/common.css">
     <style>
         .comments-section {
@@ -69,28 +69,28 @@
 </head>
 <body>
     <fieldset>
-        <legend>Comments Noted</legend>
+        <legend>Notes</legend>
         
         <div class="add-comment-section">
             <div class="form-group">
-                <label for="new-comment">Add New Comment</label>
-                <textarea id="new-comment" name="new_comment" rows="3" placeholder="Enter your comment here..."></textarea>
+                <label for="new-comment">Add New Note</label>
+                <textarea id="new-comment" name="new_comment" rows="3" placeholder="Enter your note here..."></textarea>
             </div>
-            <button type="button" id="add-comment-btn" class="btn btn-secondary">Add Comment</button>
+            <button type="button" id="add-comment-btn" class="btn btn-secondary">Add Note</button>
         </div>
 
         <div class="comments-section">
-            <div id="comments-count" class="comments-count">No comments yet</div>
+            <div id="comments-count" class="comments-count">No notes yet</div>
             
             <div id="no-comments-message" class="no-comments-message" style="display: block;">
-                No comments have been added yet.
+                No notes have been added yet.
             </div>
             
             <table id="comments-table" class="comments-table" style="display: none;">
                 <thead>
                     <tr>
                         <th>Modifier (Agent)</th>
-                        <th>Comments</th>
+                        <th>Notes</th>
                         <th>Date & Time</th>
                     </tr>
                 </thead>

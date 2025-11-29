@@ -1,6 +1,7 @@
 /**
  * This script handles fetching existing user data from the database and populating the form.
  * It is triggered when an existing user enters their UniqueID.
+ * FIXED: Disease handling now properly scoped to primary applicant only
  */
 
 // Debounce function to limit how often the fetch request is made
@@ -54,8 +55,10 @@ function populateForm(data) {
                 if (value === undefined || value === null || value === '') continue;
                 
                 // Skip invalid field names and blacklisted fields
+                // FIXED: Also skip disease-related fields - handled separately by handleDiseaseData
                 if (!fieldName || typeof fieldName !== 'string' || /^\d+$/.test(fieldName) || 
-                    FIELD_BLACKLIST.includes(fieldName)) {
+                    FIELD_BLACKLIST.includes(fieldName) ||
+                    fieldName === 'disease' || fieldName.endsWith('_details') || fieldName.endsWith('_start_date')) {
                     continue;
                 }
                 
@@ -182,17 +185,8 @@ function populateField(fieldName, value) {
                 });
             }
         } else if (type === 'date') {
-            // Handle date fields specially
-            let dateValue = value;
-            if (typeof value === 'string' && value.includes('/')) {
-                // Convert DD/MM/YYYY to YYYY-MM-DD
-                const parts = value.split('/');
-                if (parts.length === 3) {
-                    dateValue = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-                }
-            }
             elements.forEach(el => {
-                el.value = dateValue;
+                el.value = value;
                 el.dispatchEvent(new Event('change', { bubbles: true }));
             });
         } else {
@@ -219,7 +213,7 @@ function handleSpecialFields(data) {
     handleDiseaseData(data);
 }
 
-// Function to handle disease checkbox data
+// FIXED: Function to handle disease checkbox data for PRIMARY APPLICANT ONLY
 function handleDiseaseData(data) {
     // IMPORTANT: Only look for disease data in healthHistory to avoid accidentally
     // using member data as primary applicant data
@@ -237,13 +231,25 @@ function handleDiseaseData(data) {
     // NOTE: Removed fallback to data.disease as that could pick up member data
     
     if (diseaseArray && diseaseArray.length > 0) {
-        console.log('Processing disease data:', diseaseArray);
+        // Filter out empty values that might have accumulated from data corruption
+        diseaseArray = diseaseArray.filter(v => v !== undefined && v !== null && String(v).trim() !== '');
+        
+        console.log('Processing PRIMARY APPLICANT disease data:', diseaseArray);
+        
         diseaseArray.forEach(val => {
             if (!val || val === '') return;
             
-            const cb = document.querySelector(`input[name="disease"][value="${val}"]`);
+            // FIXED: Only target disease checkboxes in the primary applicant's health-history-content
+            // This prevents accidentally checking member disease checkboxes
+            const healthHistoryContent = document.getElementById('health-history-content');
+            if (!healthHistoryContent) {
+                console.warn('health-history-content not found for disease prefill');
+                return;
+            }
+            
+            const cb = healthHistoryContent.querySelector(`input[name="disease"][value="${val}"]`);
             if (!cb) {
-                console.warn(`Disease checkbox not found for: ${val}`);
+                console.warn(`Disease checkbox not found in health-history-content for: ${val}`);
                 return;
             }
             
@@ -253,10 +259,20 @@ function handleDiseaseData(data) {
             
             // Set textarea value if present - only look in diseaseData, not entire data object
             const detailsKey = `${val}_details`;
-            const txt = document.querySelector(`textarea[name="${detailsKey}"]`);
+            const txt = healthHistoryContent.querySelector(`textarea[name="${detailsKey}"]`);
             if (txt && diseaseData && diseaseData[detailsKey] !== undefined) {
+                txt.disabled = false;
                 txt.value = diseaseData[detailsKey];
                 console.log(`Set ${detailsKey} to:`, diseaseData[detailsKey]);
+            }
+            
+            // Set start date if present - only look in diseaseData
+            const dateKey = `${val}_start_date`;
+            const dateInput = healthHistoryContent.querySelector(`input[name="${dateKey}"]`);
+            if (dateInput && diseaseData && diseaseData[dateKey] !== undefined) {
+                dateInput.disabled = false;
+                dateInput.value = diseaseData[dateKey];
+                console.log(`Set ${dateKey} to:`, diseaseData[dateKey]);
             }
         });
     }
@@ -333,16 +349,21 @@ function initializeDataFetch() {
                     if (window.updatePeopleCounter) window.updatePeopleCounter();
                     // Handle disease checkboxes specially
                     handleDiseaseData(data);
-                    // Final safety sync: ensure all checked diseases show their details containers
+                    // FIXED: Final safety sync - only for primary applicant section
                     (function syncDiseaseUI(){
-                        document.querySelectorAll('.disease-entry').forEach(entry => {
+                        const healthHistoryContent = document.getElementById('health-history-content');
+                        if (!healthHistoryContent) return;
+                        
+                        healthHistoryContent.querySelectorAll('.disease-entry').forEach(entry => {
                             const cb = entry.querySelector('input[type="checkbox"][name="disease"]');
                             const details = entry.querySelector('.disease-details-container');
                             const ta = details ? details.querySelector('textarea') : null;
+                            const dateInput = details ? details.querySelector('.disease-date-input') : null;
                             if (!cb || !details || !ta) return;
                             if (cb.checked) {
                                 details.style.display = 'flex';
                                 ta.disabled = false;
+                                if (dateInput) dateInput.disabled = false;
                             }
                         });
                     })();

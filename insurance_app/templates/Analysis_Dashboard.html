@@ -41,7 +41,7 @@
         </section>
 
         <div id="supervisor-comments-block" class="supervisor-comments is-hidden">
-            <h3>Supervisor Comments</h3>
+            <h3>Supervisor Notes</h3>
             <p id="supervisor-comments-text"></p>
         </div>
 
@@ -253,7 +253,7 @@
                     const modifiedByRaw = modifiedByJsonEl ? JSON.parse(modifiedByJsonEl.textContent) : null;
 
                     const statusDisp = (statusRaw && String(statusRaw).trim()) ? statusRaw : 'Open';
-                    const comments = (commentsRaw && String(commentsRaw).trim()) ? commentsRaw : 'No comments';
+                    const comments = (commentsRaw && String(commentsRaw).trim()) ? commentsRaw : 'No Notes';
                     let by = modifiedByRaw || '—';
 
                     let tsStr = '—';
@@ -275,7 +275,7 @@
 
                     const summaryHtml =
                         '<strong>Application Status:</strong> ' + statusDisp + '<br>' +
-                        '<strong>Comments:</strong> ' + comments + '<br>' +
+                        '<strong>Notes:</strong> ' + comments + '<br>' +
                         '<strong>Last Updated by:</strong> ' + by +
                         ' <strong>Last Updated at:</strong> ' + tsStr;
 

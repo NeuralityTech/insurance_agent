@@ -74,15 +74,15 @@
 
             <div id="decision-modal" class="modal-backdrop" aria-hidden="true">
                 <div class="modal">
-                    <h3 id="decision-modal-title">Supervisor Comments</h3>
+                    <h3 id="decision-modal-title">Supervisor Notes</h3>
                     <p style="margin-top:0;color:#555">
-                        Please provide comments for this decision. This field is mandatory.
+                        Please provide notes for this decision. This field is mandatory.
                     </p>
 
                     <div id="sup-selected-summary" style="display:none;"></div>
 
                     <textarea id="decision-comments"
-                              placeholder="Enter your comments..."></textarea>
+                              placeholder="Enter your notes..."></textarea>
 
                     <div class="modal-actions">
                         <button id="decision-cancel" class="btn btn-secondary">
@@ -588,7 +588,7 @@
                     : (pendingDecision === 'sup_rejected'
                         ? 'SUP_REJECTED'
                         : String(pendingDecision).toUpperCase());
-                modalTitle.textContent = `Supervisor Comments for ${titleKey}`;
+                modalTitle.textContent = `Supervisor Notes for ${titleKey}`;
                 try {
                     const box = document.getElementById('sup-selected-summary');
                     if (box) {

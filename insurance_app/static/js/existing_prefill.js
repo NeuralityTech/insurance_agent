@@ -1,8 +1,9 @@
 // Prefill helper for Existing User request Page
 // Exposes window.prefillExistingForm(data)
+// FIXED: Now properly scopes disease prefill to primary applicant only
 (function(){
   async function waitForSections() {
-    // Wait until primary section content has inputs by script.js
+    // Wait until primary section content has inputs loaded by script.js
     const maxWaitMs = 8000;
     const interval = 100;
     let waited = 0;
@@ -37,6 +38,35 @@
     });
   }
 
+  // Helper to extract a single meaningful value from potentially corrupted array data
+  function extractSingleValue(val) {
+    if (val === undefined || val === null) return null;
+    
+    // If it's an array, find the first non-empty value
+    if (Array.isArray(val)) {
+      for (const item of val) {
+        if (item !== undefined && item !== null && String(item).trim() !== '') {
+          return String(item).trim();
+        }
+      }
+      return null; // All values were empty
+    }
+    
+    // If it's a string that looks like a comma-separated array (e.g., "male,,male" or ",2024-01-01")
+    if (typeof val === 'string' && val.includes(',')) {
+      const parts = val.split(',');
+      for (const part of parts) {
+        if (part.trim() !== '') {
+          return part.trim();
+        }
+      }
+      return null;
+    }
+    
+    // Return as-is if it's a simple value
+    return val;
+  }
+
   function setFields(containerId, values) {
     if (!values) return;
     const container = document.getElementById(containerId);
@@ -47,8 +77,15 @@
     
     console.log(`Setting fields in ${containerId}:`, values);
     
-    Object.entries(values).forEach(([name, val]) => {
-      if (val === undefined || val === null || val === '') return;
+    Object.entries(values).forEach(([name, rawVal]) => {
+      if (rawVal === undefined || rawVal === null || rawVal === '') return;
+      
+      // Skip fields that don't belong in this section (member fields, etc.)
+      // FIXED: Also skip disease-related fields - they're handled separately
+      const skipPatterns = ['member_', 'member-', 'comments_noted', 'disease'];
+      if (skipPatterns.some(pattern => name.startsWith(pattern) || name === pattern)) {
+        return;
+      }
       
       // Try multiple selectors to find the field
       let els = container.querySelectorAll(`[name="${CSS.escape(name)}"]`);
@@ -65,7 +102,6 @@
         for (const variation of variations) {
           els = container.querySelectorAll(`[name="${CSS.escape(variation)}"]`);
           if (els.length > 0) {
-            console.log(`Found field using variation: ${variation}`);
             break;
           }
         }
@@ -76,12 +112,11 @@
         const byId = container.querySelector(`#${CSS.escape(name)}`);
         if (byId) {
           els = [byId];
-          console.log(`Found field by ID: ${name}`);
         }
       }
       
       if (els.length === 0) {
-        console.warn(`Field not found: ${name}`);
+        // Don't log warnings for fields that clearly don't belong in this section
         return;
       }
       
@@ -93,23 +128,36 @@
           el.disabled = false;
           
           if (el.type === 'radio') {
-            if (String(el.value) === String(val)) {
+            // For radio buttons, extract single value and compare
+            const cleanVal = extractSingleValue(rawVal);
+            if (cleanVal && String(el.value) === String(cleanVal)) {
               el.checked = true;
               el.dispatchEvent(new Event('change', { bubbles: true }));
-              console.log(`Set radio ${name} to ${val}`);
+              console.log(`Set radio ${name} to ${cleanVal}`);
             }
           } else if (el.type === 'checkbox') {
-            if (Array.isArray(val)) {
-              el.checked = val.includes(el.value);
+            // For checkboxes (like disease), handle array of selected values
+            if (Array.isArray(rawVal)) {
+              // Filter out empty values and check if this checkbox's value is in the array
+              const cleanArray = rawVal.filter(v => v !== undefined && v !== null && String(v).trim() !== '');
+              el.checked = cleanArray.includes(el.value);
+            } else if (typeof rawVal === 'string' && rawVal.includes(',')) {
+              // Handle comma-separated string
+              const parts = rawVal.split(',').map(p => p.trim()).filter(p => p !== '');
+              el.checked = parts.includes(el.value);
             } else {
-              el.checked = Boolean(val) || String(el.value) === String(val);
+              el.checked = Boolean(rawVal) || String(el.value) === String(rawVal);
             }
             el.dispatchEvent(new Event('change', { bubbles: true }));
             console.log(`Set checkbox ${name} to ${el.checked}`);
           } else if (el.type === 'date') {
-            let dateValue = val;
-            if (typeof val === 'string' && val.includes('/')) {
-              const parts = val.split('/');
+            // Extract single date value
+            let dateValue = extractSingleValue(rawVal);
+            if (!dateValue) return;
+            
+            // Convert dd/mm/yyyy to yyyy-mm-dd if needed
+            if (typeof dateValue === 'string' && dateValue.includes('/')) {
+              const parts = dateValue.split('/');
               if (parts.length === 3) {
                 dateValue = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
               }
@@ -117,21 +165,23 @@
             el.value = dateValue;
             el.dispatchEvent(new Event('change', { bubbles: true }));
             console.log(`Set date ${name} to ${dateValue}`);
-          } else {
-            // Handle array values - convert to string properly
-            // Arrays should only be used for checkboxes, but if we get one for a text field,
-            // use the first value or join without trailing commas
-            let finalVal = val;
-            if (Array.isArray(val)) {
-              // Filter out empty values and join
-              const filtered = val.filter(v => v !== null && v !== undefined && String(v).trim() !== '');
-              finalVal = filtered.length > 0 ? filtered[0] : ''; // Use first value for text inputs
-              console.log(`Array value for ${name}, using first value: ${finalVal}`);
+          } else if (el.tagName === 'SELECT') {
+            // For select dropdowns, extract single value
+            const cleanVal = extractSingleValue(rawVal);
+            if (cleanVal) {
+              el.value = cleanVal;
+              el.dispatchEvent(new Event('change', { bubbles: true }));
+              console.log(`Set select ${name} to ${cleanVal}`);
             }
-            el.value = finalVal;
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-            el.dispatchEvent(new Event('change', { bubbles: true }));
-            console.log(`Set field ${name} to ${finalVal}`);
+          } else {
+            // For text inputs/textareas, extract single value
+            const cleanVal = extractSingleValue(rawVal);
+            if (cleanVal !== null) {
+              el.value = cleanVal;
+              el.dispatchEvent(new Event('input', { bubbles: true }));
+              el.dispatchEvent(new Event('change', { bubbles: true }));
+              console.log(`Set field ${name} to ${cleanVal}`);
+            }
           }
           
           // Restore disabled state if it was disabled
@@ -147,28 +197,26 @@
 
   async function prefillExistingForm(data) {
     console.log('Starting prefill with data:', data);
-    
-    // Check if we have a unique_id to use as a guard
-    const uid = data.unique_id || (data.primaryContact && data.primaryContact.unique_id);
-    
-    // Guard against double population
-    if (uid && window._existingPrefillDone === uid) {
-      console.log('Prefill already done for this unique_id, skipping');
-      return;
-    }
-    
     await waitForSections();
     
     try {
+      // Helper function to check if an object has meaningful content
+      const hasContent = (obj) => obj && typeof obj === 'object' && Object.keys(obj).length > 0;
+      
       // Handle both nested and flat data structures
-      // IMPORTANT: Only use the specific section data, never fall back to the entire data object
-      // as that could include members' data which would corrupt the primary applicant's fields
-      const primaryContactData = data.primaryContact || {};
-      const healthHistoryData = data.healthHistory || {};
-      const coverCostData = data.coverAndCost || {};
-      const existingCoverageData = data.existingCoverage || {};
-      const claimsServiceData = data.claimsAndService || {};
-      const financeDocData = data.financeAndDocumentation || {};
+      // Only use nested structure if it actually has content, otherwise fall back to flat data
+      const primaryContactData = hasContent(data.primaryContact) ? data.primaryContact : data;
+      const healthHistoryData = hasContent(data.healthHistory) ? data.healthHistory : data;
+      const coverCostData = hasContent(data.coverAndCost) ? data.coverAndCost : data;
+      const existingCoverageData = hasContent(data.existingCoverage) ? data.existingCoverage : data;
+      const claimsServiceData = hasContent(data.claimsAndService) ? data.claimsAndService : data;
+      const financeDocData = hasContent(data.financeAndDocumentation) ? data.financeAndDocumentation : data;
+      
+      console.log('Section data extracted:', {
+        primaryContact: Object.keys(primaryContactData).length,
+        healthHistory: Object.keys(healthHistoryData).length,
+        coverCost: Object.keys(coverCostData).length
+      });
       
       // Use section-specific data
       setFields('primary-contact-content', primaryContactData);
@@ -188,55 +236,61 @@
         window.loadExistingComments(uid);
       }
 
-      // Explicitly handle disease list to ensure details are revealed and values applied
-      // IMPORTANT: Only use healthHistoryData, never data.disease as that could include member data
+      // FIXED: Explicitly handle disease list for PRIMARY APPLICANT ONLY
+      // Only look in healthHistory section, not in top-level data (which may have member data mixed in)
       const diseaseData = healthHistoryData.disease;
       if (diseaseData) {
-        const diseaseArr = Array.isArray(diseaseData) ? diseaseData : (diseaseData ? [diseaseData] : []);
+        // Clean up disease array - filter out empty values
+        let diseaseArr = [];
+        if (Array.isArray(diseaseData)) {
+          diseaseArr = diseaseData.filter(v => v !== undefined && v !== null && String(v).trim() !== '');
+        } else if (typeof diseaseData === 'string') {
+          // Handle comma-separated string
+          diseaseArr = diseaseData.split(',').map(v => v.trim()).filter(v => v !== '');
+        }
+        
+        console.log('Processing PRIMARY APPLICANT diseases:', diseaseArr);
+        
         diseaseArr.forEach(val => {
-          const cb = document.querySelector(`#health-history-content input[name="disease"][value="${CSS.escape(val)}"]`)
-            || document.querySelector(`input[name="disease"][value="${CSS.escape(val)}"]`);
-          if (!cb) return;
+          if (!val) return;
+          
+          // FIXED: Only target disease checkboxes in the health-history-content section
+          // This prevents accidentally checking member disease checkboxes
+          const cb = document.querySelector(`#health-history-content input[name="disease"][value="${CSS.escape(val)}"]`);
+          if (!cb) {
+            console.log(`Disease checkbox not found in health-history-content for: ${val}`);
+            return;
+          }
           cb.checked = true;
           cb.dispatchEvent(new Event('change', { bubbles: true }));
           
-          // Set disease details textarea
+          // Handle disease details textarea - ONLY in healthHistoryData
           const detailsKey = `${val}_details`;
-          const detailsValue = healthHistoryData[detailsKey];
-          const txt = document.querySelector(`#health-history-content textarea[name="${CSS.escape(detailsKey)}"]`)
-            || document.querySelector(`textarea[name="${CSS.escape(detailsKey)}"]`);
-          if (txt && typeof detailsValue !== 'undefined') {
-            // Handle array values - use first value if array
-            let finalDetailsValue = detailsValue;
-            if (Array.isArray(detailsValue)) {
-              const filtered = detailsValue.filter(v => v !== null && v !== undefined && String(v).trim() !== '');
-              finalDetailsValue = filtered.length > 0 ? filtered[0] : '';
-            }
+          const rawDetailsValue = healthHistoryData[detailsKey];
+          const detailsValue = extractSingleValue(rawDetailsValue);
+          const txt = document.querySelector(`#health-history-content textarea[name="${CSS.escape(detailsKey)}"]`);
+          if (txt && detailsValue) {
             txt.disabled = false;
-            txt.value = finalDetailsValue;
+            txt.value = detailsValue;
+            console.log(`Set disease details ${detailsKey} to ${detailsValue}`);
           }
           
-          // Set disease start date
+          // Handle disease start date - ONLY in healthHistoryData
           const dateKey = `${val}_start_date`;
-          let dateValue = healthHistoryData[dateKey];
-          if (dateValue) {
-            // Handle array values
-            if (Array.isArray(dateValue)) {
-              const filtered = dateValue.filter(v => v !== null && v !== undefined && String(v).trim() !== '');
-              dateValue = filtered.length > 0 ? filtered[0] : '';
-            }
-            const dateInput = document.querySelector(`#health-history-content input[name="${CSS.escape(dateKey)}"]`)
-              || document.querySelector(`input[name="${CSS.escape(dateKey)}"]`);
-            if (dateInput && dateValue) {
-              dateInput.disabled = false;
-              dateInput.value = dateValue;
-              console.log(`Set disease date ${dateKey} to ${dateValue}`);
-            }
+          const rawDateValue = healthHistoryData[dateKey];
+          const dateValue = extractSingleValue(rawDateValue);
+          const dateInput = document.querySelector(`#health-history-content input[name="${CSS.escape(dateKey)}"]`);
+          if (dateInput && dateValue) {
+            dateInput.disabled = false;
+            dateInput.value = dateValue;
+            console.log(`Set disease date ${dateKey} to ${dateValue}`);
           }
         });
         
         // Final sync to open details for any prefilled textarea content
         if (window.initializeDiseaseDetails) window.initializeDiseaseDetails();
+        
+        // FIXED: Only sync disease entries in the health-history-content section
         document.querySelectorAll('#health-history-content .disease-entry').forEach(entry => {
           const cb = entry.querySelector('input[type="checkbox"][name="disease"]');
           const details = entry.querySelector('.disease-details-container');
@@ -292,12 +346,6 @@
       }
       
       console.log('Prefill completed successfully');
-      
-      // Mark as done to prevent double population
-      if (uid) {
-        window._existingPrefillDone = uid;
-        window._dataPopulated = uid; // Also set data_fetch.js guard
-      }
     } catch (e) {
       console.error('Prefill error', e);
     }

@@ -108,8 +108,6 @@ body {
   padding: 1.5rem;
   border-radius: 8px;
 }
-
-
 .section {
     padding: 0;
     margin-bottom: 1em;
@@ -455,8 +453,6 @@ select.input-error {
 .dropdown-list li.highlighted {
     background-color: #e0e0e0;
 }
-
-
 /* ==================================
    TAB NAVIGATION STYLES (Vertical Left Sidebar)
    ================================== */
@@ -607,20 +603,21 @@ select.input-error {
     border-bottom: solid 1px #e0e0e0;
 }
 
-/* Wrapper stacks from the top  */
+/* Wrapper - centers dots vertically for alternating labels */
 .progress-bar-wrapper {
     position: relative;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    padding: 20px 2rem 12px 2rem;
+    align-items: center; /* Center items vertically so dots align */
+    padding: 70px 2rem; /* More vertical padding for top/bottom labels */
     box-sizing: border-box;
 }
 
-/* Progress line */
+/* Progress line - positioned at center (where dots are) */
 .progress-line {
     position: absolute;
-    top: 34px;          
+    top: 50%;
+    transform: translateY(-50%);
     left: 2rem;
     right: 2rem;
     height: 4px;
@@ -646,10 +643,30 @@ select.input-error {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center; /* Center the dot */
     flex: 1;
-    min-height: 110px;
+    min-height: 160px; /* Increased for top+bottom label space */
     box-sizing: border-box;
+}
+
+/* Odd steps (1st, 3rd, 5th): labels BELOW the dot */
+/* Order: dot -> label -> timestamp (timestamp at very bottom) */
+.progress-step:nth-child(odd) .progress-meta {
+    position: absolute;
+    top: calc(50% + 18px); /* Position below the dot */
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: column; /* label first, then timestamp */
+}
+
+/* Even steps (2nd, 4th, 6th): labels ABOVE the dot */
+/* Order: timestamp -> label -> dot (timestamp at very top) */
+.progress-step:nth-child(even) .progress-meta {
+    position: absolute;
+    bottom: calc(50% + 18px); /* Position above the dot */
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: column-reverse; /* timestamp at top, label closer to dot */
 }
 
 /* Dot */
@@ -681,10 +698,12 @@ select.input-error {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    margin-top: 12px; /* space between dot/line and label area */
+    gap: 6px; /* Consistent gap between label and timestamp */
     text-align: center;
-    width: 100%;
+    width: max-content;
+    max-width: 120px;
+    /* Ensure consistent height for alignment across steps */
+    min-height: 50px;
 }
 
 .progress-step > .progress-label,
@@ -702,7 +721,7 @@ select.input-error {
 .progress-label {
     font-size: var(--label-font-size);
     line-height: var(--label-line-height);
-    color: #666;
+    color: #000;
     font-weight: 500;
     text-align: center;
     max-width: 120px;
@@ -716,15 +735,12 @@ select.input-error {
     line-clamp: 2;
     overflow: hidden;
     text-overflow: ellipsis;
-
-    /* reserve space equal to two text lines so timestamps align */
-    min-height: calc(var(--label-line-height) * 2em); /* 2 lines */
 }
 
 /* Completed / active label color */
 .progress-step.completed .progress-label,
 .progress-step.active .progress-label {
-    color: #007bff;
+    color: #000;
     font-weight: 600;
 }
 
@@ -734,7 +750,7 @@ select.input-error {
 
 .progress-timestamp {
     font-size: 0.7rem;
-    color: #666;
+    color: #000;
     margin: 0;               /* spacing controlled via .progress-meta gap */
     white-space: nowrap;
     font-weight: 400;
@@ -745,7 +761,7 @@ select.input-error {
 /* Completed / active timestamp */
 .progress-step.completed .progress-timestamp,
 .progress-step.active .progress-timestamp {
-    color: #007bff;
+    color: #000;
     font-weight: 500;
 }
 
@@ -835,63 +851,73 @@ select.input-error {
 }
 
 /* ===========================
-   RESPONSIVE TUNING
+   RESPONSIVE TUNING - Progress Bar with Alternating Labels
    =========================== */
 
 @media (min-width: 1400px) {
-    .progress-bar-wrapper { padding-top: 24px; padding-bottom: 14px; }
-    .progress-line { top: 38px; }
-    .progress-step { min-height: 120px; }
+    .progress-bar-wrapper { padding: 75px 2rem; }
+    .progress-step { min-height: 170px; }
+    .progress-step:nth-child(odd) .progress-meta { top: calc(50% + 20px); flex-direction: column; }
+    .progress-step:nth-child(even) .progress-meta { bottom: calc(50% + 20px); flex-direction: column-reverse; }
+    .progress-meta { max-width: 130px; }
+    .progress-label { max-width: 130px; }
 }
 
 @media (min-width: 1200px) and (max-width: 1399px) {
-    .progress-bar-wrapper { padding-top: 22px; }
-    .progress-line { top: 36px; }
-    .progress-step { min-height: 115px; }
+    .progress-bar-wrapper { padding: 70px 2rem; }
+    .progress-step { min-height: 165px; }
+    .progress-step:nth-child(odd) .progress-meta { top: calc(50% + 18px); flex-direction: column; }
+    .progress-step:nth-child(even) .progress-meta { bottom: calc(50% + 18px); flex-direction: column-reverse; }
+    .progress-meta { max-width: 125px; }
+    .progress-label { max-width: 125px; }
 }
 
 @media (min-width: 992px) and (max-width: 1199px) {
-    .progress-bar-wrapper { padding-top: 20px; }
-    .progress-line { top: 34px; }
-    .progress-step { min-height: 110px; }
+    .progress-bar-wrapper { padding: 65px 2rem; }
+    .progress-step { min-height: 160px; }
+    .progress-step:nth-child(odd) .progress-meta { top: calc(50% + 16px); flex-direction: column; }
+    .progress-step:nth-child(even) .progress-meta { bottom: calc(50% + 16px); flex-direction: column-reverse; }
+    .progress-meta { max-width: 115px; }
+    .progress-label { max-width: 115px; }
 }
 
 @media (min-width: 768px) and (max-width: 991px) {
-    .progress-bar-wrapper { padding-top: 18px; }
-    .progress-line { top: 32px; }
-    .progress-step { min-height: 125px; }
+    .progress-bar-wrapper { padding: 60px 1.5rem; }
+    .progress-step { min-height: 155px; }
+    .progress-step:nth-child(odd) .progress-meta { top: calc(50% + 14px); flex-direction: column; }
+    .progress-step:nth-child(even) .progress-meta { bottom: calc(50% + 14px); flex-direction: column-reverse; }
 
-    /* on narrower widths labels take less horizontal space, so keep clamp but increase label height slightly */
-    .progress-label { min-height: calc(var(--label-line-height) * 2em); max-width: 100px; white-space: normal; }
+    /* on narrower widths labels take less horizontal space */
+    .progress-label { max-width: 100px; white-space: normal; }
+    .progress-meta { max-width: 100px; }
     .progress-timestamp { white-space: normal; max-width: 100px; }
 }
 
 @media (min-width: 480px) and (max-width: 767px) {
-    .progress-bar-wrapper { padding-top: 16px; }
-    .progress-line { top: 30px; }
-    .progress-step { min-height: 135px; }
-    .progress-label { min-height: calc(var(--label-line-height) * 2em); max-width: 80px; }
-    .progress-timestamp { font-size: 0.6rem; white-space: normal; max-width: 80px; line-height: 1.1; }
+    .progress-bar-wrapper { padding: 65px 1.25rem; }
+    .progress-step { min-height: 165px; }
+    .progress-step:nth-child(odd) .progress-meta { top: calc(50% + 14px); flex-direction: column; }
+    .progress-step:nth-child(even) .progress-meta { bottom: calc(50% + 14px); flex-direction: column-reverse; }
+    .progress-label { max-width: 90px; font-size: 0.8rem; }
+    .progress-meta { max-width: 90px; gap: 6px; }
+    .progress-timestamp { font-size: 0.65rem; white-space: normal; max-width: 90px; line-height: 1.2; }
 }
 
 @media (max-width: 479px) {
-    .progress-bar-wrapper { padding-top: 14px; }
-    .progress-line { top: 28px; }
-    .progress-step { min-height: 145px; }
-    .progress-label { min-height: calc(var(--label-line-height) * 2em); max-width: 70px; }
-    .progress-timestamp { font-size: 0.55rem; white-space: normal; max-width: 70px; line-height: 1.1; }
+    .progress-bar-wrapper { padding: 60px 0.75rem; }
+    .progress-step { min-height: 160px; }
+    .progress-step:nth-child(odd) .progress-meta { top: calc(50% + 12px); flex-direction: column; }
+    .progress-step:nth-child(even) .progress-meta { bottom: calc(50% + 12px); flex-direction: column-reverse; }
+    .progress-label { max-width: 75px; font-size: 0.75rem; }
+    .progress-meta { max-width: 75px; gap: 5px; }
+    .progress-timestamp { font-size: 0.6rem; white-space: normal; max-width: 75px; line-height: 1.2; }
 }
 
 /* landscape mobile */
 @media (max-width: 768px) and (orientation: landscape) {
-    .progress-bar-wrapper { padding-top: 16px; }
-    .progress-line { top: 30px; }
-    .progress-step { min-height: 115px; }
+    .progress-bar-wrapper { padding: 55px 1.5rem; }
+    .progress-step { min-height: 140px; }
 }
-
-
-
-
 /* --- Save Button Styling --- */
 .btn-save {
     background-color: #007bff;
@@ -1349,18 +1375,29 @@ select.input-error {
     }
     
     .progress-bar-wrapper {
-        padding: 0 1rem;
+        padding: 60px 1.25rem;
     }
     
     .progress-line {
-        left: 1rem;
-        right: 1rem;
+        left: 1.25rem;
+        right: 1.25rem;
     }
     
     .progress-label {
-        font-size: 0.75rem;
-        max-width: 80px;
-        margin-top: 0.75rem;
+        font-size: 0.8rem;
+        max-width: 90px;
+    }
+    
+    .progress-meta {
+        max-width: 90px;
+        gap: 6px;
+    }
+    
+    .progress-timestamp {
+        font-size: 0.65rem;
+        white-space: normal;
+        max-width: 90px;
+        line-height: 1.2;
     }
     
     .progress-dot {
@@ -1374,8 +1411,11 @@ select.input-error {
     }
     
     .progress-step {
-        min-height: 60px;
+        min-height: 160px;
     }
+    
+    .progress-step:nth-child(odd) .progress-meta { top: calc(50% + 14px); flex-direction: column; }
+    .progress-step:nth-child(even) .progress-meta { bottom: calc(50% + 14px); flex-direction: column-reverse; }
 }
 
 /* Small mobile devices (below 480px) */
@@ -1550,17 +1590,29 @@ select.input-error {
     }
     
     .progress-bar-wrapper {
-        padding: 0 0.5rem;
+        padding: 55px 0.75rem;
     }
     
     .progress-line {
-        left: 0.5rem;
-        right: 0.5rem;
+        left: 0.75rem;
+        right: 0.75rem;
     }
     
     .progress-label {
-        font-size: 0.7rem;
-        max-width: 60px;
+        font-size: 0.75rem;
+        max-width: 75px;
+    }
+    
+    .progress-meta {
+        max-width: 75px;
+        gap: 5px;
+    }
+    
+    .progress-timestamp {
+        font-size: 0.6rem;
+        white-space: normal;
+        max-width: 75px;
+        line-height: 1.2;
     }
     
     .progress-dot {
@@ -1572,6 +1624,14 @@ select.input-error {
     .progress-step.active .progress-dot {
         border-width: 3px;
     }
+    
+    .progress-step {
+        min-height: 155px;
+    }
+    
+    /* Adjusted positioning for smaller dots (14px + 2px border = 9px radius) */
+    .progress-step:nth-child(odd) .progress-meta { top: calc(50% + 12px); flex-direction: column; }
+    .progress-step:nth-child(even) .progress-meta { bottom: calc(50% + 12px); flex-direction: column-reverse; }
 }
 
 /* Touch device optimizations */
@@ -1688,5 +1748,35 @@ select.input-error {
     .progress-dot[data-tooltip]:hover::after,
     .progress-dot[data-tooltip]:hover::before {
         transition: none;
+    }
+}
+
+/* ==================================
+   COMPACT PROGRESS BAR SPACING
+   ================================== */
+
+.progress-bar-container {
+    margin: 0 auto 0.75rem auto;   
+    padding-top: 0.75rem;          
+    padding-bottom: 0.75rem;
+}
+
+.progress-bar-wrapper {
+    padding-top: 35px;
+    padding-bottom: 35px;
+}
+
+.progress-step {
+    min-height: 130px;             
+}
+
+@media (max-width: 767px) {
+    .progress-bar-wrapper {
+        padding-top: 30px;
+        padding-bottom: 30px;
+    }
+
+    .progress-step {
+        min-height: 120px;
     }
 }

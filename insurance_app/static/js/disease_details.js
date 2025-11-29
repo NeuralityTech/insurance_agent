@@ -2,6 +2,8 @@
  * This file handles the user interface logic for the Health History section.
  * It is used by: New_Applicant_Request_Form.html, Existing_Applicant_Request_Form.html, member_details.html
  * The main function is called from script.js when the Health History section is loaded.
+ * 
+ * FIXED: validatePrimaryDiseaseDates now properly scoped to primary applicant only
  */ 
 
 /**
@@ -130,42 +132,6 @@ function initializeDiseaseDetails(root) {
         // Listen for changes
         checkbox.addEventListener('change', () => setEntryState(entry, checkbox.checked));
     });
-
-    /* Add global validation for form submission
-    const form = document.getElementById('insurance-form');
-    if (form && !form.dataset.diseaseValidationAdded) {
-        form.addEventListener('submit', (e) => {
-            let hasErrors = false;
-            
-            // Check all disease entries in the entire document (not just container)
-            document.querySelectorAll('.disease-entry').forEach(entry => {
-                const checkbox = entry.querySelector('input[type="checkbox"][name="disease"]');
-                if (checkbox && checkbox.checked) {
-                    const dateInput = entry.querySelector('.disease-date-input');
-                    const errorSpan = dateInput && entry.querySelector('.error-message');
-                    
-                    if (dateInput && !validateDateField(dateInput, errorSpan)) {
-                        hasErrors = true;
-                    }
-                }
-            });
-            
-            if (hasErrors) {
-                e.preventDefault();
-                e.stopPropagation();
-                alert('Please provide valid start dates for all selected diseases before continuing.');
-                // Scroll to first error
-                const firstError = document.querySelector('.input-error');
-                if (firstError) {
-                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    firstError.focus();
-                }
-                return false;
-            }
-        });
-        form.dataset.diseaseValidationAdded = 'true';
-    }
-    */
 }
 
 // Auto-init when DOM is ready on pages that include this script directly
@@ -198,30 +164,52 @@ function initializeOccupationalRisk(root) {
     render();
 }
 
-// VALIDATE PRIMARY APPLICANT DISEASE DATES
+// ============================================================================
+// FIXED: VALIDATE PRIMARY APPLICANT DISEASE DATES
+// Now properly scoped to only validate diseases in health-history-content section
+// This prevents validation from incorrectly including member disease entries
+// ============================================================================
 window.validatePrimaryDiseaseDates = function () {
     let isValid = true;
 
-    // Every disease checkbox container
-    document.querySelectorAll('.disease-entry').forEach(entry => {
+    // FIXED: Only validate disease entries in the primary applicant's health history section
+    const healthHistoryContent = document.getElementById('health-history-content');
+    if (!healthHistoryContent) {
+        // If section not found, assume valid (might be on a different page)
+        return true;
+    }
+
+    // Query only disease entries within health-history-content
+    healthHistoryContent.querySelectorAll('.disease-entry').forEach(entry => {
         const checkbox = entry.querySelector('input[type="checkbox"]');
         const dateInput = entry.querySelector('.disease-date-input');
         const errorSpan = entry.querySelector('.error-message');
 
         if (checkbox && checkbox.checked) {
             // If selected but date missing
-            if (!dateInput.value) {
+            if (!dateInput || !dateInput.value) {
                 isValid = false;
                 if (errorSpan) errorSpan.textContent = "Please enter a start date.";
-                dateInput.classList.add('input-error');
+                if (dateInput) dateInput.classList.add('input-error');
             } else {
-                if (errorSpan) errorSpan.textContent = "";
-                dateInput.classList.remove('input-error');
+                // Also validate date is not in the future
+                const selectedDate = new Date(dateInput.value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                if (selectedDate > today) {
+                    isValid = false;
+                    if (errorSpan) errorSpan.textContent = "Date cannot be in the future.";
+                    dateInput.classList.add('input-error');
+                } else {
+                    if (errorSpan) errorSpan.textContent = "";
+                    dateInput.classList.remove('input-error');
+                }
             }
         } else {
             // disease unselected — clear errors
             if (errorSpan) errorSpan.textContent = "";
-            dateInput.classList.remove('input-error');
+            if (dateInput) dateInput.classList.remove('input-error');
         }
     });
 

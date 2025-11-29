@@ -358,11 +358,9 @@
     /**
      * Updates the progress bar based on a status string
      * 
-     * Logic:
      * - completedStep = the step index that corresponds to the current status
      * - All steps up to and including completedStep are marked "completed"
-     * - The step AFTER completedStep (completedStep + 1) is marked "active"
-     * - Exception: If completedStep is the final step, ALL steps are completed (no active)
+     * - The step after completedStep (completedStep + 1) is marked "active," unless it's the final *   step, then every step os marked completed
      * 
      * @param {string} status - The application status
      */
@@ -457,7 +455,13 @@
                             ts.className = 'progress-timestamp';
                             ts.textContent = formatTimestampCompact(raw);
                             ts.title = raw;
-                            step.appendChild(ts);
+                            // Append to meta container so CSS flex-direction positioning works
+                            const meta = step.querySelector('.progress-meta');
+                            if (meta) {
+                                meta.appendChild(ts);
+                            } else {
+                                step.appendChild(ts);
+                            }
                         }
                     }
                 }

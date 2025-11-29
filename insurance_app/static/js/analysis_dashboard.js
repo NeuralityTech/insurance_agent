@@ -13,22 +13,75 @@ const bmi = (kg, cm) => {
     return isFinite(val) ? val.toFixed(1) : "—";
 };
 
+// ----- Helper to extract single value from potentially corrupted data -----
+function extractSingleValue(val) {
+    if (val === undefined || val === null) return null;
+    
+    // If it's an array, find the first non-empty value
+    if (Array.isArray(val)) {
+        for (const item of val) {
+            if (item !== undefined && item !== null && String(item).trim() !== '') {
+                return String(item).trim();
+            }
+        }
+        return null;
+    }
+    
+    // If it's a string that looks like a comma-separated array
+    if (typeof val === 'string' && val.includes(',')) {
+        const parts = val.split(',');
+        for (const part of parts) {
+            if (part.trim() !== '') {
+                return part.trim();
+            }
+        }
+        return null;
+    }
+    
+    return val;
+}
+
 // ----- Personal Info rendering -----
 function renderPersonalInfo(client) {
     const el = document.getElementById('personalInfo');
     if (!el) return;
+    
+    // Helper to check if object has meaningful content
+    const hasContent = (obj) => obj && typeof obj === 'object' && Object.keys(obj).length > 0;
+    
     const lines = [];
-    const p = client?.primaryContact || {};
-    const h = client?.healthHistory || {};
-    const age = h["self-dob"] ? yearsFromDob(h["self-dob"]) : (h["self-age"] || "—");
-    const b = bmi(Number(h["self-weight"]), Number(h["self-height"]));
-    const g = (h["self-gender"] || p.gender || p.applicant_gender || "—");
-    lines.push(`<li>Name : <strong>${p.applicant_name || "—"}</strong> - Age : ${age} - BMI : ${b} - Gender : ${g}</li>`);
+    // Use nested structure only if it has content, otherwise fall back to client root
+    const p = hasContent(client?.primaryContact) ? client.primaryContact : (client || {});
+    const h = hasContent(client?.healthHistory) ? client.healthHistory : (client || {});
+    
+    // Extract values, handling potential array corruption
+    const rawDob = h["self-dob"] || h.dob || p.dob || client?.dob;
+    const dob = extractSingleValue(rawDob);
+    const rawAge = h["self-age"] || h.age || p.age || client?.age;
+    const age = dob ? yearsFromDob(dob) : (extractSingleValue(rawAge) || "—");
+    
+    const rawWeight = h["self-weight"] || h.weight || client?.weight;
+    const rawHeight = h["self-height"] || h.height || client?.height;
+    const weight = Number(extractSingleValue(rawWeight)) || 0;
+    const height = Number(extractSingleValue(rawHeight)) || 0;
+    const b = bmi(weight, height);
+    
+    const rawGender = h["self-gender"] || p.gender || p.applicant_gender || client?.gender;
+    const g = extractSingleValue(rawGender) || "—";
+    
+    const rawName = p.applicant_name || client?.applicant_name;
+    const name = extractSingleValue(rawName) || "—";
+    
+    lines.push(`<li>Name : <strong>${name}</strong> - Age : ${age} - BMI : ${b} - Gender : ${g}</li>`);
     (client?.members || []).forEach(m => {
-        const ageM = yearsFromDob(m.dob);
-        const bM = bmi(Number(m.weight_kg || m.weight), Number(m.height_cm || m.height));
-        const gM = (m.gender || m.sex || "—");
-        lines.push(`<li>Name : ${m.name || "—"} - Age : ${ageM} - BMI : ${bM} - Gender : ${gM}</li>`);
+        const mDob = extractSingleValue(m.dob);
+        const ageM = mDob ? yearsFromDob(mDob) : "—";
+        const mWeight = Number(extractSingleValue(m.weight_kg || m.weight)) || 0;
+        const mHeight = Number(extractSingleValue(m.height_cm || m.height)) || 0;
+        const bM = bmi(mWeight, mHeight);
+        const gM = extractSingleValue(m.gender || m.sex) || "—";
+        const mName = extractSingleValue(m.name) || "—";
+        lines.push(`<li>Name : ${mName} - Age : ${ageM} - BMI : ${bM} - Gender : ${gM}</li>`);
     });
     el.innerHTML = `<h2>Personal Information</h2><ul class="people">${lines.join("")}</ul>`;
 }
@@ -395,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             });
                             
                             const summaryHtml = '<strong>Application Status:</strong> ' + statusDisp + '<br>' +
-                                               '<strong>Comments:</strong> ' + comments + '<br>' +
+                                               '<strong>Notes:</strong> ' + comments + '<br>' +
                                                '<strong>Last Updated by:</strong> ' + by + ' <strong>Last Updated at:</strong> ' + tsStr;
                             supSummary.innerHTML = summaryHtml;
                         }

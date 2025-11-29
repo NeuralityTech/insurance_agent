@@ -705,7 +705,7 @@
                             }
                         }
 
-                        const comments = (data.application_comments && String(data.application_comments).trim()) ? data.application_comments : 'No comments';
+                        const comments = (data.application_comments && String(data.application_comments).trim()) ? data.application_comments : 'No notes';
                         let tsStr = '—';
                         let by = '—';
                         const timestampSources = [
@@ -737,7 +737,7 @@
                         }
 
                         const summaryHtml = `<strong>Application Status:</strong> ${statusDisp}<br>
-                                            <strong>Comments:</strong> ${comments}<br>
+                                            <strong>Notes:</strong> ${comments}<br>
                                             <strong>Last Updated by:</strong> ${by} <strong>Last Updated at:</strong> ${tsStr}`;
                         if (supSummary) supSummary.innerHTML = summaryHtml;
 
@@ -752,14 +752,14 @@
                                     const raw = (meta.supervisor_status || '').toString();
                                     const normalized = raw.trim().toUpperCase();
                                     const statusDisp = normalized === 'OPEN' ? 'Open' : (raw || 'Open');
-                                    const comments = (meta.supervisor_comments && String(meta.supervisor_comments).trim()) ? meta.supervisor_comments : 'No comments';
+                                    const comments = (meta.supervisor_comments && String(meta.supervisor_comments).trim()) ? meta.supervisor_comments : 'No notes';
                                     let tsStr = '—';
                                     if (meta.supervisor_modified_at) {
                                         tsStr = formatTimestampForDisplay(meta.supervisor_modified_at);
                                     }
                                     const by = meta.supervisor_modified_by || '—';
                                     const summaryHtml = '<strong>Application Status:</strong> ' + statusDisp + '<br>' +
-                                                    '<strong>Comments:</strong> ' + comments + '<br>' +
+                                                    '<strong>Supervisor Notes:</strong> ' + comments + '<br>' +
                                                     '<strong>Last Updated by:</strong> ' + by + ' <strong>Last Updated at:</strong> ' + tsStr;
                                     supSummary.innerHTML = summaryHtml;
 
@@ -795,10 +795,25 @@
                 await loadById(idInput.value);
             });
 
+            (async function autoLoadFromUrl() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const uidFromUrl = urlParams.get('uid');
+                if (uidFromUrl) {
+                    console.log('Auto-loading from URL parameter:', uidFromUrl);
+                    // Set the input field value so user sees what's being loaded
+                    if (idInput) {
+                        idInput.value = uidFromUrl;
+                    }
+                    // Wait a bit for sections to load before calling loadById
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await loadById(uidFromUrl);
+                }
+            })();
+
             if (previewBtn) {
                 previewBtn.addEventListener('click', function(e) {
                     e.preventDefault();
-                    e.stopImmediatePropagation(); // ✅ ADD THIS - stops other handlers from running
+                    e.stopImmediatePropagation();
                     
                     // Trigger form submission which will run all validation
                     const submitEvent = new Event('submit', {
@@ -820,6 +835,7 @@
                 if (resetBtn) resetBtn.disabled = true;
 
                 try {
+                    // Disease date validation for primary applicant
                     const healthHistoryContent = document.getElementById('health-history-content');
                     if (healthHistoryContent) {
                         const diseaseEntries = healthHistoryContent.querySelectorAll('.disease-entry');
@@ -842,12 +858,9 @@
                             // Only validate if disease is selected
                             if (checkbox.checked) {
                                 if (!dateInput.value || dateInput.value.trim() === '') {
-                                    // Get friendly label from the disease header
                                     const headerLabel = entry.querySelector('.disease-header label');
                                     const diseaseLabel = headerLabel ? headerLabel.textContent.trim() : 'the selected disease';
-
                                     diseaseErrors.push(`Disease start date for ${diseaseLabel} is required`);
-
                                     if (errorSpan) {
                                         errorSpan.textContent = 'Disease start date is required';
                                         errorSpan.style.display = 'block';
@@ -862,9 +875,7 @@
                                     if (selectedDate > today) {
                                         const headerLabel = entry.querySelector('.disease-header label');
                                         const diseaseLabel = headerLabel ? headerLabel.textContent.trim() : 'the selected disease';
-                                        
                                         diseaseErrors.push(`Disease start date for ${diseaseLabel} cannot be in the future`);
-                                        
                                         if (errorSpan) {
                                             errorSpan.textContent = 'Date cannot be in the future';
                                             errorSpan.style.display = 'block';
@@ -900,10 +911,24 @@
                     
                     const formObj = {};
                     const allInputs = form.querySelectorAll('input, select, textarea');
+                    
+                    // Get reference to members section to identify inputs we should skip
+                    const membersCoveredContent = document.getElementById('members-covered-content');
 
                     allInputs.forEach(el => {
                         if (!el.name) return;
-                        if (el.disabled) return; // ✅ skip disabled/read-only fields entirely
+                        if (el.disabled) return; // skip disabled/read-only fields entirely
+                        
+                        if (membersCoveredContent && membersCoveredContent.contains(el)) {
+                            // This input is inside the members section
+                            // Member data is handled separately via localStorage 'members'
+                            return;
+                        }
+                        
+                        // Also skip inputs inside any .member-form container
+                        if (el.closest('.member-form') || el.closest('.member-tab-content')) {
+                            return;
+                        }
 
                         const k = el.name;
                         const v = el.value;
@@ -957,6 +982,20 @@
                         }
                     } catch {}
 
+                    // ====================================================================
+                    // CRITICAL: Include members in formObj for server submission
+                    // Members are stored separately in localStorage but MUST be sent to server
+                    // ====================================================================
+                    try {
+                        const membersData = JSON.parse(localStorage.getItem('members')) || [];
+                        if (membersData.length > 0) {
+                            formObj.members = membersData;
+                            console.log('Including', membersData.length, 'member(s) in submission');
+                        }
+                    } catch (e) {
+                        console.warn('Error reading members from localStorage:', e);
+                    }
+
                     const userId = localStorage.getItem('loggedInUserId');
                     if (!userId) {
                         throw new Error('User not logged in. Please log in and try again.');
@@ -966,36 +1005,6 @@
                         userId: userId,
                         formData: formObj
                     };
-                    
-                    // Build structured data format (same as Preview.html) before submission
-                    // This ensures members and sections are properly structured for the server
-                    const structuredData = {
-                        unique_id: formObj.unique_id,
-                        applicant_name: formObj.applicant_name,
-                        primaryContact: {},
-                        healthHistory: {},
-                        members: JSON.parse(localStorage.getItem('members')) || [],
-                        coverAndCost: {},
-                        existingCoverage: {},
-                        claimsAndService: {},
-                        financeAndDocumentation: {},
-                        commentsNoted: window.getCommentsData ? window.getCommentsData() : { comments_noted: [] }
-                    };
-                    
-                    // Populate structured sections using getSectionData if available
-                    if (typeof window.getSectionData === 'function') {
-                        structuredData.primaryContact = window.getSectionData('primary-contact') || {};
-                        structuredData.primaryContact['unique_id'] = formObj.unique_id;
-                        structuredData.healthHistory = window.getSectionData('health-history') || {};
-                        structuredData.coverAndCost = window.getSectionData('cover-cost') || {};
-                        structuredData.existingCoverage = window.getSectionData('existing-coverage') || {};
-                        structuredData.claimsAndService = window.getSectionData('claims-service') || {};
-                        structuredData.financeAndDocumentation = window.getSectionData('finance-documentation') || {};
-                    }
-                    
-                    // Use structured data as the primary submission format
-                    payload.formData = structuredData;
-                    
                     if (window.clearProgressTimestamps) {
                         window.clearProgressTimestamps(formObj.unique_id);
                     }
@@ -1023,10 +1032,81 @@
 
                     const result = await resp.json().catch(() => ({}));
 
-                    // Use the structured data we already built for localStorage
-                    // No need to rebuild it since structuredData already has all sections
-                    localStorage.setItem('formSummary', JSON.stringify(structuredData));
-                    localStorage.setItem('submissionData', JSON.stringify(structuredData));
+                    const summaryData = {
+                        primaryContact: {},
+                        healthHistory: {},
+                        members: JSON.parse(localStorage.getItem('members')) || [],
+                        coverAndCost: {},
+                        existingCoverage: {},
+                        claimsAndService: {},
+                        financeAndDocumentation: {},
+                        commentsNoted: window.getCommentsData ? window.getCommentsData() : { comments_noted: [] }
+                    };
+
+                    // Prefer the same section-based logic used by the New Applicant flow
+                    if (typeof window.getSectionData === 'function') {
+                        // Primary Contact
+                        summaryData.primaryContact = window.getSectionData('primary-contact') || {};
+                        summaryData.primaryContact['unique_id'] = formObj.unique_id;
+
+                        // Health History
+                        summaryData.healthHistory = window.getSectionData('health-history') || {};
+
+                        // Other sections
+                        summaryData.coverAndCost = window.getSectionData('cover-cost') || {};
+                        summaryData.existingCoverage = window.getSectionData('existing-coverage') || {};
+                        summaryData.claimsAndService = window.getSectionData('claims-service') || {};
+                        summaryData.financeAndDocumentation = window.getSectionData('finance-documentation') || {};
+                    } else {
+                        // Fallback: legacy mapping if getSectionData is not available
+                        summaryData.primaryContact['unique_id'] = formObj.unique_id;
+
+                        Object.keys(formObj).forEach(key => {
+                            const value = formObj[key];
+
+                            if (key === 'unique_id') return;
+
+                            if ([
+                                'applicant_name', 'gender', 'email', 'phone', 'address',
+                                'self-dob', 'self-height', 'self-weight', 'self-age',
+                                'occupation', 'city', 'hubs'
+                            ].includes(key)) {
+                                summaryData.primaryContact[key] = value;
+                            }
+                            else if (
+                                key.startsWith('medical-') || key.startsWith('medical_') ||
+                                key.startsWith('disease-') || key.startsWith('disease_') ||
+                                key === 'self-details' || key === 'self_details' ||
+                                key === 'disease' || key.endsWith('_details') || key.endsWith('_start_date')
+                            ) {
+                                summaryData.healthHistory[key] = value;
+                            }
+                            else if ([
+                                'policy-type', 'sum-insured', 'annual-budget', 'payment-mode',
+                                'room-preference', 'co-pay', 'ncb-importance', 'maternity-cover',
+                                'opd-cover', 'top-up'
+                            ].includes(key)) {
+                                summaryData.coverAndCost[key] = value;
+                            }
+                            else if ([
+                                'existing-policies', 'port-policy', 'critical-illness', 'worldwide-cover'
+                            ].includes(key)) {
+                                summaryData.existingCoverage[key] = value;
+                            }
+                            else if ([
+                                'past-claims', 'claim-issues', 'service-expectations', 'network-hospitals'
+                            ].includes(key)) {
+                                summaryData.claimsAndService[key] = value;
+                            }
+                            else if (['tax-benefit', 'address_proof_details'].includes(key)) {
+                                summaryData.financeAndDocumentation[key] = value;
+                            }
+                        });
+                    }
+
+
+                    localStorage.setItem('formSummary', JSON.stringify(summaryData));
+                    localStorage.setItem('submissionData', JSON.stringify(formObj));
                     if (result.plans) {
                         localStorage.setItem('plans', JSON.stringify(result.plans));
                     }
@@ -1061,22 +1141,6 @@
                 }
             });
 
-            setTimeout(() => {
-                if (window.initializeCommentsNoted) {
-                    window.initializeCommentsNoted();
-                }
-                attachOrCreateLastModifiedFooter();
-            }, 1500);
-
-            const urlUid = new URLSearchParams(window.location.search).get('uid');
-            const storedUid = localStorage.getItem('selectedUniqueId');
-            const incomingUid = urlUid || storedUid;
-            if (incomingUid) {
-                idInput.value = incomingUid;
-                try { localStorage.removeItem('selectedUniqueId'); } catch {}
-                loadById(incomingUid);
-            }
-        });
 
         window.renderPlansTab = async function(container, uniqueId) {
             if (!container || !uniqueId) return;
@@ -1179,7 +1243,7 @@
                         <p>Review the plans selected by the agent and supervisor, then select the plans you agree to.</p>
                         <div id="plans-selection-matrix" style="margin-top: 1rem;"></div>
                         <div style="margin-top: 1rem;">
-                            <textarea id="client-plans-comment" rows="3" style="width: 100%; margin-bottom: 0.5rem;" placeholder="Add your comments about the selected plans"></textarea>
+                            <textarea id="client-plans-comment" rows="3" style="width: 100%; margin-bottom: 0.5rem;" placeholder="Add your notes about the selected plans"></textarea>
                         </div>
                         <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
                             <button type="button" id="save-client-plans" class="btn">Save Client Selection</button>
@@ -1202,7 +1266,7 @@
                                 </div>
                                 ${submissionData.client_comments ? `
                                     <div style="margin-top: 0.75rem;">
-                                        <strong style="display: block; margin-bottom: 0.25rem;">Client Comments:</strong>
+                                        <strong style="display: block; margin-bottom: 0.25rem;">Client Notes:</strong>
                                         <div style="margin-left: 1rem; color: #555;">${submissionData.client_comments}</div>
                                     </div>
                                 ` : ''}
@@ -1217,11 +1281,11 @@
                                 </div>
 
                                 <label for="underwriter-comment" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
-                                    Comments
+                                    Notes
                                 </label>
                                 <textarea id="underwriter-comment" rows="3" 
                                         style="width: 100%; margin-bottom: 0.5rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;" 
-                                        placeholder="Enter your underwriter comments">${submissionData.underwriter_comments || ''}</textarea>
+                                        placeholder="Enter underwriter notes">${submissionData.underwriter_comments || ''}</textarea>
 
                                 <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
                                     <button type="button" id="save-underwriter-decision" class="btn">Submit</button>
@@ -1370,7 +1434,7 @@
                         const comment = (underwriterCommentEl?.value || '').trim();
 
                         if (!comment) {
-                            underwriterStatusEl.textContent = 'Please provide comments for the underwriter.';
+                            underwriterStatusEl.textContent = 'Please provide notes for the underwriter.';
                             underwriterStatusEl.style.color = 'red';
                             return;
                         }
@@ -1518,6 +1582,7 @@
                 }
             }
         }
+        });
     </script>
 </body>
 </html>
