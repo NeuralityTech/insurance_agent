@@ -1,0 +1,43 @@
+{
+  "unique_id": "Suresh_74465",
+  "proposed": {
+    "comprehensive_cover": {
+      "name": "comprehensive_cover",
+      "plans": [
+        "Star Health Assure",
+        "Senior Citizens Red Carpet Health Insurance"
+      ]
+    },
+    "member1": {
+      "name": "Suresh",
+      "plans": [
+        "Star Cardiac Care Gold",
+        "Platinum Sec 2 (Cardiac Ailments)"
+      ]
+    },
+    "member2": {
+      "name": "Mahesh",
+      "plans": [
+        "Star Health Assure"
+      ]
+    },
+    "member3": {
+      "name": "Mallesh",
+      "plans": []
+    }
+  },
+  "agent_selected": [
+    "Platinum Sec 2 (Cardiac Ailments)",
+    "Star Cardiac Care Gold",
+    "Senior Citizens Red Carpet Health Insurance"
+  ],
+  "supervisor_selected": [
+    "Platinum Sec 2 (Cardiac Ailments)",
+    "Star Cardiac Care Gold"
+  ],
+  "client_agreed": [
+    "Star Cardiac Care Gold",
+    "Platinum Sec 2 (Cardiac Ailments)",
+    "Senior Citizens Red Carpet Health Insurance"
+  ]
+}
