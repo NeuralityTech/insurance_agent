@@ -24,6 +24,13 @@
         </div>
         <div class="form-row">
             <div class="form-group">
+                <label for="gst-number">GST Number</label>
+                <input type="text" id="gst-number" name="gst-number" placeholder="e.g., 22AAAAA0000A1Z5" pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$|^$" title="Please enter a valid 15-character GST number (e.g., 22AAAAA0000A1Z5)" maxlength="15" style="text-transform: uppercase;">
+                <span class="error-message" id="gst-number-error"></span>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
                 <fieldset>
                     <legend>ID/Address Proof</legend>
                 <div class="checkbox-group">
@@ -35,7 +42,18 @@
             </div>
         </div>
     </fieldset>
+
+    <script>
+        // Auto-uppercase GST number input
+        document.addEventListener('DOMContentLoaded', function() {
+            const gstInput = document.getElementById('gst-number');
+            if (gstInput) {
+                gstInput.addEventListener('input', function() {
+                    this.value = this.value.toUpperCase();
+                });
+            }
+        });
+    </script>
     </details>
 </body>
 </html>
-

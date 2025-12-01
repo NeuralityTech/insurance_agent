@@ -407,38 +407,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return errors;
     }
 
-    // Function to update continue button state based on validation
-    // This enables/disables the continue button based on whether required fields are filled
-    function updateContinueButtonState() {
-        const continueBtn = document.getElementById('continue-btn');
-        
-        // If there's no continue button (e.g., on Existing Applicant form), do nothing
-        if (!continueBtn) return;
-        
-        // Get basic required fields and check if they have values
-        const requiredFields = [
-            document.querySelector('[name="applicant_name"]'),
-            document.querySelector('[name="gender"]'),
-            document.querySelector('[name="email"]'),
-            document.querySelector('[name="phone"]')
-        ];
-        
-        // Check if all basic required fields have values
-        const allFilled = requiredFields.every(field => {
-            if (!field) return true; // Field doesn't exist, skip
-            return field.value && field.value.trim() !== '' && field.value !== 'Select';
-        });
-        
-        // Update button state (visual feedback only - actual validation happens on click)
-        if (allFilled) {
-            continueBtn.classList.remove('btn-disabled');
-            continueBtn.style.opacity = '1';
-        } else {
-            continueBtn.classList.add('btn-disabled');
-            continueBtn.style.opacity = '0.7';
-        }
-    }
-
     // Function to setup validation
     function setupFormValidation() {
         const form = document.getElementById('insurance-form');
@@ -559,6 +527,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         applyDefaults(summaryData.existingCoverage, {
             'existing-policies': 'None',
+            'policy-type-category': '',
+            'insurer-name': '',
+            'existing-policy-number': '',
+            'existing-sum-insured': '',
+            'policy-since-date': '',
             'port-policy': 'No',
             'critical-illness': 'None',
             'worldwide-cover': 'No'
@@ -571,6 +544,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         applyDefaults(summaryData.financeAndDocumentation, {
             'tax-benefit': 'yes',
+            'gst-number': '',
             'address_proof_details': 'Not Submitted'
         });
         
@@ -828,6 +802,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             applyDefaults(summaryData.existingCoverage, {
                 'existing-policies': 'None',
+                'policy-type-category': '',
+                'insurer-name': '',
+                'existing-policy-number': '',
+                'existing-sum-insured': '',
+                'policy-since-date': '',
                 'port-policy': 'No',
                 'critical-illness': 'None',
                 'worldwide-cover': 'No'
@@ -840,6 +819,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             applyDefaults(summaryData.financeAndDocumentation, {
                 'tax-benefit': 'yes',
+                'gst-number': '',
                 'address_proof_details': 'Not Submitted'
             });
             

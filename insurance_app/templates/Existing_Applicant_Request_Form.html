@@ -1089,7 +1089,9 @@
                                 summaryData.coverAndCost[key] = value;
                             }
                             else if ([
-                                'existing-policies', 'port-policy', 'critical-illness', 'worldwide-cover'
+                                'existing-policies', 'port-policy', 'critical-illness', 'worldwide-cover',
+                                'policy-type-category', 'insurer-name', 'existing-policy-number', 
+                                'existing-sum-insured', 'policy-since-date'
                             ].includes(key)) {
                                 summaryData.existingCoverage[key] = value;
                             }
@@ -1098,7 +1100,7 @@
                             ].includes(key)) {
                                 summaryData.claimsAndService[key] = value;
                             }
-                            else if (['tax-benefit', 'address_proof_details'].includes(key)) {
+                            else if (['tax-benefit', 'address_proof_details', 'gst-number'].includes(key)) {
                                 summaryData.financeAndDocumentation[key] = value;
                             }
                         });

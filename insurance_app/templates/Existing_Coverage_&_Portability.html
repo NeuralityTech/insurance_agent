@@ -7,17 +7,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Existing Coverage & Portability</title>
     <link rel="stylesheet" href="../css/common.css">
+    <style>
+        .existing-policy-details {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 0.5rem;
+        }
+        .existing-policy-details .form-row {
+            margin-bottom: 0.75rem;
+        }
+        .existing-policy-details .form-row:last-child {
+            margin-bottom: 0;
+        }
+        .existing-policy-details label {
+            font-size: 0.9rem;
+            color: #495057;
+        }
+        .section-label {
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+    </style>
 </head>
 <body>
 
     <fieldset>
+        <!-- Type of Policy -->
         <div class="form-row">
             <div class="form-group">
-                <label for="existing-policies">Existing Policies (insurer, SI, since when)</label>
-                <textarea id="existing-policies" name="existing-policies" rows="2" pattern="^[a-zA-Z0-9\s,.-/()]*$" title="Please enter only letters, numbers, and basic punctuation (, . - / ( ))."></textarea>
-                <span class="error-message" id="existing-policies-error"></span>
+                <label for="policy-type-category">Type of Policy</label>
+                <select id="policy-type-category" name="policy-type-category">
+                    <option value="">Select</option>
+                    <option value="group-policy">Group Policy</option>
+                    <option value="individual-policy">Individual Policy</option>
+                    <option value="bank-policy">Bank Policy</option>
+                    <option value="cash-policy">Cash Policy</option>
+                </select>
             </div>
         </div>
+
+        <!-- Existing Policy Details - Structured Fields -->
+        <div class="form-row">
+            <div class="form-group" style="flex: 1 1 100%;">
+                <span class="section-label">Existing Policy Details</span>
+                <div class="existing-policy-details">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="insurer-name">Name of the Insurer</label>
+                            <input type="text" id="insurer-name" name="insurer-name" placeholder="e.g., Star Health, HDFC Ergo" pattern="^[a-zA-Z0-9\s,.-]*$" title="Please enter only letters, numbers, and basic punctuation">
+                            <span class="error-message" id="insurer-name-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="existing-policy-number">Policy Number</label>
+                            <input type="text" id="existing-policy-number" name="existing-policy-number" placeholder="e.g., POL123456789" pattern="^[a-zA-Z0-9\s/-]*$" title="Please enter only letters, numbers, and basic punctuation">
+                            <span class="error-message" id="existing-policy-number-error"></span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="existing-sum-insured">Sum Insured (₹)</label>
+                            <input type="text" id="existing-sum-insured" name="existing-sum-insured" placeholder="e.g., 500000" pattern="^[0-9,]*$" title="Please enter numbers only">
+                            <span class="error-message" id="existing-sum-insured-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="policy-since-date">Since When (Date)</label>
+                            <input type="date" id="policy-since-date" name="policy-since-date">
+                            <span class="error-message" id="policy-since-date-error"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legacy field - hidden for backward compatibility -->
+        <input type="hidden" id="existing-policies" name="existing-policies">
+
         <div class="form-row">
             <div class="form-group">
                 <label for="port-policy">Want to Port Current Policy?</label>
@@ -49,7 +117,34 @@
             </div>
         </div>
     </fieldset>
+
+    <script>
+        // Auto-populate the hidden legacy field for backward compatibility
+        document.addEventListener('DOMContentLoaded', function() {
+            const insurerName = document.getElementById('insurer-name');
+            const policyNumber = document.getElementById('existing-policy-number');
+            const sumInsured = document.getElementById('existing-sum-insured');
+            const sinceDate = document.getElementById('policy-since-date');
+            const legacyField = document.getElementById('existing-policies');
+            
+            function updateLegacyField() {
+                if (!legacyField) return;
+                const parts = [];
+                if (insurerName && insurerName.value) parts.push('Insurer: ' + insurerName.value);
+                if (policyNumber && policyNumber.value) parts.push('Policy #: ' + policyNumber.value);
+                if (sumInsured && sumInsured.value) parts.push('SI: ₹' + sumInsured.value);
+                if (sinceDate && sinceDate.value) parts.push('Since: ' + sinceDate.value);
+                legacyField.value = parts.join(', ');
+            }
+            
+            [insurerName, policyNumber, sumInsured, sinceDate].forEach(el => {
+                if (el) {
+                    el.addEventListener('change', updateLegacyField);
+                    el.addEventListener('input', updateLegacyField);
+                }
+            });
+        });
+    </script>
     </details>
 </body>
 </html>
-
