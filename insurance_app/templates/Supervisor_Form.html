@@ -179,6 +179,9 @@
             if (summaryData.otherNotes) {
                 html += buildSection('Other Notes', summaryData.otherNotes);
             }
+            if (!html) {
+                html = '<p>No stored form summary is available for this client.</p>';
+            }
             return html;
         }
 
@@ -308,7 +311,18 @@
                             }
                             if (!r.ok) throw new Error('load failed');
                             ps = await r.json();
-                            let proposed = ps.proposed || {};
+                            // Always prefer the freshly computed proposed plans from /client_details
+                            const fresh = (window._proposedPlans && typeof window._proposedPlans === 'object') ? window._proposedPlans : {};
+                            let proposed = Object.keys(fresh).length ? fresh : (ps.proposed || {});
+
+                            // keep server-side cache in sync
+                            if (Object.keys(fresh).length) {
+                            fetch(`/plan_summary/${encodeURIComponent(uid)}/init_or_update`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ proposed: fresh })
+                            }).catch(() => {});
+                            }
                             try {
                                 if (proposed && proposed.comprehensive_cover) {
                                     if (!proposed.comprehensive_cover.name) proposed.comprehensive_cover.name = 'Family';
