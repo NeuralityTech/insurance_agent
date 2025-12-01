@@ -424,3 +424,59 @@ def patch_plan_summary_client(unique_id):
     except Exception as e:
         current_app.logger.error(f"Failed to patch client for {unique_id}: {e}")
         return jsonify({ 'error': 'failed to write' }), 500
+
+@actions_bp.route('/api/agent/active_plans', methods=['GET'])
+def get_active_plans():
+    """
+    Get all active plans from the features table.
+    
+    Returns:
+        JSON object with list of active plan names:
+        {
+            "plans": ["Plan A", "Plan B", "Plan C", ...],
+            "count": 3
+        }
+    """
+    conn = None
+    try:
+        conn = get_derived_db_connection()
+        cursor = conn.cursor()
+        
+        # Check which columns exist
+        cursor.execute('PRAGMA table_info(features)')
+        available_cols = {row[1] for row in cursor.fetchall()}
+        
+        # Determine the plan name column
+        plan_col = 'Plan_Name' if 'Plan_Name' in available_cols else 'Plan Name'
+        
+        # Query for active plans only
+        # Status is stored as lowercase 'active' based on update_plan_status
+        if 'Status' in available_cols:
+            cursor.execute(f'''
+                SELECT DISTINCT "{plan_col}" 
+                FROM features 
+                WHERE LOWER(Status) = 'active'
+                ORDER BY "{plan_col}"
+            ''')
+        else:
+            # If no Status column, return all plans
+            cursor.execute(f'''
+                SELECT DISTINCT "{plan_col}" 
+                FROM features 
+                ORDER BY "{plan_col}"
+            ''')
+        
+        rows = cursor.fetchall()
+        plans = [row[0] for row in rows if row[0]]
+        
+        return jsonify({
+            'plans': plans,
+            'count': len(plans)
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Error fetching active plans: {e}")
+        return jsonify({'error': 'Failed to fetch active plans', 'details': str(e)}), 500
+    finally:
+        if conn:
+            conn.close()

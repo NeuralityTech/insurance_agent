@@ -16,6 +16,89 @@
     .btn { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; color: white; font-size: 14px; }
     .btn-primary { background-color: #3b82f6; }
     .btn-secondary { background-color: #64748b; }
+    
+    /* New Plan & PED Section */
+    .new-plan-section {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border: 1px solid #7dd3fc;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+    }
+    .new-plan-section h3 {
+      margin: 0 0 12px 0;
+      color: #0369a1;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .new-plan-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+    .new-plan-field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 4px;
+    }
+    .new-plan-field input, .new-plan-field select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .new-plan-field input:focus, .new-plan-field select:focus {
+      outline: none;
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    }
+    .btn-add-plan {
+      background: #0ea5e9;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 38px;
+    }
+    .btn-add-plan:hover { background: #0284c7; }
+    .btn-add-plan:disabled { background: #94a3b8; cursor: not-allowed; }
+    .plan-added-msg {
+      color: #059669;
+      font-size: 13px;
+      margin-top: 8px;
+      display: none;
+    }
+    .plan-added-msg.show { display: block; }
+    .help-text {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    /* PED column styling (kept for top section PED input only, no member grid PED) */
+    .pc-ped {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .pc-ped:focus {
+      outline: none;
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+    }
   </style>
 </head>
 <body data-sidebar="existing-applicant">
@@ -31,6 +114,34 @@
       </div>
     </div>
 
+    <!-- New Plan & PED Capture Section -->
+    <div class="new-plan-section" id="newPlanSection">
+      <h3><i class="fas fa-plus-circle"></i> Add Plan & PED</h3>
+      <p style="font-size: 12px; color: #64748b; margin: 0 0 12px 0;">
+        Select a plan and enter any Pre-Existing Diseases mentioned by the client during tele-verification.
+      </p>
+      <div class="new-plan-grid">
+        <div class="new-plan-field">
+          <label for="quickPlanSelect">Select Plan</label>
+          <select id="quickPlanSelect">
+            <option value="">-- Select a plan --</option>
+          </select>
+          <div class="help-text">Choose from active plans in the system</div>
+        </div>
+        <div class="new-plan-field">
+          <label for="quickPedInput">PED(s) - Pre-Existing Disease(s)</label>
+          <input type="text" id="quickPedInput" placeholder="e.g., Cardiac Problem, Diabetes">
+          <div class="help-text">Comma-separated if multiple (e.g., Cardiac, Diabetes)</div>
+        </div>
+        <button type="button" id="addPlanRowBtn" class="btn-add-plan">
+          <i class="fas fa-plus"></i> Add Plan
+        </button>
+      </div>
+      <div id="planAddedMsg" class="plan-added-msg">
+        <i class="fas fa-check-circle"></i> <span id="planAddedText">Plan added!</span>
+      </div>
+    </div>
+
     <!-- Dynamic tabular form -->
     <div style="margin-top: 12px; overflow-x:auto;">
       <table style="width:100%; border-collapse:collapse; background:#fff;">
@@ -40,6 +151,7 @@
             <th style="text-align:left; padding:8px; border:1px solid #eee;">Member Number</th>
             <th style="text-align:left; padding:8px; border:1px solid #eee;">Member Name</th>
             <th style="text-align:left; padding:8px; border:1px solid #eee;">Plan</th>
+            <!-- PED column removed from member grid -->
             <th style="text-align:left; padding:8px; border:1px solid #eee;">Policy Start Date</th>
             <th style="text-align:left; padding:8px; border:1px solid #eee;">Policy Period</th>
             <th style="text-align:left; padding:8px; border:1px solid #eee;">Policy End date</th>
@@ -49,7 +161,7 @@
         <tbody id="policyRows"></tbody>
       </table>
       <div style="margin-top:8px;">
-        <button id="addRowBtn" class="btn btn-secondary" type="button">Add Row</button>
+        <button id="addRowBtn" class="btn btn-secondary" type="button"><i class="fas fa-plus"></i> Add Row</button>
       </div>
     </div>
 
@@ -97,11 +209,113 @@
         }
       } catch {}
 
+      // Initialize plan arrays
+      window.clientAgreedPlans = [];
+      window.activePlans = [];
+      window.teleVerificationPlans = [];      // plans added during tele-verification
+      window.allAvailablePlans = [];         // clientAgreedPlans + teleVerificationPlans
+
+      // Fetch active plans from the database (for tele-verification plan selector ONLY)
+      async function fetchActivePlans() {
+        try {
+          const res = await fetch('/api/agent/active_plans');
+          if (res.ok) {
+            const data = await res.json();
+            window.activePlans = data.plans || [];
+            console.log('Fetched', window.activePlans.length, 'active plans');
+          }
+        } catch (e) {
+          console.warn('Failed to fetch active plans:', e);
+          window.activePlans = [];
+        }
+      }
+
+      // Combine client agreed plans and tele-verification plans
+      function updateAllAvailablePlans() {
+        const combined = new Set([
+          ...(window.clientAgreedPlans || []),
+          ...(window.teleVerificationPlans || [])
+        ]);
+        window.allAvailablePlans = Array.from(combined).sort();
+
+        // Update the quick plan selector (from active plans)
+        const quickSelect = document.getElementById('quickPlanSelect');
+        if (quickSelect) {
+          const sourcePlans = window.activePlans || [];
+          quickSelect.innerHTML = '<option value="">-- Select a plan --</option>' +
+            sourcePlans.map(p => `<option value="${p}">${p}</option>`).join('');
+        }
+
+        // Refresh plan dropdowns in the member table
+        refreshPlanDropdowns();
+      }
+
+      // Refresh all plan dropdowns in the table
+      function refreshPlanDropdowns() {
+        const allPlans = window.allAvailablePlans || [];
+        const planOptions = '<option value="">Select a plan</option>' + 
+          allPlans.map(p => `<option value="${p}">${p}</option>`).join('');
+        
+        document.querySelectorAll('.pc-plan').forEach(select => {
+          const currentValue = select.value;
+          select.innerHTML = planOptions;
+          if (currentValue && allPlans.includes(currentValue)) {
+            select.value = currentValue;
+          }
+        });
+      }
+
+      // Quick Add Row button handler (tele-verification)
+      const addPlanRowBtn = document.getElementById('addPlanRowBtn');
+      const quickPlanSelect = document.getElementById('quickPlanSelect');
+      const quickPedInput = document.getElementById('quickPedInput');
+      const planAddedMsg = document.getElementById('planAddedMsg');
+      const planAddedText = document.getElementById('planAddedText');
+
+      if (addPlanRowBtn) {
+        addPlanRowBtn.addEventListener('click', function() {
+          const selectedPlan = quickPlanSelect?.value || '';
+          const ped = (quickPedInput?.value || '').trim();
+
+          if (!selectedPlan) {
+            alert('Please select a plan to add.');
+            return;
+          }
+
+          if (!Array.isArray(window.teleVerificationPlans)) {
+            window.teleVerificationPlans = [];
+          }
+
+          // Add selected plan to tele-verification list if not already present
+          if (!window.teleVerificationPlans.includes(selectedPlan)) {
+            window.teleVerificationPlans.push(selectedPlan);
+          }
+
+          // Update the set of selectable plans for members
+          updateAllAvailablePlans();
+
+          // Show confirmation (note: we are not adding a member row, only making the plan selectable)
+          if (planAddedMsg && planAddedText) {
+            planAddedText.textContent = ped
+              ? `Plan "${selectedPlan}" added with PED note: ${ped}`
+              : `Plan "${selectedPlan}" added to selectable plans.`;
+            planAddedMsg.classList.add('show');
+            setTimeout(() => planAddedMsg.classList.remove('show'), 3000);
+          }
+
+          // Clear inputs
+          if (quickPlanSelect) quickPlanSelect.value = '';
+          if (quickPedInput) quickPedInput.value = '';
+        });
+      }
 
       // Prefill Policy holder (memberName) and Member number (mobile) from DB submission
       async function prefillFromSubmission() {
         if (!uid) return;
         try {
+          // Fetch active plans first
+          await fetchActivePlans();
+          
           const res = await fetch(`/api/agent/submission/${encodeURIComponent(uid)}`);
           if (!res.ok) return;
           const data = await res.json();
@@ -115,6 +329,9 @@
               console.error('Failed to parse Client_Agreed_Plans:', e);
             }
           }
+
+          // Initially, allAvailablePlans = clientAgreedPlans (no tele-verification plans yet)
+          updateAllAvailablePlans();
 
           let form = data?.form_summary;
           if (typeof form === 'string') {
@@ -249,9 +466,19 @@
               const rows = Array.isArray(details.rows) ? details.rows : [];
               for (const r of rows) {
                 if (r && r.member_name) memberNames.push(String(r.member_name).trim());
+                // If there are existing plans on rows that are NOT in clientAgreedPlans,
+                // treat them as tele-verification plans so that dropdowns can display them.
+                if (r && r.plan && !window.clientAgreedPlans.includes(r.plan)) {
+                  if (!window.teleVerificationPlans.includes(r.plan)) {
+                    window.teleVerificationPlans.push(r.plan);
+                  }
+                }
               }
             }
           } catch {}
+          // After including any plans from existing rows, recompute allowed plans
+          updateAllAvailablePlans();
+
           // Fallback: inspect top-level data object (in case values are not inside form_summary)
           if ((!holderName || holderName.trim() === '') && data && typeof data === 'object') {
             holderName = pickName(data) || holderName;
@@ -291,16 +518,17 @@
           addRow({ memberName: memberNames[0] || '' }, memberNames);
           // Save a master member list to avoid duplicating options when adding more rows
           try { window.__memberNamesMaster = memberNames.slice(); } catch {}
+
+          // Check if we should auto-display the summary
+          const urlParams = new URLSearchParams(window.location.search);
+          const viewMode = urlParams.get('view');
+          
+          if (viewMode === 'summary') {
+            // Load saved policy details and display summary
+            await loadAndDisplaySavedPolicy();
+          }
         } catch (e) {
           console.warn('Prefill failed', e);
-        }
-        // Check if we should auto-display the summary
-        const urlParams = new URLSearchParams(window.location.search);
-        const viewMode = urlParams.get('view');
-        
-        if (viewMode === 'summary') {
-          // Load saved policy details and display summary
-          await loadAndDisplaySavedPolicy();
         }
       }
 
@@ -348,7 +576,8 @@
               addRow({
                 policyNumber: row.policy_number,
                 memberNumber: row.member_number,
-                memberName: row.member_name
+                memberName: row.member_name,
+                plan: row.plan
               }, memberNames);
               
               // Fill in the new row
@@ -423,7 +652,9 @@
         names = names.filter(n => (!seenNames.has(n) && (seenNames.add(n), true)));
         const memberNameOptions = '<option value="">Select a member</option>' + names.map(n => `<option value="${n}">${n}</option>`).join('');
 
-        const planOptions = '<option value="">Select a plan</option>' + (window.clientAgreedPlans || []).map(p => `<option value="${p}">${p}</option>`).join('');
+        // Use allAvailablePlans which combines Client Agreed Plans + Tele-Verification Plans
+        const allPlans = window.allAvailablePlans || window.clientAgreedPlans || [];
+        const planOptions = '<option value="">Select a plan</option>' + allPlans.map(p => `<option value="${p}">${p}</option>`).join('');
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -457,6 +688,7 @@
         if (defaults.policyNumber) tr.querySelector('.pc-number').value = defaults.policyNumber;
         if (defaults.memberNumber) tr.querySelector('.pc-member-number').value = defaults.memberNumber;
         if (defaults.memberName) tr.querySelector('.pc-member-name').value = defaults.memberName;
+        if (defaults.plan) tr.querySelector('.pc-plan').value = defaults.plan;
         // Wire end-date compute
         tr.querySelector('.pc-start').addEventListener('change', () => computeRowEndDate(tr));
         tr.querySelector('.pc-period').addEventListener('change', () => computeRowEndDate(tr));
@@ -480,93 +712,92 @@
         addRow({}, opts);
       });
 
-
       // Removed Cancel button; Back to Approvals available in header
 
       saveBtn.addEventListener('click', async function(){
-              // First, remove any completely empty rows
-              const allRows = Array.from(rowsTbody.querySelectorAll('tr'));
-              allRows.forEach(tr => {
-                const policyNum = tr.querySelector('.pc-number')?.value.trim() || '';
-                const memberNum = tr.querySelector('.pc-member-number')?.value.trim() || '';
-                const memberName = tr.querySelector('.pc-member-name')?.value || '';
-                const plan = tr.querySelector('.pc-plan')?.value || '';
-                const startDate = tr.querySelector('.pc-start')?.value || '';
-                
-                // If all fields are empty, remove the row
-                if (!policyNum && !memberNum && !memberName && !plan && !startDate) {
-                  tr.remove();
-                }
-              });
-              
-              // Extract remaining rows
-              const rows = Array.from(rowsTbody.querySelectorAll('tr')).map(tr => ({
-                policy_number: tr.querySelector('.pc-number')?.value.trim() || '',
-                member_number: tr.querySelector('.pc-member-number')?.value.trim() || '',
-                member_name: tr.querySelector('.pc-member-name')?.value || '',
-                plan: tr.querySelector('.pc-plan')?.value || '',
-                policy_start_date: tr.querySelector('.pc-start')?.value || '',
-                policy_period_months: parseInt(tr.querySelector('.pc-period')?.value || '12', 10),
-                policy_end_date: tr.querySelector('.pc-end')?.value || ''
-              }));
-              
-              if (!rows.length) { return alert('Please add at least one row with data.'); }
-              
-              const first = rows[0];
-              if (!first.policy_number || !first.member_number || !first.member_name || !first.policy_start_date) {
-                return alert('Please fill all required fields in the first row.');
-              }
-              
-              const payload = {
-                unique_id: uid,
-                policy_number: first.policy_number,
-                policy_name: '',
-                member_number: first.member_number,
-                member_name: first.member_name,
-                policy_start_date: first.policy_start_date,
-                policy_period_months: first.policy_period_months,
-                close_comments: (document.getElementById('appComments')?.value || '').trim(),
-                policy_details: JSON.stringify({ rows })
-              };
-              
-              // Disable button during save
-              saveBtn.disabled = true;
-              saveBtn.textContent = 'Saving...';
-              
-              try {
-                const resp = await fetch('/api/agent/policy_details', {
-                  method: 'POST',
-                  headers: { 
-                    'Content-Type': 'application/json', 
-                    'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown') 
-                  },
-                  body: JSON.stringify(payload)
-                });
-                
-                if (!resp.ok) {
-                  const t = await resp.text().catch(()=> '');
-                  console.error('Save policy failed', resp.status, t);
-                  saveBtn.disabled = false;
-                  saveBtn.textContent = 'Save Policy';
-                  return alert('Failed to save policy details');
-                }
-                
-                const data = await resp.json();
-                if (data && data.policy_end_date) {
-                  const firstEndEl = rowsTbody.querySelector('tr .pc-end');
-                  if (firstEndEl) firstEndEl.value = data.policy_end_date;
-                }
-                
-                // Display summary below the form
-                displayPolicySummary(rows, payload);
-                
-              } catch (e) {
-                console.error(e);
-                saveBtn.disabled = false;
-                saveBtn.textContent = 'Save Policy';
-                alert('Failed to save policy details');
-              }
-            });
+        // First, remove any completely empty rows
+        const allRows = Array.from(rowsTbody.querySelectorAll('tr'));
+        allRows.forEach(tr => {
+          const policyNum = tr.querySelector('.pc-number')?.value.trim() || '';
+          const memberNum = tr.querySelector('.pc-member-number')?.value.trim() || '';
+          const memberName = tr.querySelector('.pc-member-name')?.value || '';
+          const plan = tr.querySelector('.pc-plan')?.value || '';
+          const startDate = tr.querySelector('.pc-start')?.value || '';
+          
+          // If all fields are empty, remove the row
+          if (!policyNum && !memberNum && !memberName && !plan && !startDate) {
+            tr.remove();
+          }
+        });
+        
+        // Extract remaining rows (PED removed from row model)
+        const rows = Array.from(rowsTbody.querySelectorAll('tr')).map(tr => ({
+          policy_number: tr.querySelector('.pc-number')?.value.trim() || '',
+          member_number: tr.querySelector('.pc-member-number')?.value.trim() || '',
+          member_name: tr.querySelector('.pc-member-name')?.value || '',
+          plan: tr.querySelector('.pc-plan')?.value || '',
+          policy_start_date: tr.querySelector('.pc-start')?.value || '',
+          policy_period_months: parseInt(tr.querySelector('.pc-period')?.value || '12', 10),
+          policy_end_date: tr.querySelector('.pc-end')?.value || ''
+        }));
+        
+        if (!rows.length) { return alert('Please add at least one row with data.'); }
+        
+        const first = rows[0];
+        if (!first.policy_number || !first.member_number || !first.member_name || !first.policy_start_date) {
+          return alert('Please fill all required fields in the first row.');
+        }
+        
+        const payload = {
+          unique_id: uid,
+          policy_number: first.policy_number,
+          policy_name: '',
+          member_number: first.member_number,
+          member_name: first.member_name,
+          policy_start_date: first.policy_start_date,
+          policy_period_months: first.policy_period_months,
+          close_comments: (document.getElementById('appComments')?.value || '').trim(),
+          policy_details: JSON.stringify({ rows })
+        };
+        
+        // Disable button during save
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+        
+        try {
+          const resp = await fetch('/api/agent/policy_details', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json', 
+              'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown') 
+            },
+            body: JSON.stringify(payload)
+          });
+          
+          if (!resp.ok) {
+            const t = await resp.text().catch(()=> '');
+            console.error('Save policy failed', resp.status, t);
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Policy';
+            return alert('Failed to save policy details');
+          }
+          
+          const data = await resp.json();
+          if (data && data.policy_end_date) {
+            const firstEndEl = rowsTbody.querySelector('tr .pc-end');
+            if (firstEndEl) firstEndEl.value = data.policy_end_date;
+          }
+          
+          // Display summary below the form
+          displayPolicySummary(rows, payload);
+          
+        } catch (e) {
+          console.error(e);
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Policy';
+          alert('Failed to save policy details');
+        }
+      });
 
       function displayPolicySummary(rows, payload) {
         const summarySection = document.getElementById('policySummarySection');
@@ -577,7 +808,7 @@
         // Build summary for ALL members/policies
         let html = '';
         
-        // Policy overview table showing all members
+        // Policy overview table showing all members (PED column removed)
         html += `
           <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
             <h3 style="margin-bottom: 1rem; color: #495057;">
