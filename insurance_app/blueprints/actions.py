@@ -201,6 +201,129 @@ def update_approval_status(unique_id):
     finally:
         if conn: conn.close()
 
+@actions_bp.route('/api/supervisor/reassign_agent', methods=['POST'])
+def reassign_agent():
+    """
+    Reassign an application to a different agent.
+
+    Expected JSON body (from dashboard.js):
+    {
+        "unique_id": "Evan_34957",
+        "new_agent": "AGENT_002",
+        "reassigned_by": "SUPERVISOR_001"  # optional; falls back to header or 'Unknown'
+    }
+    """
+    payload = request.get_json(silent=True) or {}
+
+    unique_id = (payload.get('unique_id') or '').strip()
+    new_agent = (payload.get('new_agent') or '').strip()
+    reassigned_by = (
+        payload.get('reassigned_by')
+        or request.headers.get('X-User-Id')
+        or 'Unknown'
+    )
+
+    if not unique_id or not new_agent:
+        return jsonify({
+            'success': False,
+            'message': 'Both unique_id and new_agent are required.'
+        }), 400
+
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Look up the current agent and application status
+        cursor.execute(
+            """
+            SELECT agent, application_status
+            FROM submissions
+            WHERE unique_id = ?
+            """,
+            (unique_id,)
+        )
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({
+                'success': False,
+                'message': f'Application {unique_id} was not found.'
+            }), 404
+
+        current_agent = row['agent']
+        application_status = row['application_status']
+
+        # If nothing is changing, just return success with a no-op message
+        if (current_agent or '').strip() == new_agent:
+            return jsonify({
+                'success': True,
+                'message': f'Application {unique_id} is already assigned to {new_agent}.',
+                'previous_agent': current_agent,
+                'new_agent': new_agent
+            }), 200
+
+        # Perform the update
+        cursor.execute(
+            """
+            UPDATE submissions
+            SET agent = ?
+            WHERE unique_id = ?
+            """,
+            (new_agent, unique_id)
+        )
+        conn.commit()
+
+        # Best-effort audit log entry
+        try:
+            try:
+                import pytz
+                ist = pytz.timezone('Asia/Kolkata')
+                timestamp_iso = datetime.now(ist).isoformat()
+            except Exception:
+                # Fallback if pytz is not available for some reason
+                timestamp_iso = datetime.utcnow().isoformat()
+
+            comments = (
+                f'Agent reassigned from {current_agent or "None"} '
+                f'to {new_agent} by {reassigned_by}'
+            )
+            insert_application_status_log_entry(
+                unique_id,
+                application_status,
+                comments,
+                timestamp_iso,
+                reassigned_by,
+                source='agent_reassignment'
+            )
+        except Exception:
+            # Logging should never break the main operation
+            pass
+
+        current_app.logger.info(
+            f'Application {unique_id} reassigned from {current_agent} '
+            f'to {new_agent} by {reassigned_by}'
+        )
+
+        return jsonify({
+            'success': True,
+            'message': f'Application {unique_id} reassigned from {current_agent} to {new_agent}.',
+            'previous_agent': current_agent,
+            'new_agent': new_agent
+        }), 200
+
+    except Exception as e:
+        current_app.logger.error(f'Error reassigning agent for {unique_id}: {e}')
+        if conn:
+            conn.rollback()
+        return jsonify({
+            'success': False,
+            'message': 'Error reassigning agent.'
+        }), 500
+    finally:
+        if conn:
+            conn.close()
+
+
 @actions_bp.route('/supervisor_selected_plans/<unique_id>', methods=['POST'])
 def update_supervisor_selected_plans(unique_id):
     """Save supervisor selected plans to database"""

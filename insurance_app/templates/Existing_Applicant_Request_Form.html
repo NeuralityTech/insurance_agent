@@ -132,20 +132,37 @@
             return String(s).trim();
         }
 
+        // Check if current user is the owner (agent) of the application
+        function _isOwner(currentUserId, applicationAgent) {
+            if (!currentUserId || !applicationAgent) return false;
+            const currentLower = String(currentUserId).trim().toLowerCase();
+            const agentLower = String(applicationAgent).trim().toLowerCase();
+            // Check for exact match or partial match (user ID contained in agent field)
+            return currentLower === agentLower || 
+                   agentLower.includes(currentLower) || 
+                   currentLower.includes(agentLower);
+        }
+
         // Returns true if applicant details should be editable by the role at the given status
-        function _isApplicantEditable(role, statusStr) {
+        // Now also considers ownership - agents can only edit their own applications
+        function _isApplicantEditable(role, statusStr, currentUserId, applicationAgent) {
             const roleL = (role || '').toLowerCase();
             const status = _normalize(statusStr);
 
             // AGENT: editable only when OPEN (i.e. before 'Submitted for Review') or when SUPERVISOR_REJECTED
+            // AND must be the owner of the application
             if (roleL === 'agent') {
+                const isOwner = _isOwner(currentUserId, applicationAgent);
+                if (!isOwner) {
+                    return false; // Agent cannot edit applications they don't own
+                }
                 if (ROLE_STATUS.OPEN_DRAFT.includes(status) || ROLE_STATUS.SUPERVISOR_REJECTED.includes(status)) {
                     return true;
                 }
                 return false;
             }
 
-            // SUPERVISOR: editable only during OPEN or SUP_REVIEW
+            // SUPERVISOR: editable only during OPEN or SUP_REVIEW (they can edit any application at these stages)
             if (roleL === 'supervisor') {
                 if (ROLE_STATUS.OPEN_DRAFT.includes(status) || ROLE_STATUS.SUBMITTED.includes(status)) return true;
                 return false;
@@ -242,13 +259,15 @@
          * Apply role+status restrictions.
          * role: string e.g., 'agent' | 'supervisor'
          * submissionData: the fetched submission object (may be {} on initial page load)
+         * currentUserId: the logged-in user's ID
          */
-        function applyRoleAndStatusRestrictions(role, submissionData) {
+        function applyRoleAndStatusRestrictions(role, submissionData, currentUserId) {
             // start from a clean slate
             _unlockEntireForm();
 
             const status = deriveCanonicalStatusFromSubmission(submissionData || {});
-            const applicantEditable = _isApplicantEditable(role, status);
+            const applicationAgent = submissionData?.agent || '';
+            const applicantEditable = _isApplicantEditable(role, status, currentUserId, applicationAgent);
             const agentCanSelectPlans = _canAgentSelectPlans(role, status);
             const canSubmitToUW = _canSubmitToUnderwriter(role, status);
 
@@ -407,7 +426,7 @@
             }
 
             const userRole = localStorage.getItem('userRole');
-            applyRoleAndStatusRestrictions(userRole, {}); // no submission data yet; safe initial call
+            applyRoleAndStatusRestrictions(userRole, {}, userId); // no submission data yet; safe initial call
 
 
             function hardResetForm() {
@@ -781,7 +800,7 @@
                     const userRole = localStorage.getItem('userRole');
                     updateWorkflowButtons(data.application_status, userRole);
                     if (userRole) {
-                        applyRoleAndStatusRestrictions(userRole, data);
+                        applyRoleAndStatusRestrictions(userRole, data, userId);
                     }
 
                     

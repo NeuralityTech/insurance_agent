@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Supervisors see all proposals by default
         currentAgentFilter = '';
       } else {
-        // Agents see only their own proposals
+        // Agents see ONLY their own proposals - never all proposals
         const agentName = `${userId}`;
         
         // Check if user has proposals
@@ -166,7 +166,9 @@ document.addEventListener('DOMContentLoaded', function() {
           if (partialMatch) {
             currentAgentFilter = partialMatch.agent;
           } else {
-            currentAgentFilter = ''; // Show all if no match
+            // IMPORTANT: Agents should NOT see all applications if they have none
+            // Keep their filter set to their userId so they see 0 results instead of all
+            currentAgentFilter = agentName;
           }
         }
       }
@@ -226,6 +228,9 @@ document.addEventListener('DOMContentLoaded', function() {
       isSupervisor &&
       (String(normalizedStatus).trim().toLowerCase() === 'submitted for review');
 
+    // Supervisors can reassign agents at any time
+    const shouldShowReassign = isSupervisor;
+
     // Build row HTML
     row.innerHTML = `
       <td>
@@ -247,6 +252,11 @@ document.addEventListener('DOMContentLoaded', function() {
           ${shouldShowSupervisorAction ? `
             <button class="btn-icon btn-approve" title="Supervisor Approve" onclick="goToSupervisorForm('${escapeHtml(proposal.uniqueId)}')">
               <i class="fas fa-user-shield"></i>
+            </button>
+          ` : ''}
+          ${shouldShowReassign ? `
+            <button class="btn-icon btn-reassign" title="Reassign Agent" onclick="openReassignModal('${escapeHtml(proposal.uniqueId)}', '${escapeHtml(proposal.agent)}')">
+              <i class="fas fa-user-edit"></i>
             </button>
           ` : ''}
         </div>
@@ -298,16 +308,35 @@ document.addEventListener('DOMContentLoaded', function() {
     
     allAgents = ['All Agents', ...Array.from(uniqueAgents).sort()];
     
-    // Set default value based on currentAgentFilter
-    if (currentAgentFilter && allAgents.includes(currentAgentFilter)) {
-      selectedAgent = currentAgentFilter;
-      agentFilterInput.value = currentAgentFilter;
-    } else {
-      selectedAgent = 'All Agents';
-      agentFilterInput.value = 'All Agents';
-    }
+    // Check if user is a supervisor
+    const isSupervisor = userRole && userRole.toLowerCase() === 'supervisor';
     
-    populateAgentDropdown(allAgents);
+    // For non-supervisors (agents), hide the agent filter dropdown
+    // They can only see their own applications
+    if (!isSupervisor) {
+      if (agentFilterInput) {
+        agentFilterInput.style.display = 'none';
+        // Also hide the parent wrapper if it exists
+        const wrapper = agentFilterInput.closest('.searchable-dropdown-wrapper');
+        if (wrapper) {
+          wrapper.style.display = 'none';
+        }
+      }
+      // Set to their own agent filter and don't allow changes
+      selectedAgent = currentAgentFilter || userId;
+    } else {
+      // Supervisors can see all agents
+      // Set default value based on currentAgentFilter
+      if (currentAgentFilter && allAgents.includes(currentAgentFilter)) {
+        selectedAgent = currentAgentFilter;
+        agentFilterInput.value = currentAgentFilter;
+      } else {
+        selectedAgent = 'All Agents';
+        agentFilterInput.value = 'All Agents';
+      }
+      
+      populateAgentDropdown(allAgents);
+    }
     
     // Apply initial filter
     filterTable();
@@ -858,6 +887,250 @@ function filterTable() {
   window.goToSupervisorForm = function(uniqueId) {
     // Redirect to the Supervisor_Form.html page with the unique ID as a query parameter
     window.location.href = `/html/Supervisor_Form.html?uid=${encodeURIComponent(uniqueId)}`;
+  };
+
+  // ===================================
+  // AGENT REASSIGNMENT (Supervisor Only)
+  // ===================================
+  let reassignModal = null;
+  let currentReassignUid = null;
+  let currentReassignAgent = null;
+
+  // Create the reassign modal dynamically
+  function createReassignModal() {
+    if (document.getElementById('reassignModal')) return;
+    
+    const modal = document.createElement('div');
+    modal.id = 'reassignModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3><i class="fas fa-user-edit"></i> Reassign Application</h3>
+          <button class="modal-close" onclick="closeReassignModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Reassign application <strong id="reassignUidDisplay"></strong></p>
+          <p>Current Agent: <strong id="currentAgentDisplay"></strong></p>
+          <div class="form-group" style="margin-top: 1rem;">
+            <label for="newAgentSelect">Select New Agent:</label>
+            <select id="newAgentSelect" class="form-control">
+              <option value="">-- Select Agent --</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeReassignModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="confirmReassign()">Reassign</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Add modal styles if not already present
+    if (!document.getElementById('reassignModalStyles')) {
+      const styles = document.createElement('style');
+      styles.id = 'reassignModalStyles';
+      styles.textContent = `
+        .modal-overlay {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 1000;
+          justify-content: center;
+          align-items: center;
+        }
+        .modal-overlay.show {
+          display: flex;
+        }
+        .modal-content {
+          background: white;
+          border-radius: 8px;
+          width: 90%;
+          max-width: 450px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1rem 1.5rem;
+          border-bottom: 1px solid #e9ecef;
+        }
+        .modal-header h3 {
+          margin: 0;
+          font-size: 1.1rem;
+          color: #333;
+        }
+        .modal-header h3 i {
+          margin-right: 0.5rem;
+          color: #007bff;
+        }
+        .modal-close {
+          background: none;
+          border: none;
+          font-size: 1.5rem;
+          cursor: pointer;
+          color: #666;
+        }
+        .modal-close:hover {
+          color: #333;
+        }
+        .modal-body {
+          padding: 1.5rem;
+        }
+        .modal-body p {
+          margin: 0.5rem 0;
+          color: #555;
+        }
+        .modal-body .form-group {
+          margin-top: 1rem;
+        }
+        .modal-body label {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 500;
+          color: #333;
+        }
+        .modal-body .form-control {
+          width: 100%;
+          padding: 0.5rem;
+          border: 1px solid #ced4da;
+          border-radius: 4px;
+          font-size: 1rem;
+        }
+        .modal-footer {
+          display: flex;
+          justify-content: flex-end;
+          gap: 0.75rem;
+          padding: 1rem 1.5rem;
+          border-top: 1px solid #e9ecef;
+        }
+        .modal-footer .btn {
+          padding: 0.5rem 1rem;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 0.9rem;
+        }
+        .modal-footer .btn-secondary {
+          background: #6c757d;
+          color: white;
+          border: none;
+        }
+        .modal-footer .btn-secondary:hover {
+          background: #5a6268;
+        }
+        .modal-footer .btn-primary {
+          background: #007bff;
+          color: white;
+          border: none;
+        }
+        .modal-footer .btn-primary:hover {
+          background: #0056b3;
+        }
+        .btn-reassign {
+          color: #17a2b8 !important;
+        }
+        .btn-reassign:hover {
+          background: rgba(23, 162, 184, 0.1);
+        }
+      `;
+      document.head.appendChild(styles);
+    }
+  }
+
+  // Open the reassign modal
+  window.openReassignModal = function(uniqueId, currentAgent) {
+    createReassignModal();
+    
+    currentReassignUid = uniqueId;
+    currentReassignAgent = currentAgent;
+    
+    document.getElementById('reassignUidDisplay').textContent = uniqueId;
+    document.getElementById('currentAgentDisplay').textContent = currentAgent || 'N/A';
+    
+    // Populate agent dropdown
+    const select = document.getElementById('newAgentSelect');
+    select.innerHTML = '<option value="">-- Select Agent --</option>';
+    
+    // Get unique agents from proposals data (excluding 'All Agents' and current agent)
+    const uniqueAgents = new Set();
+    proposalsData.forEach(p => {
+      if (p.agent && p.agent !== 'N/A') {
+        uniqueAgents.add(p.agent);
+      }
+    });
+    
+    Array.from(uniqueAgents).sort().forEach(agent => {
+      if (agent !== currentAgent) {
+        const option = document.createElement('option');
+        option.value = agent;
+        option.textContent = agent;
+        select.appendChild(option);
+      }
+    });
+    
+    document.getElementById('reassignModal').classList.add('show');
+  };
+
+  // Close the reassign modal
+  window.closeReassignModal = function() {
+    const modal = document.getElementById('reassignModal');
+    if (modal) {
+      modal.classList.remove('show');
+    }
+    currentReassignUid = null;
+    currentReassignAgent = null;
+  };
+
+  // Confirm and execute the reassignment
+  window.confirmReassign = async function() {
+    const newAgent = document.getElementById('newAgentSelect').value;
+    
+    if (!newAgent) {
+      alert('Please select a new agent.');
+      return;
+    }
+    
+    if (!currentReassignUid) {
+      alert('No application selected for reassignment.');
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/supervisor/reassign_agent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          unique_id: currentReassignUid,
+          new_agent: newAgent,
+          reassigned_by: userId
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to reassign agent');
+      }
+      
+      const result = await response.json();
+      alert(`Application ${currentReassignUid} has been reassigned from ${currentReassignAgent} to ${newAgent}`);
+      
+      closeReassignModal();
+      
+      // Reload the proposals data to reflect the change
+      loadProposalsData();
+      
+    } catch (error) {
+      console.error('Error reassigning agent:', error);
+      alert('Failed to reassign agent: ' + error.message);
+    }
   };
 
   // ===================================
