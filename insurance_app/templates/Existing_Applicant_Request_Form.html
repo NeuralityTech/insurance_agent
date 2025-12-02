@@ -173,19 +173,47 @@
         }
 
         // Returns true if agent should be allowed to select plans (SUP_APPROVED stage only)
-        function _canAgentSelectPlans(role, statusStr) {
+        // Agents must also be the owner of the application
+        function _canAgentSelectPlans(role, statusStr, currentUserId, applicationAgent) {
             const roleL = (role || '').toLowerCase();
             const status = _normalize(statusStr);
-            return (roleL === ('agent' || 'supervisor') && ROLE_STATUS.SUPERVISOR_APPROVED.includes(status));
+            
+            // Check if status allows plan selection
+            const statusAllows = ROLE_STATUS.SUPERVISOR_APPROVED.includes(status);
+            if (!statusAllows) return false;
+            
+            // Agents must own the application
+            if (roleL === 'agent') {
+                return _isOwner(currentUserId, applicationAgent);
+            }
+            
+            // Supervisors can select plans for any application at this stage
+            if (roleL === 'supervisor') {
+                return true;
+            }
+            
+            return false;
         }
         // Returns true if agent or supervisor can submit to UW (CLIENT_APPROVED stage only)
-        function _canSubmitToUnderwriter(role, statusStr) {
+        // Agents must also be the owner of the application
+        function _canSubmitToUnderwriter(role, statusStr, currentUserId, applicationAgent) {
             const roleL = (role || '').toLowerCase();
             const status = _normalize(statusStr);
-            return (
-                (roleL === 'agent' || roleL === 'supervisor') && 
-                ROLE_STATUS.CLIENT_APPROVED.includes(status)
-            );
+            
+            const statusAllows = ROLE_STATUS.CLIENT_APPROVED.includes(status);
+            if (!statusAllows) return false;
+            
+            // Agents must own the application
+            if (roleL === 'agent') {
+                return _isOwner(currentUserId, applicationAgent);
+            }
+            
+            // Supervisors can submit for any application
+            if (roleL === 'supervisor') {
+                return true;
+            }
+            
+            return false;
         }
 
         /* DOM lock/unlock helpers (scoped to #insurance-form so page nav stays functional) */
@@ -268,8 +296,8 @@
             const status = deriveCanonicalStatusFromSubmission(submissionData || {});
             const applicationAgent = submissionData?.agent || '';
             const applicantEditable = _isApplicantEditable(role, status, currentUserId, applicationAgent);
-            const agentCanSelectPlans = _canAgentSelectPlans(role, status);
-            const canSubmitToUW = _canSubmitToUnderwriter(role, status);
+            const agentCanSelectPlans = _canAgentSelectPlans(role, status, currentUserId, applicationAgent);
+            const canSubmitToUW = _canSubmitToUnderwriter(role, status, currentUserId, applicationAgent);
 
             // If applicant details editable for this role — leave everything unlocked
             if (applicantEditable) {

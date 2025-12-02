@@ -117,18 +117,29 @@
      * @returns {Promise<Object|null>} The submission data or null
      */
     async function getDateData() {
+        // Check if we're on a new applicant form (no uid in URL)
+        const urlParams = new URLSearchParams(location.search);
+        const uidFromUrl = urlParams.get('uid') || urlParams.get('unique_id');
+        
+        // For new applicant forms (no uid), return null to prevent showing stale timestamps
+        const isNewApplicantForm = window.location.pathname.includes('New_Applicant');
+        if (isNewApplicantForm && !uidFromUrl) {
+            // Clear any stale cached data
+            window.currentSubmissionData = null;
+            return null;
+        }
+        
         // Try window.currentSubmissionData first
         let d = window.currentSubmissionData || null;
         let uid = d?.unique_id || d?.uniqueId || null;
         
         // Try to get uid from URL if not in data
         if (!uid) {
-            const p = new URLSearchParams(location.search);
-            uid = p.get('uid') || p.get('unique_id');
+            uid = uidFromUrl;
         }
         
-        // Try to get uid from localStorage
-        if (!uid) {
+        // Try to get uid from localStorage (but only for existing applicant forms)
+        if (!uid && !isNewApplicantForm) {
             uid = localStorage.getItem('currentUniqueId');
         }
         
@@ -500,7 +511,14 @@
     document.addEventListener('DOMContentLoaded', () => {
         // Only auto-init for new applicant form, not existing applicant form
         const isExistingForm = window.location.pathname.includes('Existing_Applicant');
-        if (!isExistingForm && document.getElementById('insurance-form')) {
+        const isNewForm = window.location.pathname.includes('New_Applicant');
+        
+        if (isNewForm && document.getElementById('insurance-form')) {
+            // Clear any stale cached data from previous sessions
+            window.currentSubmissionData = null;
+            // Don't clear currentUniqueId from localStorage as it might be needed elsewhere
+            // but the getDateData function now checks for new applicant forms
+            
             initializeFormProgressBar();
         }
     });

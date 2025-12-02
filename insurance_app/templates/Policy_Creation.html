@@ -202,12 +202,50 @@
       const rowsTbody = document.getElementById('policyRows');
       const summaryLine = document.getElementById('summaryLine');
 
-      try {
-        const uidLS = localStorage.getItem('loggedInUserId');
-        if (!uidLS) {
-          window.location.href = 'Main_login.html';
+      // Get logged-in user info
+      const loggedInUserId = localStorage.getItem('loggedInUserId');
+      const userRole = localStorage.getItem('userRole');
+      
+      if (!loggedInUserId) {
+        window.location.href = 'Main_login.html';
+        return;
+      }
+
+      // Ownership check helper
+      function isOwner(currentUserId, applicationAgent) {
+        if (!currentUserId || !applicationAgent) return false;
+        const currentLower = String(currentUserId).trim().toLowerCase();
+        const agentLower = String(applicationAgent).trim().toLowerCase();
+        return currentLower === agentLower || 
+               agentLower.includes(currentLower) || 
+               currentLower.includes(agentLower);
+      }
+
+      // Function to lock down the page for non-owners
+      function lockPageForNonOwner(applicationAgent) {
+        // Show warning message
+        const container = document.querySelector('.container');
+        if (container) {
+          const warning = document.createElement('div');
+          warning.style.cssText = 'background: #fee2e2; border: 1px solid #ef4444; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; color: #dc2626;';
+          warning.innerHTML = `
+            <strong><i class="fas fa-exclamation-triangle"></i> Access Denied</strong>
+            <p style="margin: 0.5rem 0 0 0;">You do not have permission to create policies for this application. This application belongs to <strong>${applicationAgent || 'another agent'}</strong>.</p>
+          `;
+          container.insertBefore(warning, container.firstChild.nextSibling);
         }
-      } catch {}
+        
+        // Disable all form controls
+        document.querySelectorAll('button, input, select, textarea').forEach(el => {
+          el.disabled = true;
+        });
+        
+        // Hide action buttons
+        if (saveBtn) saveBtn.style.display = 'none';
+        if (addRowBtn) addRowBtn.style.display = 'none';
+        const newPlanSection = document.getElementById('newPlanSection');
+        if (newPlanSection) newPlanSection.style.display = 'none';
+      }
 
       // Initialize plan arrays
       window.clientAgreedPlans = [];
@@ -320,6 +358,16 @@
           if (!res.ok) return;
           const data = await res.json();
 
+          // Check ownership - agents can only create policies for their own applications
+          const applicationAgent = data?.agent || '';
+          const isSupervisor = userRole && userRole.toLowerCase() === 'supervisor';
+          
+          if (!isSupervisor && !isOwner(loggedInUserId, applicationAgent)) {
+            console.warn('Access denied: User', loggedInUserId, 'is not the owner of application', uid, '(owned by', applicationAgent + ')');
+            lockPageForNonOwner(applicationAgent);
+            return; // Stop further processing
+          }
+
           // Fetch and store client agreed plans
           if (data && data.Client_Agreed_Plans) {
             try {
@@ -413,15 +461,15 @@
             const banned = [
               'aadhaar','aadhar','pan','passport','voter','dl','driving','license','licence',
               'policy','number','mobile','phone','contact',
-              'cardiac','cancer','diabetes','others'
+              'cardiac','cancer','diabetes','others',
+              'insurer','insurance'
             ];
             if (banned.some(b => lower.includes(b))) return false;
-            // Exclude if mostly digits/symbols
             const letters = s.replace(/[^A-Za-z'\-\.\s]/g, '');
             if (letters.length < Math.ceil(s.length * 0.6)) return false;
-            // Likely name pattern: letters, spaces, apostrophes, hyphens, dots
             return /^[A-Za-z][A-Za-z'\-\.\s]*$/.test(s);
           }
+
           // Try from parsed form JSON
           if (form && typeof form === 'object') {
             // Holder name and mobile
@@ -446,6 +494,10 @@
                 if (typeof obj === 'object') {
                   for (const [k,v] of Object.entries(obj)) {
                     const key = String(k).toLowerCase();
+                    // Skip insurer-related fields, existing coverage fields, and other non-member fields
+                    const skipFields = ['insurer-name','insurer', 'existing', 'policy-type', 'sum-insured', 'since', 'gst'];
+                    if (skipFields.some(skip => key.includes(skip))) continue;
+                    
                     if (typeof v === 'string' && v.trim() && (key.includes('name') || key.includes('member'))) {
                       if (isLikelyName(v)) memberNames.push(v.trim());
                     }
@@ -509,7 +561,8 @@
           memberNames = memberNames
             .filter(Boolean)
             .flatMap(n => String(n).includes(',') ? String(n).split(',').map(s=>s.trim()).filter(Boolean) : [String(n).trim()])
-            .filter(isLikelyName);
+            .filter(isLikelyName)
+            .filter(n => !/\b(insurer|insurance|policy|company|health)\b/i.test(n));;
           // Deduplicate preserving order
           const seen = new Set();
           memberNames = memberNames.filter(n => (n && !seen.has(n) && seen.add(n)));
