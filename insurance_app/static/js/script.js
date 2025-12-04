@@ -547,7 +547,6 @@ document.addEventListener('DOMContentLoaded', function() {
             'past-claims': 'None',
             'claim-issues': 'None',
             'service-expectations': 'None',
-            'network-hospitals': 'None'
         });
         applyDefaults(summaryData.financeAndDocumentation, {
             'tax-benefit': 'yes',
@@ -822,7 +821,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 'past-claims': 'None',
                 'claim-issues': 'None',
                 'service-expectations': 'None',
-                'network-hospitals': 'None'
             });
             applyDefaults(summaryData.financeAndDocumentation, {
                 'tax-benefit': 'yes',
