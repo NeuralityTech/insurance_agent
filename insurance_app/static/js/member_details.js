@@ -45,6 +45,44 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (textarea) {
                                 textarea.value = details;
                             }
+                            
+                            // Restore since year
+                            const sinceYearKey = `${key}_since_year`;
+                            if (memberToEdit[sinceYearKey]) {
+                                const sinceYearSelect = detailsContainer.querySelector(`select[name="${sinceYearKey}"]`);
+                                if (sinceYearSelect) {
+                                    sinceYearSelect.value = memberToEdit[sinceYearKey];
+                                }
+                            }
+                            
+                            // Restore since years
+                            const sinceYearsKey = `${key}_since_years`;
+                            if (memberToEdit[sinceYearsKey]) {
+                                const sinceYearsInput = detailsContainer.querySelector(`input[name="${sinceYearsKey}"]`);
+                                if (sinceYearsInput) {
+                                    sinceYearsInput.value = memberToEdit[sinceYearsKey];
+                                }
+                            }
+                            
+                            // Backward compatibility: convert old start_date to since_year
+                            const startDateKey = `${key}_start_date`;
+                            if (memberToEdit[startDateKey] && !memberToEdit[sinceYearKey]) {
+                                const dateValue = memberToEdit[startDateKey];
+                                if (dateValue) {
+                                    const year = new Date(dateValue).getFullYear();
+                                    if (!isNaN(year)) {
+                                        const sinceYearSelect = detailsContainer.querySelector(`select[name="${key}_since_year"]`);
+                                        if (sinceYearSelect) {
+                                            sinceYearSelect.value = year;
+                                        }
+                                        const currentYear = new Date().getFullYear();
+                                        const sinceYearsInput = detailsContainer.querySelector(`input[name="${key}_since_years"]`);
+                                        if (sinceYearsInput) {
+                                            sinceYearsInput.value = Math.max(0, currentYear - year);
+                                        }
+                                    }
+                                }
+                            }
                         }
                         // Trigger toggle logic
                         checkbox.dispatchEvent(new Event('change'));
@@ -96,11 +134,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const memberId = editMemberId || `${namePart}${birthYear}_${Date.now()}`; // Add timestamp to ensure uniqueness
 
         const healthHistory = {};
+        const diseaseDurations = {};
         document.querySelectorAll('input[name="disease"]').forEach(checkbox => {
             if (!checkbox.checked) return;
             const key = checkbox.value;
             const detailsTextarea = document.querySelector(`textarea[name="${key}_details"]`);
             healthHistory[key] = detailsTextarea ? detailsTextarea.value : '';
+            
+            // Collect since year
+            const sinceYearSelect = document.querySelector(`select[name="${key}_since_year"]`);
+            if (sinceYearSelect && sinceYearSelect.value) {
+                diseaseDurations[`${key}_since_year`] = sinceYearSelect.value;
+            }
+            
+            // Collect since years
+            const sinceYearsInput = document.querySelector(`input[name="${key}_since_years"]`);
+            if (sinceYearsInput && sinceYearsInput.value) {
+                diseaseDurations[`${key}_since_years`] = sinceYearsInput.value;
+            }
         });
 
         const memberData = {
@@ -122,6 +173,9 @@ document.addEventListener('DOMContentLoaded', () => {
             occupationalRisk: document.querySelector('input[name="occupational-risk"]:checked')?.value || '',
             occupationalRiskDetails: document.getElementById('occupational-risk-details')?.value || ''
         };
+        
+        // Merge disease durations (since_year, since_years) into memberData
+        Object.assign(memberData, diseaseDurations);
 
         // Prevent duplicates
         if (!editMemberId) {

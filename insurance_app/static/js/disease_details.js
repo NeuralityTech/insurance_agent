@@ -3,14 +3,69 @@
  * It is used by: New_Applicant_Request_Form.html, Existing_Applicant_Request_Form.html, member_details.html
  * The main function is called from script.js when the Health History section is loaded.
  * 
- * FIXED: validatePrimaryDiseaseDates now properly scoped to primary applicant only
+ * UPDATED: Changed from date input to Since Year dropdown and Since X Years input
+ * with auto-calculation between the two fields
  */ 
+
+/**
+ * Get the current year
+ */
+function getCurrentYear() {
+    return new Date().getFullYear();
+}
+
+/**
+ * Populate a year dropdown with years from startYear to current year
+ * @param {HTMLSelectElement} selectEl - The select element to populate
+ * @param {number} startYear - The starting year (default 1950)
+ */
+function populateYearDropdown(selectEl, startYear = 1950) {
+    if (!selectEl) return;
+    
+    const currentYear = getCurrentYear();
+    
+    // Clear existing options except the first placeholder
+    while (selectEl.options.length > 1) {
+        selectEl.remove(1);
+    }
+    
+    // Add years in descending order (most recent first)
+    for (let year = currentYear; year >= startYear; year--) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        selectEl.appendChild(option);
+    }
+}
+
+/**
+ * Calculate number of years from a given year to current year
+ * @param {number} sinceYear - The year the disease started
+ * @returns {number} Number of years
+ */
+function calculateYearsFromYear(sinceYear) {
+    if (!sinceYear || isNaN(sinceYear)) return 0;
+    const currentYear = getCurrentYear();
+    return Math.max(0, currentYear - parseInt(sinceYear));
+}
+
+/**
+ * Calculate the year from number of years ago
+ * @param {number} yearsAgo - Number of years ago
+ * @returns {number} The calculated year
+ */
+function calculateYearFromYears(yearsAgo) {
+    if (!yearsAgo || isNaN(yearsAgo)) return null;
+    const currentYear = getCurrentYear();
+    return currentYear - parseInt(yearsAgo);
+}
 
 /**
  * Initializes the event listeners for disease checkboxes.
  * Behavior:
- *  - Checked: show details container, enable date input and textarea, make date required
- *  - Unchecked: hide details, clear values, disable fields, remove required
+ *  - Checked: show details container, enable year/years inputs and textarea
+ *  - Unchecked: hide details, clear values, disable fields
+ *  - Auto-calculate between Since Year and Since X Years
  */
 function initializeDiseaseDetails(root) {
     const container = root || document.getElementById('disease-list')
@@ -18,29 +73,28 @@ function initializeDiseaseDetails(root) {
         || document.getElementById('health-history-content');
     if (!container) return;
 
-    // Get todays date in YYYY-MM-DD format for max attribute
-    const today = new Date().toISOString().split('T')[0];
+    const currentYear = getCurrentYear();
 
     function setEntryState(entry, checked) {
         const details = entry.querySelector('.disease-details-container');
-        const dateInput = details && details.querySelector('.disease-date-input');
+        const sinceYearSelect = details && details.querySelector('.disease-since-year');
+        const sinceYearsInput = details && details.querySelector('.disease-since-years');
         const textarea = details && details.querySelector('textarea');
-        const errorSpan = dateInput && document.getElementById(dateInput.id + '-error');
+        const errorSpan = entry.querySelector('.error-message');
 
-        if (!details || !dateInput || !textarea) return;
+        if (!details) return;
 
-        // Set max date to today
-        dateInput.setAttribute('max', today);
+        // Populate year dropdown if present
+        if (sinceYearSelect) {
+            populateYearDropdown(sinceYearSelect);
+        }
 
-        // If textarea already has data, ensure checkbox is checked
-        const txtRaw = textarea.value != null ? textarea.value.toString() : '';
-        const dateRaw = dateInput.value != null ? dateInput.value.toString() : '';
+        // Check if there's existing data - if so, force checkbox to be checked
+        const hasYearValue = sinceYearSelect && sinceYearSelect.value && sinceYearSelect.value !== '';
+        const hasYearsValue = sinceYearsInput && sinceYearsInput.value && sinceYearsInput.value !== '' && sinceYearsInput.value !== '0';
+        const hasTextValue = textarea && textarea.value && textarea.value.trim() !== '';
 
-        // Treat pure commas / whitespace as "no real data"
-        const hasMeaningfulText = txtRaw.replace(/,/g, '').trim() !== '';
-        const hasDateValue = dateRaw.trim() !== '';
-
-        if (!checked && (hasMeaningfulText || hasDateValue)) {
+        if (!checked && (hasYearValue || hasYearsValue || hasTextValue)) {
             const cb = entry.querySelector('input[type="checkbox"][name="disease"]') ||
                     entry.querySelector('input[type="checkbox"]');
             if (cb) {
@@ -49,42 +103,43 @@ function initializeDiseaseDetails(root) {
             }
         }
 
-
         if (checked) {
             // Show and enable fields
             details.style.display = 'flex';
-            dateInput.disabled = false;
-            dateInput.required = true;
-            textarea.disabled = false;
             
-            // Add validation listener for date
-            if (!dateInput.dataset.listenerAdded) {
-                dateInput.addEventListener('change', function() {
-                    validateDateField(dateInput, errorSpan);
-                });
-                dateInput.addEventListener('blur', function() {
-                    validateDateField(dateInput, errorSpan);
-                });
-                dateInput.dataset.listenerAdded = 'true';
+            if (sinceYearSelect) {
+                sinceYearSelect.disabled = false;
+            }
+            if (sinceYearsInput) {
+                sinceYearsInput.disabled = false;
+            }
+            if (textarea) {
+                textarea.disabled = false;
             }
             
-            // Validate immediately if there's a value
-            if (dateInput.value) {
-                validateDateField(dateInput, errorSpan);
-            }
+            // Setup auto-calculation between year and years
+            setupAutoCalculation(entry, sinceYearSelect, sinceYearsInput, errorSpan);
+            
         } else {
             // Hide and disable fields
             details.style.display = 'none';
-            dateInput.value = '';
-            dateInput.disabled = true;
-            dateInput.required = false;
-            textarea.value = '';
-            textarea.disabled = true;
-            textarea.required = false;
+            
+            if (sinceYearSelect) {
+                sinceYearSelect.value = '';
+                sinceYearSelect.disabled = true;
+            }
+            if (sinceYearsInput) {
+                sinceYearsInput.value = '';
+                sinceYearsInput.disabled = true;
+            }
+            if (textarea) {
+                textarea.value = '';
+                textarea.disabled = true;
+            }
             
             // Clear error states
-            if (dateInput.classList) dateInput.classList.remove('input-error');
-            if (textarea.classList) textarea.classList.remove('error', 'is-invalid');
+            if (sinceYearSelect) sinceYearSelect.classList.remove('input-error');
+            if (sinceYearsInput) sinceYearsInput.classList.remove('input-error');
             if (errorSpan) {
                 errorSpan.textContent = '';
                 errorSpan.style.display = 'none';
@@ -92,31 +147,94 @@ function initializeDiseaseDetails(root) {
         }
     }
 
-    function validateDateField(dateInput, errorSpan) {
-        if (!dateInput || !errorSpan) return true;
+    function setupAutoCalculation(entry, sinceYearSelect, sinceYearsInput, errorSpan) {
+        if (!sinceYearSelect || !sinceYearsInput) return;
+        
+        // Remove existing listeners to prevent duplicates
+        const newYearSelect = sinceYearSelect.cloneNode(true);
+        const newYearsInput = sinceYearsInput.cloneNode(true);
+        
+        sinceYearSelect.parentNode.replaceChild(newYearSelect, sinceYearSelect);
+        sinceYearsInput.parentNode.replaceChild(newYearsInput, sinceYearsInput);
+        
+        // Repopulate year dropdown after cloning
+        populateYearDropdown(newYearSelect);
+        
+        // When year is selected, calculate number of years
+        newYearSelect.addEventListener('change', function() {
+            if (this.value && this.value !== '') {
+                const years = calculateYearsFromYear(parseInt(this.value));
+                newYearsInput.value = years;
+                validateDiseaseFields(entry, newYearSelect, newYearsInput, errorSpan);
+            }
+        });
+        
+        // When years is entered, calculate the year
+        newYearsInput.addEventListener('input', function() {
+            if (this.value && this.value !== '' && !isNaN(this.value)) {
+                const yearsAgo = parseInt(this.value);
+                if (yearsAgo >= 0 && yearsAgo <= 100) {
+                    const year = calculateYearFromYears(yearsAgo);
+                    if (year >= 1950 && year <= currentYear) {
+                        newYearSelect.value = year;
+                    }
+                }
+                validateDiseaseFields(entry, newYearSelect, newYearsInput, errorSpan);
+            }
+        });
+        
+        // Also validate on blur
+        newYearSelect.addEventListener('blur', function() {
+            validateDiseaseFields(entry, newYearSelect, newYearsInput, errorSpan);
+        });
+        
+        newYearsInput.addEventListener('blur', function() {
+            validateDiseaseFields(entry, newYearSelect, newYearsInput, errorSpan);
+        });
+    }
 
+    function validateDiseaseFields(entry, sinceYearSelect, sinceYearsInput, errorSpan) {
+        const checkbox = entry.querySelector('input[type="checkbox"]');
+        if (!checkbox || !checkbox.checked) {
+            // Not checked, clear errors
+            if (errorSpan) {
+                errorSpan.textContent = '';
+                errorSpan.style.display = 'none';
+            }
+            if (sinceYearSelect) sinceYearSelect.classList.remove('input-error');
+            if (sinceYearsInput) sinceYearsInput.classList.remove('input-error');
+            return true;
+        }
+        
         let isValid = true;
         let message = '';
-
-        if (!dateInput.disabled && dateInput.required) {
-            if (!dateInput.value || dateInput.value.trim() === '') {
+        
+        // Check if at least one of year or years is filled
+        const hasYear = sinceYearSelect && sinceYearSelect.value && sinceYearSelect.value !== '';
+        const hasYears = sinceYearsInput && sinceYearsInput.value && sinceYearsInput.value !== '' && sinceYearsInput.value !== '0';
+        
+        if (!hasYear && !hasYears) {
+            isValid = false;
+            message = 'Please enter Since Year or Since Years';
+        } else if (sinceYearsInput && sinceYearsInput.value) {
+            const yearsVal = parseInt(sinceYearsInput.value);
+            if (yearsVal < 0) {
                 isValid = false;
-                message = 'Disease start date is required';
-            } else {
-                const selectedDate = new Date(dateInput.value);
-                const todayDate = new Date(today);
-                
-                if (selectedDate > todayDate) {
-                    isValid = false;
-                    message = 'Disease start date cannot be in the future';
-                }
+                message = 'Years cannot be negative';
+            } else if (yearsVal > 100) {
+                isValid = false;
+                message = 'Years cannot exceed 100';
             }
         }
-
-        errorSpan.textContent = message;
-        errorSpan.style.display = isValid ? 'none' : 'block';
-        dateInput.classList.toggle('input-error', !isValid);
-
+        
+        if (errorSpan) {
+            errorSpan.textContent = message;
+            errorSpan.style.display = isValid ? 'none' : 'block';
+        }
+        
+        if (sinceYearSelect) sinceYearSelect.classList.toggle('input-error', !isValid && !hasYear);
+        if (sinceYearsInput) sinceYearsInput.classList.toggle('input-error', !isValid && !hasYears);
+        
         return isValid;
     }
 
@@ -165,14 +283,13 @@ function initializeOccupationalRisk(root) {
 }
 
 // ============================================================================
-// FIXED: VALIDATE PRIMARY APPLICANT DISEASE DATES
-// Now properly scoped to only validate diseases in health-history-content section
-// This prevents validation from incorrectly including member disease entries
+// VALIDATE PRIMARY APPLICANT DISEASE DURATION
+// Now validates Since Year / Since Years instead of date
 // ============================================================================
 window.validatePrimaryDiseaseDates = function () {
     let isValid = true;
 
-    // FIXED: Only validate disease entries in the primary applicant's health history section
+    // Only validate disease entries in the primary applicant's health history section
     const healthHistoryContent = document.getElementById('health-history-content');
     if (!healthHistoryContent) {
         // If section not found, assume valid (might be on a different page)
@@ -182,39 +299,67 @@ window.validatePrimaryDiseaseDates = function () {
     // Query only disease entries within health-history-content
     healthHistoryContent.querySelectorAll('.disease-entry').forEach(entry => {
         const checkbox = entry.querySelector('input[type="checkbox"]');
-        const dateInput = entry.querySelector('.disease-date-input');
+        const sinceYearSelect = entry.querySelector('.disease-since-year');
+        const sinceYearsInput = entry.querySelector('.disease-since-years');
         const errorSpan = entry.querySelector('.error-message');
 
         if (checkbox && checkbox.checked) {
-            // If selected but date missing
-            if (!dateInput || !dateInput.value) {
+            // Check if at least one of year or years is filled
+            const hasYear = sinceYearSelect && sinceYearSelect.value && sinceYearSelect.value !== '';
+            const hasYears = sinceYearsInput && sinceYearsInput.value && sinceYearsInput.value !== '' && parseInt(sinceYearsInput.value) > 0;
+            
+            if (!hasYear && !hasYears) {
                 isValid = false;
-                if (errorSpan) errorSpan.textContent = "Please enter a start date.";
-                if (dateInput) dateInput.classList.add('input-error');
+                if (errorSpan) {
+                    errorSpan.textContent = "Please enter Since Year or Since Years.";
+                    errorSpan.style.display = 'block';
+                }
+                if (sinceYearSelect) sinceYearSelect.classList.add('input-error');
+                if (sinceYearsInput) sinceYearsInput.classList.add('input-error');
             } else {
-                // Also validate date is not in the future
-                const selectedDate = new Date(dateInput.value);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                if (selectedDate > today) {
-                    isValid = false;
-                    if (errorSpan) errorSpan.textContent = "Date cannot be in the future.";
-                    dateInput.classList.add('input-error');
+                // Validate years value if present
+                if (sinceYearsInput && sinceYearsInput.value) {
+                    const yearsVal = parseInt(sinceYearsInput.value);
+                    if (yearsVal < 0 || yearsVal > 100) {
+                        isValid = false;
+                        if (errorSpan) {
+                            errorSpan.textContent = "Years must be between 0 and 100.";
+                            errorSpan.style.display = 'block';
+                        }
+                        sinceYearsInput.classList.add('input-error');
+                    } else {
+                        if (errorSpan) {
+                            errorSpan.textContent = "";
+                            errorSpan.style.display = 'none';
+                        }
+                        if (sinceYearSelect) sinceYearSelect.classList.remove('input-error');
+                        if (sinceYearsInput) sinceYearsInput.classList.remove('input-error');
+                    }
                 } else {
-                    if (errorSpan) errorSpan.textContent = "";
-                    dateInput.classList.remove('input-error');
+                    if (errorSpan) {
+                        errorSpan.textContent = "";
+                        errorSpan.style.display = 'none';
+                    }
+                    if (sinceYearSelect) sinceYearSelect.classList.remove('input-error');
+                    if (sinceYearsInput) sinceYearsInput.classList.remove('input-error');
                 }
             }
         } else {
             // disease unselected — clear errors
-            if (errorSpan) errorSpan.textContent = "";
-            if (dateInput) dateInput.classList.remove('input-error');
+            if (errorSpan) {
+                errorSpan.textContent = "";
+                errorSpan.style.display = 'none';
+            }
+            if (sinceYearSelect) sinceYearSelect.classList.remove('input-error');
+            if (sinceYearsInput) sinceYearsInput.classList.remove('input-error');
         }
     });
 
     return isValid;
 };
 
-
+// Expose utility functions globally for other scripts
+window.populateYearDropdown = populateYearDropdown;
+window.calculateYearsFromYear = calculateYearsFromYear;
+window.calculateYearFromYears = calculateYearFromYears;
 window.initializeOccupationalRisk = initializeOccupationalRisk;

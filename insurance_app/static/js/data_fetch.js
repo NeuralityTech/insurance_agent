@@ -55,7 +55,8 @@ function populateForm(data) {
                 // Also skip disease-related fields - handled separately by handleDiseaseData
                 if (!fieldName || typeof fieldName !== 'string' || /^\d+$/.test(fieldName) || 
                     FIELD_BLACKLIST.includes(fieldName) ||
-                    fieldName === 'disease' || fieldName.endsWith('_details') || fieldName.endsWith('_start_date')) {
+                    fieldName === 'disease' || fieldName.endsWith('_details') || 
+                    fieldName.endsWith('_start_date') || fieldName.endsWith('_since_year') || fieldName.endsWith('_since_years')) {
                     continue;
                 }
                 
@@ -249,7 +250,7 @@ function handleDiseaseData(data) {
             }
             
             cb.checked = true;
-            // Fire change so initializeDiseaseDetails toggles visibility and enables textarea
+            // Fire change so initializeDiseaseDetails toggles visibility and enables fields
             cb.dispatchEvent(new Event('change', { bubbles: true }));
             
             // Set textarea value if present - only look in diseaseData, not entire data object
@@ -261,13 +262,45 @@ function handleDiseaseData(data) {
                 console.log(`Set ${detailsKey} to:`, diseaseData[detailsKey]);
             }
             
-            // Set start date if present - only look in diseaseData
+            // Set since year if present - only look in diseaseData
+            const sinceYearKey = `${val}_since_year`;
+            const sinceYearSelect = healthHistoryContent.querySelector(`select[name="${sinceYearKey}"]`);
+            if (sinceYearSelect && diseaseData && diseaseData[sinceYearKey] !== undefined) {
+                sinceYearSelect.disabled = false;
+                sinceYearSelect.value = diseaseData[sinceYearKey];
+                console.log(`Set ${sinceYearKey} to:`, diseaseData[sinceYearKey]);
+            }
+            
+            // Set since years if present - only look in diseaseData
+            const sinceYearsKey = `${val}_since_years`;
+            const sinceYearsInput = healthHistoryContent.querySelector(`input[name="${sinceYearsKey}"]`);
+            if (sinceYearsInput && diseaseData && diseaseData[sinceYearsKey] !== undefined) {
+                sinceYearsInput.disabled = false;
+                sinceYearsInput.value = diseaseData[sinceYearsKey];
+                console.log(`Set ${sinceYearsKey} to:`, diseaseData[sinceYearsKey]);
+            }
+            
+            // Backward compatibility: convert old start_date to since_year
             const dateKey = `${val}_start_date`;
-            const dateInput = healthHistoryContent.querySelector(`input[name="${dateKey}"]`);
-            if (dateInput && diseaseData && diseaseData[dateKey] !== undefined) {
-                dateInput.disabled = false;
-                dateInput.value = diseaseData[dateKey];
-                console.log(`Set ${dateKey} to:`, diseaseData[dateKey]);
+            if (diseaseData && diseaseData[dateKey] !== undefined && !diseaseData[sinceYearKey]) {
+                const dateValue = diseaseData[dateKey];
+                if (dateValue) {
+                    const dateObj = new Date(dateValue);
+                    if (!isNaN(dateObj.getTime())) {
+                        const year = dateObj.getFullYear();
+                        if (sinceYearSelect) {
+                            sinceYearSelect.disabled = false;
+                            sinceYearSelect.value = year;
+                            console.log(`Converted ${dateKey} (${dateValue}) to since_year ${year}`);
+                        }
+                        // Calculate years
+                        const currentYear = new Date().getFullYear();
+                        if (sinceYearsInput) {
+                            sinceYearsInput.disabled = false;
+                            sinceYearsInput.value = Math.max(0, currentYear - year);
+                        }
+                    }
+                }
             }
         });
     }
@@ -352,12 +385,14 @@ function initializeDataFetch() {
                             const cb = entry.querySelector('input[type="checkbox"][name="disease"]');
                             const details = entry.querySelector('.disease-details-container');
                             const ta = details ? details.querySelector('textarea') : null;
-                            const dateInput = details ? details.querySelector('.disease-date-input') : null;
+                            const sinceYearSelect = details ? details.querySelector('.disease-since-year') : null;
+                            const sinceYearsInput = details ? details.querySelector('.disease-since-years') : null;
                             if (!cb || !details || !ta) return;
                             if (cb.checked) {
                                 details.style.display = 'flex';
                                 ta.disabled = false;
-                                if (dateInput) dateInput.disabled = false;
+                                if (sinceYearSelect) sinceYearSelect.disabled = false;
+                                if (sinceYearsInput) sinceYearsInput.disabled = false;
                             }
                         });
                     })();

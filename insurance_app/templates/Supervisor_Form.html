@@ -131,15 +131,28 @@
 
         function buildSummaryHTML(summaryData = {}) {
             let html = '';
-            if (summaryData.primaryContact) {
-                html += buildSection('Primary Contact', summaryData.primaryContact);
+            
+            // Check if data is already structured (has expected keys) or is flat
+            const isStructured = summaryData.primaryContact || summaryData.healthHistory || 
+                                 summaryData.coverAndCost || summaryData.existingCoverage || 
+                                 summaryData.claimsAndService || summaryData.financeAndDocumentation;
+            
+            let displayData = summaryData;
+            
+            // If data is flat, convert it to structured format
+            if (!isStructured && Object.keys(summaryData).length > 0) {
+                displayData = convertFlatToStructured(summaryData);
             }
-            if (summaryData.healthHistory) {
-                html += buildSection('Proposer\'s Health Details', summaryData.healthHistory);
+            
+            if (displayData.primaryContact && Object.keys(displayData.primaryContact).length > 0) {
+                html += buildSection('Primary Contact', displayData.primaryContact);
             }
-            if (summaryData.members && summaryData.members.length) {
+            if (displayData.healthHistory && Object.keys(displayData.healthHistory).length > 0) {
+                html += buildSection('Proposer\'s Health Details', displayData.healthHistory);
+            }
+            if (displayData.members && displayData.members.length) {
                 html += '<fieldset><legend>Members to be Covered</legend>';
-                summaryData.members.forEach(member => {
+                displayData.members.forEach(member => {
                     html += '<div class="summary-member-card">';
                     const memberFieldsOrder = [
                         'name', 'relationship', 'occupation', 'gender', 'dob', 'age',
@@ -164,25 +177,122 @@
                 });
                 html += '</fieldset>';
             }
-            if (summaryData.coverAndCost) {
-                html += buildSection('Cover & Cost Preferences', summaryData.coverAndCost);
+            if (displayData.coverAndCost && Object.keys(displayData.coverAndCost).length > 0) {
+                html += buildSection('Cover & Cost Preferences', displayData.coverAndCost);
             }
-            if (summaryData.existingCoverage) {
-                html += buildSection('Existing Coverage & Portability', summaryData.existingCoverage);
+            if (displayData.existingCoverage && Object.keys(displayData.existingCoverage).length > 0) {
+                html += buildSection('Existing Coverage & Portability', displayData.existingCoverage);
             }
-            if (summaryData.claimsAndService) {
-                html += buildSection('Claims & Service History', summaryData.claimsAndService);
+            if (displayData.claimsAndService && Object.keys(displayData.claimsAndService).length > 0) {
+                html += buildSection('Claims & Service History', displayData.claimsAndService);
             }
-            if (summaryData.financeAndDocumentation) {
-                html += buildSection('Finance & Documentation', summaryData.financeAndDocumentation);
+            if (displayData.financeAndDocumentation && Object.keys(displayData.financeAndDocumentation).length > 0) {
+                html += buildSection('Finance & Documentation', displayData.financeAndDocumentation);
             }
-            if (summaryData.otherNotes) {
-                html += buildSection('Other Notes', summaryData.otherNotes);
+            if (displayData.otherNotes && Object.keys(displayData.otherNotes).length > 0) {
+                html += buildSection('Other Notes', displayData.otherNotes);
             }
             if (!html) {
                 html = '<p>No stored form summary is available for this client.</p>';
             }
             return html;
+        }
+        
+        /**
+         * Convert flat form data to structured format for display
+         * This handles data submitted from forms that store flat key-value pairs
+         */
+        function convertFlatToStructured(flatData) {
+            const structured = {
+                primaryContact: {},
+                healthHistory: {},
+                members: [],
+                coverAndCost: {},
+                existingCoverage: {},
+                claimsAndService: {},
+                financeAndDocumentation: {},
+                otherNotes: {}
+            };
+            
+            // Define field mappings
+            const primaryContactFields = [
+                'unique_id', 'applicant_name', 'gender', 'email', 'phone', 'address',
+                'self-dob', 'self-height', 'self-weight', 'self-age', 'self_dob', 'self_height', 'self_weight', 'self_age',
+                'occupation', 'city', 'hubs', 'pincode', 'state', 'country', 'mobile', 'alternate_phone'
+            ];
+            
+            const coverAndCostFields = [
+                'policy-type', 'policy_type', 'sum-insured', 'sum_insured', 'annual-budget', 'annual_budget',
+                'payment-mode', 'payment_mode', 'room-preference', 'room_preference', 'co-pay', 'co_pay',
+                'ncb-importance', 'ncb_importance', 'maternity-cover', 'maternity_cover', 
+                'opd-cover', 'opd_cover', 'top-up', 'top_up', 'deductible', 'premium_budget'
+            ];
+            
+            const existingCoverageFields = [
+                'existing-policies', 'existing_policies', 'port-policy', 'port_policy',
+                'critical-illness', 'critical_illness', 'worldwide-cover', 'worldwide_cover',
+                'policy-type-category', 'policy_type_category', 'insurer-name', 'insurer_name',
+                'existing-policy-number', 'existing_policy_number', 'existing-sum-insured', 'existing_sum_insured',
+                'policy-since-date', 'policy_since_date', 'portability', 'current_insurer'
+            ];
+            
+            const claimsAndServiceFields = [
+                'past-claims', 'past_claims', 'claim-issues', 'claim_issues', 
+                'service-expectations', 'service_expectations', 'network-hospitals', 'network_hospitals',
+                'network-hospital-1st', 'network_hospital_1st', 'network-hospital-2nd', 'network_hospital_2nd',
+                'network-hospital-3rd', 'network_hospital_3rd', 'preferred_hospitals', 'claim_history'
+            ];
+            
+            const financeFields = [
+                'tax-benefit', 'tax_benefit', 'address_proof_details', 'gst-number', 'gst_number',
+                'pan_number', 'aadhar_number', 'bank_details', 'payment_method'
+            ];
+            
+            // Process each field
+            Object.keys(flatData).forEach(key => {
+                const value = flatData[key];
+                
+                // Skip null, undefined, empty values and internal fields
+                if (value === null || value === undefined || value === '') return;
+                if (key === 'unique_id' && structured.primaryContact['unique_id']) return;
+                
+                // Check for members array (already structured)
+                if (key === 'members' && Array.isArray(value)) {
+                    structured.members = value;
+                    return;
+                }
+                
+                // Map to appropriate section
+                if (primaryContactFields.includes(key)) {
+                    structured.primaryContact[key] = value;
+                }
+                else if (key.startsWith('medical-') || key.startsWith('medical_') ||
+                         key.startsWith('disease-') || key.startsWith('disease_') ||
+                         key === 'self-details' || key === 'self_details' ||
+                         key === 'disease' || key.endsWith('_details') || 
+                         key.endsWith('_start_date') || key.endsWith('_since_year') || 
+                         key.endsWith('_since_years') || key.includes('health')) {
+                    structured.healthHistory[key] = value;
+                }
+                else if (coverAndCostFields.includes(key)) {
+                    structured.coverAndCost[key] = value;
+                }
+                else if (existingCoverageFields.includes(key)) {
+                    structured.existingCoverage[key] = value;
+                }
+                else if (claimsAndServiceFields.includes(key)) {
+                    structured.claimsAndService[key] = value;
+                }
+                else if (financeFields.includes(key)) {
+                    structured.financeAndDocumentation[key] = value;
+                }
+                else if (key !== 'comments_noted' && key !== 'commentsNoted') {
+                    // Put unrecognized fields in otherNotes, excluding comments
+                    structured.otherNotes[key] = value;
+                }
+            });
+            
+            return structured;
         }
 
         function renderProposedPlansList(proposed) {
@@ -404,7 +514,10 @@
                 });
                 const result = await response.json();
                 if (response.ok) {
-                    showToast(`Client form has been approved.`);
+                    // Show appropriate message based on the action taken
+                    const isApproval = status.toLowerCase().includes('approved');
+                    const actionText = isApproval ? 'approved' : 'rejected';
+                    showToast(`Client form has been ${actionText}.`);
                     const badge = document.getElementById('supervisor-status');
                     if (badge) {
                         const newUpper = status.toUpperCase();

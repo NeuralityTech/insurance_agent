@@ -83,7 +83,9 @@
       // Skip fields that don't belong in this section (member fields, etc.)
       // FIXED: Also skip disease-related fields - they're handled separately
       const skipPatterns = ['member_', 'member-', 'comments_noted', 'disease'];
-      if (skipPatterns.some(pattern => name.startsWith(pattern) || name === pattern)) {
+      const skipSuffixes = ['_details', '_start_date', '_since_year', '_since_years'];
+      if (skipPatterns.some(pattern => name.startsWith(pattern) || name === pattern) ||
+          skipSuffixes.some(suffix => name.endsWith(suffix))) {
         return;
       }
       
@@ -275,15 +277,49 @@
             console.log(`Set disease details ${detailsKey} to ${detailsValue}`);
           }
           
-          // Handle disease start date - ONLY in healthHistoryData
+          // Handle disease since year - ONLY in healthHistoryData
+          const sinceYearKey = `${val}_since_year`;
+          const rawYearValue = healthHistoryData[sinceYearKey];
+          const yearValue = extractSingleValue(rawYearValue);
+          const sinceYearSelect = document.querySelector(`#health-history-content select[name="${CSS.escape(sinceYearKey)}"]`);
+          if (sinceYearSelect && yearValue) {
+            sinceYearSelect.disabled = false;
+            sinceYearSelect.value = yearValue;
+            console.log(`Set disease since year ${sinceYearKey} to ${yearValue}`);
+          }
+          
+          // Handle disease since years - ONLY in healthHistoryData
+          const sinceYearsKey = `${val}_since_years`;
+          const rawYearsValue = healthHistoryData[sinceYearsKey];
+          const yearsValue = extractSingleValue(rawYearsValue);
+          const sinceYearsInput = document.querySelector(`#health-history-content input[name="${CSS.escape(sinceYearsKey)}"]`);
+          if (sinceYearsInput && yearsValue) {
+            sinceYearsInput.disabled = false;
+            sinceYearsInput.value = yearsValue;
+            console.log(`Set disease since years ${sinceYearsKey} to ${yearsValue}`);
+          }
+          
+          // Backward compatibility: convert old start_date to since_year
           const dateKey = `${val}_start_date`;
           const rawDateValue = healthHistoryData[dateKey];
           const dateValue = extractSingleValue(rawDateValue);
-          const dateInput = document.querySelector(`#health-history-content input[name="${CSS.escape(dateKey)}"]`);
-          if (dateInput && dateValue) {
-            dateInput.disabled = false;
-            dateInput.value = dateValue;
-            console.log(`Set disease date ${dateKey} to ${dateValue}`);
+          if (dateValue && !yearValue) {
+            // Extract year from date and populate since_year
+            const dateObj = new Date(dateValue);
+            if (!isNaN(dateObj.getTime())) {
+              const year = dateObj.getFullYear();
+              if (sinceYearSelect) {
+                sinceYearSelect.disabled = false;
+                sinceYearSelect.value = year;
+                console.log(`Converted start_date ${dateValue} to since_year ${year}`);
+              }
+              // Calculate years
+              const currentYear = new Date().getFullYear();
+              if (sinceYearsInput) {
+                sinceYearsInput.disabled = false;
+                sinceYearsInput.value = Math.max(0, currentYear - year);
+              }
+            }
           }
         });
         
@@ -295,12 +331,14 @@
           const cb = entry.querySelector('input[type="checkbox"][name="disease"]');
           const details = entry.querySelector('.disease-details-container');
           const ta = details ? details.querySelector('textarea') : null;
-          const dateInput = details ? details.querySelector('.disease-date-input') : null;
+          const sinceYearSelect = details ? details.querySelector('.disease-since-year') : null;
+          const sinceYearsInput = details ? details.querySelector('.disease-since-years') : null;
           if (cb && details && (cb.checked || (ta && ta.value && ta.value.trim() !== ''))) {
             cb.checked = true;
             details.style.display = 'flex';
             if (ta) ta.disabled = false;
-            if (dateInput) dateInput.disabled = false;
+            if (sinceYearSelect) sinceYearSelect.disabled = false;
+            if (sinceYearsInput) sinceYearsInput.disabled = false;
           }
         });
       }

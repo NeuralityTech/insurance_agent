@@ -8,6 +8,53 @@
     <title>Self Details</title>
     <link rel="stylesheet" href="../css/common.css">
     <link rel="stylesheet" href="../css/health_history.css">
+    <style>
+        /* Disease Duration Styles */
+        .disease-duration-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .disease-duration-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .disease-duration-row label {
+            font-size: 0.9em;
+            color: #555;
+            min-width: 80px;
+        }
+        .disease-duration-row select,
+        .disease-duration-row input[type="number"] {
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.95em;
+            width: 100px;
+        }
+        .disease-duration-row select:focus,
+        .disease-duration-row input[type="number"]:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.15);
+        }
+        .disease-duration-row .or-text {
+            color: #888;
+            font-style: italic;
+            font-size: 0.85em;
+        }
+        .disease-duration-row .years-suffix {
+            color: #555;
+            font-size: 0.9em;
+        }
+        .disease-since-year.input-error,
+        .disease-since-years.input-error {
+            border-color: #dc3545;
+        }
+    </style>
 </head>
 <body>
     <form id="health-history-form" novalidate>
@@ -27,10 +74,18 @@
                                     </label>
                                 </div>
                                 <div class="disease-details-container">
-                                    <div class="disease-date-group">
-                                        <label for="cardiac_start_date">Disease Start Date *</label>
-                                        <input type="date" id="cardiac_start_date" name="cardiac_start_date" class="disease-date-input" disabled>
-                                        <span class="error-message" id="cardiac_start_date-error"></span>
+                                    <div class="disease-duration-group">
+                                        <div class="disease-duration-row">
+                                            <label for="cardiac_since_year">Since Year *</label>
+                                            <select id="cardiac_since_year" name="cardiac_since_year" class="disease-since-year" disabled>
+                                                <option value="">Select Year</option>
+                                            </select>
+                                            <span class="or-text">OR</span>
+                                            <label for="cardiac_since_years">Since</label>
+                                            <input type="number" id="cardiac_since_years" name="cardiac_since_years" class="disease-since-years" min="0" max="100" placeholder="0" disabled>
+                                            <span class="years-suffix">years</span>
+                                        </div>
+                                        <span class="error-message" id="cardiac_since-error"></span>
                                     </div>
                                     <textarea name="cardiac_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation." disabled></textarea>
                                 </div>
@@ -45,10 +100,18 @@
                                     </label>
                                 </div>
                                 <div class="disease-details-container">
-                                    <div class="disease-date-group">
-                                        <label for="diabetes_start_date">Disease Start Date *</label>
-                                        <input type="date" id="diabetes_start_date" name="diabetes_start_date" class="disease-date-input" disabled>
-                                        <span class="error-message" id="diabetes_start_date-error"></span>
+                                    <div class="disease-duration-group">
+                                        <div class="disease-duration-row">
+                                            <label for="diabetes_since_year">Since Year *</label>
+                                            <select id="diabetes_since_year" name="diabetes_since_year" class="disease-since-year" disabled>
+                                                <option value="">Select Year</option>
+                                            </select>
+                                            <span class="or-text">OR</span>
+                                            <label for="diabetes_since_years">Since</label>
+                                            <input type="number" id="diabetes_since_years" name="diabetes_since_years" class="disease-since-years" min="0" max="100" placeholder="0" disabled>
+                                            <span class="years-suffix">years</span>
+                                        </div>
+                                        <span class="error-message" id="diabetes_since-error"></span>
                                     </div>
                                     <textarea name="diabetes_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation." disabled></textarea>
                                 </div>
@@ -63,10 +126,18 @@
                                     </label>
                                 </div>
                                 <div class="disease-details-container">
-                                    <div class="disease-date-group">
-                                        <label for="hypertension_start_date">Disease Start Date *</label>
-                                        <input type="date" id="hypertension_start_date" name="hypertension_start_date" class="disease-date-input" disabled>
-                                        <span class="error-message" id="hypertension_start_date-error"></span>
+                                    <div class="disease-duration-group">
+                                        <div class="disease-duration-row">
+                                            <label for="hypertension_since_year">Since Year *</label>
+                                            <select id="hypertension_since_year" name="hypertension_since_year" class="disease-since-year" disabled>
+                                                <option value="">Select Year</option>
+                                            </select>
+                                            <span class="or-text">OR</span>
+                                            <label for="hypertension_since_years">Since</label>
+                                            <input type="number" id="hypertension_since_years" name="hypertension_since_years" class="disease-since-years" min="0" max="100" placeholder="0" disabled>
+                                            <span class="years-suffix">years</span>
+                                        </div>
+                                        <span class="error-message" id="hypertension_since-error"></span>
                                     </div>
                                     <textarea name="hypertension_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation." disabled></textarea>
                                 </div>
@@ -81,10 +152,18 @@
                                     </label>
                                 </div>
                                 <div class="disease-details-container">
-                                    <div class="disease-date-group">
-                                        <label for="cancer_start_date">Disease Start Date *</label>
-                                        <input type="date" id="cancer_start_date" name="cancer_start_date" class="disease-date-input" disabled>
-                                        <span class="error-message" id="cancer_start_date-error"></span>
+                                    <div class="disease-duration-group">
+                                        <div class="disease-duration-row">
+                                            <label for="cancer_since_year">Since Year *</label>
+                                            <select id="cancer_since_year" name="cancer_since_year" class="disease-since-year" disabled>
+                                                <option value="">Select Year</option>
+                                            </select>
+                                            <span class="or-text">OR</span>
+                                            <label for="cancer_since_years">Since</label>
+                                            <input type="number" id="cancer_since_years" name="cancer_since_years" class="disease-since-years" min="0" max="100" placeholder="0" disabled>
+                                            <span class="years-suffix">years</span>
+                                        </div>
+                                        <span class="error-message" id="cancer_since-error"></span>
                                     </div>
                                     <textarea name="cancer_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation." disabled></textarea>
                                 </div>
@@ -99,10 +178,18 @@
                                     </label>
                                 </div>
                                 <div class="disease-details-container">
-                                    <div class="disease-date-group">
-                                        <label for="critical_illness_start_date">Disease Start Date *</label>
-                                        <input type="date" id="critical_illness_start_date" name="critical_illness_start_date" class="disease-date-input" disabled>
-                                        <span class="error-message" id="critical_illness_start_date-error"></span>
+                                    <div class="disease-duration-group">
+                                        <div class="disease-duration-row">
+                                            <label for="critical_illness_since_year">Since Year *</label>
+                                            <select id="critical_illness_since_year" name="critical_illness_since_year" class="disease-since-year" disabled>
+                                                <option value="">Select Year</option>
+                                            </select>
+                                            <span class="or-text">OR</span>
+                                            <label for="critical_illness_since_years">Since</label>
+                                            <input type="number" id="critical_illness_since_years" name="critical_illness_since_years" class="disease-since-years" min="0" max="100" placeholder="0" disabled>
+                                            <span class="years-suffix">years</span>
+                                        </div>
+                                        <span class="error-message" id="critical_illness_since-error"></span>
                                     </div>
                                     <textarea name="critical_illness_details" placeholder="Provide more details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation." disabled></textarea>
                                 </div>
@@ -117,10 +204,18 @@
                                     </label>
                                 </div>
                                 <div class="disease-details-container">
-                                    <div class="disease-date-group">
-                                        <label for="other_start_date">Disease Start Date *</label>
-                                        <input type="date" id="other_start_date" name="other_start_date" class="disease-date-input" disabled>
-                                        <span class="error-message" id="other_start_date-error"></span>
+                                    <div class="disease-duration-group">
+                                        <div class="disease-duration-row">
+                                            <label for="other_since_year">Since Year *</label>
+                                            <select id="other_since_year" name="other_since_year" class="disease-since-year" disabled>
+                                                <option value="">Select Year</option>
+                                            </select>
+                                            <span class="or-text">OR</span>
+                                            <label for="other_since_years">Since</label>
+                                            <input type="number" id="other_since_years" name="other_since_years" class="disease-since-years" min="0" max="100" placeholder="0" disabled>
+                                            <span class="years-suffix">years</span>
+                                        </div>
+                                        <span class="error-message" id="other_since-error"></span>
                                     </div>
                                     <textarea name="other_details" placeholder="Please specify and provide details..." rows="2" pattern="^[a-zA-Z0-9\s.,'()-]*$" title="Please enter only letters, numbers, and common punctuation." disabled></textarea>
                                 </div>
@@ -203,4 +298,3 @@
 
 </body>
 </html>
-

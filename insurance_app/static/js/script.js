@@ -364,40 +364,47 @@ document.addEventListener('DOMContentLoaded', function() {
             errors.push('Annual Budget must be numeric');
         }
 
-        // ✅ Validate Disease start dates for PRIMARY APPLICANT
+        // ✅ Validate Disease duration for PRIMARY APPLICANT (Since Year or Since Years)
         const healthHistoryContent = document.getElementById('health-history-content');
         if (healthHistoryContent) {
             const diseaseEntries = healthHistoryContent.querySelectorAll('.disease-entry');
 
             diseaseEntries.forEach(entry => {
                 const checkbox = entry.querySelector('input[type="checkbox"][name="disease"], input[type="checkbox"]');
-                const dateInput = entry.querySelector('.disease-date-input');
+                const sinceYearSelect = entry.querySelector('.disease-since-year');
+                const sinceYearsInput = entry.querySelector('.disease-since-years');
                 const errorSpan = entry.querySelector('.error-message');
 
-                if (!checkbox || !dateInput) return;
+                if (!checkbox) return;
 
                 // Clear any previous error state
                 if (errorSpan) {
                     errorSpan.textContent = '';
                     errorSpan.style.display = 'none';
                 }
-                dateInput.classList.remove('input-error');
+                if (sinceYearSelect) sinceYearSelect.classList.remove('input-error');
+                if (sinceYearsInput) sinceYearsInput.classList.remove('input-error');
 
                 // Only validate if disease is selected
                 if (checkbox.checked) {
-                    if (!dateInput.value || dateInput.value.trim() === '') {
+                    // Check if at least one of year or years is filled
+                    const hasYear = sinceYearSelect && sinceYearSelect.value && sinceYearSelect.value !== '';
+                    const hasYears = sinceYearsInput && sinceYearsInput.value && sinceYearsInput.value !== '' && parseInt(sinceYearsInput.value) > 0;
+                    
+                    if (!hasYear && !hasYears) {
                         // Friendly label from the disease header
                         const headerLabel = entry.querySelector('.disease-header label');
                         const diseaseLabel = headerLabel ? headerLabel.textContent.trim() : 'the selected disease';
 
                         // Add to the same errors array used for height/DOB/etc.
-                        errors.push(`Disease start date for ${diseaseLabel} is required`);
+                        errors.push(`Disease duration for ${diseaseLabel} is required (Since Year or Since Years)`);
 
                         if (errorSpan) {
-                            errorSpan.textContent = 'Disease start date is required';
+                            errorSpan.textContent = 'Please enter Since Year or Since Years';
                             errorSpan.style.display = 'block';
                         }
-                        dateInput.classList.add('input-error');
+                        if (sinceYearSelect) sinceYearSelect.classList.add('input-error');
+                        if (sinceYearsInput) sinceYearsInput.classList.add('input-error');
                     }
                 }
             });
@@ -443,7 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 err.includes('Aadhaar')
             )) {
                 errorTab = 0; // Primary Contact tab
-            } else if (errors.some(err => err.includes('Disease start date'))) {
+            } else if (errors.some(err => err.includes('Disease duration'))) {
                 errorTab = 1; // Health History tab
             } else if (errors.some(err => err.includes('Sum Insured') || err.includes('Budget'))) {
                 errorTab = 3; // Cover & Cost tab

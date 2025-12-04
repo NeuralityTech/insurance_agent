@@ -162,9 +162,10 @@
                 return false;
             }
 
-            // SUPERVISOR: editable only during OPEN or SUP_REVIEW (they can edit any application at these stages)
+            // SUPERVISOR: editable ONLY during SUP_REVIEW (submitted for review)
+            // Supervisors should NOT edit OPEN applications - those need to be submitted for review first by the agent
             if (roleL === 'supervisor') {
-                if (ROLE_STATUS.OPEN_DRAFT.includes(status) || ROLE_STATUS.SUBMITTED.includes(status)) return true;
+                if (ROLE_STATUS.SUBMITTED.includes(status)) return true;
                 return false;
             }
 
@@ -295,6 +296,7 @@
 
             const status = deriveCanonicalStatusFromSubmission(submissionData || {});
             const applicationAgent = submissionData?.agent || '';
+            const isOwner = _isOwner(currentUserId, applicationAgent);
             const applicantEditable = _isApplicantEditable(role, status, currentUserId, applicationAgent);
             const agentCanSelectPlans = _canAgentSelectPlans(role, status, currentUserId, applicationAgent);
             const canSubmitToUW = _canSubmitToUnderwriter(role, status, currentUserId, applicationAgent);
@@ -326,7 +328,7 @@
                 }
             });
 
-            if (ROLE_STATUS.WITH_UW.includes(status)) {
+            if (ROLE_STATUS.WITH_UW.includes(status) && isOwner) {
                 const policyDecision = document.getElementById('policy-decision-select');
                 if (policyDecision) {
                     _unlockElement(policyDecision);
@@ -882,7 +884,7 @@
                 if (resetBtn) resetBtn.disabled = true;
 
                 try {
-                    // Disease date validation for primary applicant
+                    // Disease duration validation for primary applicant (Since Year or Since Years)
                     const healthHistoryContent = document.getElementById('health-history-content');
                     if (healthHistoryContent) {
                         const diseaseEntries = healthHistoryContent.querySelectorAll('.disease-entry');
@@ -890,50 +892,41 @@
 
                         diseaseEntries.forEach(entry => {
                             const checkbox = entry.querySelector('input[type="checkbox"][name="disease"], input[type="checkbox"]');
-                            const dateInput = entry.querySelector('.disease-date-input');
+                            const sinceYearSelect = entry.querySelector('.disease-since-year');
+                            const sinceYearsInput = entry.querySelector('.disease-since-years');
                             const errorSpan = entry.querySelector('.error-message');
 
-                            if (!checkbox || !dateInput) return;
+                            if (!checkbox) return;
 
                             // Clear any previous error state
                             if (errorSpan) {
                                 errorSpan.textContent = '';
                                 errorSpan.style.display = 'none';
                             }
-                            dateInput.classList.remove('input-error');
+                            if (sinceYearSelect) sinceYearSelect.classList.remove('input-error');
+                            if (sinceYearsInput) sinceYearsInput.classList.remove('input-error');
 
                             // Only validate if disease is selected
                             if (checkbox.checked) {
-                                if (!dateInput.value || dateInput.value.trim() === '') {
+                                // Check if at least one of year or years is filled
+                                const hasYear = sinceYearSelect && sinceYearSelect.value && sinceYearSelect.value !== '';
+                                const hasYears = sinceYearsInput && sinceYearsInput.value && sinceYearsInput.value !== '' && parseInt(sinceYearsInput.value) >= 0;
+                                
+                                if (!hasYear && !hasYears) {
                                     const headerLabel = entry.querySelector('.disease-header label');
                                     const diseaseLabel = headerLabel ? headerLabel.textContent.trim() : 'the selected disease';
-                                    diseaseErrors.push(`Disease start date for ${diseaseLabel} is required`);
+                                    diseaseErrors.push(`Disease duration for ${diseaseLabel} is required (Since Year or Since Years)`);
                                     if (errorSpan) {
-                                        errorSpan.textContent = 'Disease start date is required';
+                                        errorSpan.textContent = 'Please enter Since Year or Since Years';
                                         errorSpan.style.display = 'block';
                                     }
-                                    dateInput.classList.add('input-error');
-                                } else {
-                                    // Also validate date is not in the future
-                                    const selectedDate = new Date(dateInput.value);
-                                    const today = new Date();
-                                    today.setHours(0, 0, 0, 0);
-                                    
-                                    if (selectedDate > today) {
-                                        const headerLabel = entry.querySelector('.disease-header label');
-                                        const diseaseLabel = headerLabel ? headerLabel.textContent.trim() : 'the selected disease';
-                                        diseaseErrors.push(`Disease start date for ${diseaseLabel} cannot be in the future`);
-                                        if (errorSpan) {
-                                            errorSpan.textContent = 'Date cannot be in the future';
-                                            errorSpan.style.display = 'block';
-                                        }
-                                        dateInput.classList.add('input-error');
-                                    }
+                                    if (sinceYearSelect) sinceYearSelect.classList.add('input-error');
+                                    if (sinceYearsInput) sinceYearsInput.classList.add('input-error');
                                 }
                             }
                         });
 
-                        // If there are disease date errors, stop submission
+                        // If there are disease duration errors, stop submission
                         if (diseaseErrors.length > 0) {
                             alert('Please fix the following errors before submitting:\n\n• ' + diseaseErrors.join('\n• '));
                             
@@ -1124,7 +1117,8 @@
                                 key.startsWith('medical-') || key.startsWith('medical_') ||
                                 key.startsWith('disease-') || key.startsWith('disease_') ||
                                 key === 'self-details' || key === 'self_details' ||
-                                key === 'disease' || key.endsWith('_details') || key.endsWith('_start_date')
+                                key === 'disease' || key.endsWith('_details') || key.endsWith('_start_date') ||
+                                key.endsWith('_since_year') || key.endsWith('_since_years')
                             ) {
                                 summaryData.healthHistory[key] = value;
                             }
@@ -1143,7 +1137,8 @@
                                 summaryData.existingCoverage[key] = value;
                             }
                             else if ([
-                                'past-claims', 'claim-issues', 'service-expectations', 'network-hospitals'
+                                'past-claims', 'claim-issues', 'service-expectations',
+                                'network-hospital-1st', 'network-hospital-2nd', 'network-hospital-3rd'
                             ].includes(key)) {
                                 summaryData.claimsAndService[key] = value;
                             }

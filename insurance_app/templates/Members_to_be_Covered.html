@@ -208,6 +208,52 @@
                 padding: 1rem;
             }
         }
+
+        /* Disease Duration Styles for Members */
+        .disease-duration-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .disease-duration-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .disease-duration-row label {
+            font-size: 0.9em;
+            color: #555;
+            min-width: 80px;
+        }
+        .disease-duration-row select,
+        .disease-duration-row input[type="number"] {
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.95em;
+            width: 100px;
+        }
+        .disease-duration-row select:focus,
+        .disease-duration-row input[type="number"]:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.15);
+        }
+        .disease-duration-row .or-text {
+            color: #888;
+            font-style: italic;
+            font-size: 0.85em;
+        }
+        .disease-duration-row .years-suffix {
+            color: #555;
+            font-size: 0.9em;
+        }
+        .member-disease-since-year.input-error,
+        .member-disease-since-years.input-error {
+            border-color: #dc3545;
+        }
     </style>
 </head>
 <body>
@@ -373,10 +419,18 @@
                                         </label>
                                     </div>
                                     <div class="disease-details-container">
-                                        <div class="disease-date-group">
-                                            <label>Disease Start Date *</label>
-                                            <input type="date" name="cardiac_start_date" class="disease-date-input member-disease-date" disabled>
-                                            <span class="error-message cardiac-start-date-error"></span>
+                                        <div class="disease-duration-group">
+                                            <div class="disease-duration-row">
+                                                <label>Since Year *</label>
+                                                <select name="cardiac_since_year" class="member-disease-since-year" disabled>
+                                                    <option value="">Select Year</option>
+                                                </select>
+                                                <span class="or-text">OR</span>
+                                                <label>Since</label>
+                                                <input type="number" name="cardiac_since_years" class="member-disease-since-years" min="0" max="100" placeholder="0" disabled>
+                                                <span class="years-suffix">years</span>
+                                            </div>
+                                            <span class="error-message cardiac-since-error"></span>
                                         </div>
                                         <textarea name="cardiac_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2" disabled></textarea>
                                     </div>
@@ -391,10 +445,18 @@
                                         </label>
                                     </div>
                                     <div class="disease-details-container">
-                                        <div class="disease-date-group">
-                                            <label>Disease Start Date *</label>
-                                            <input type="date" name="diabetes_start_date" class="disease-date-input member-disease-date" disabled>
-                                            <span class="error-message diabetes-start-date-error"></span>
+                                        <div class="disease-duration-group">
+                                            <div class="disease-duration-row">
+                                                <label>Since Year *</label>
+                                                <select name="diabetes_since_year" class="member-disease-since-year" disabled>
+                                                    <option value="">Select Year</option>
+                                                </select>
+                                                <span class="or-text">OR</span>
+                                                <label>Since</label>
+                                                <input type="number" name="diabetes_since_years" class="member-disease-since-years" min="0" max="100" placeholder="0" disabled>
+                                                <span class="years-suffix">years</span>
+                                            </div>
+                                            <span class="error-message diabetes-since-error"></span>
                                         </div>
                                         <textarea name="diabetes_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2" disabled></textarea>
                                     </div>
@@ -409,10 +471,18 @@
                                         </label>
                                     </div>
                                     <div class="disease-details-container">
-                                        <div class="disease-date-group">
-                                            <label>Disease Start Date *</label>
-                                            <input type="date" name="hypertension_start_date" class="disease-date-input member-disease-date" disabled>
-                                            <span class="error-message hypertension-start-date-error"></span>
+                                        <div class="disease-duration-group">
+                                            <div class="disease-duration-row">
+                                                <label>Since Year *</label>
+                                                <select name="hypertension_since_year" class="member-disease-since-year" disabled>
+                                                    <option value="">Select Year</option>
+                                                </select>
+                                                <span class="or-text">OR</span>
+                                                <label>Since</label>
+                                                <input type="number" name="hypertension_since_years" class="member-disease-since-years" min="0" max="100" placeholder="0" disabled>
+                                                <span class="years-suffix">years</span>
+                                            </div>
+                                            <span class="error-message hypertension-since-error"></span>
                                         </div>
                                         <textarea name="hypertension_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2" disabled></textarea>
                                     </div>
@@ -427,10 +497,18 @@
                                         </label>
                                     </div>
                                     <div class="disease-details-container">
-                                        <div class="disease-date-group">
-                                            <label>Disease Start Date *</label>
-                                            <input type="date" name="cancer_start_date" class="disease-date-input member-disease-date" disabled>
-                                            <span class="error-message cancer-start-date-error"></span>
+                                        <div class="disease-duration-group">
+                                            <div class="disease-duration-row">
+                                                <label>Since Year *</label>
+                                                <select name="cancer_since_year" class="member-disease-since-year" disabled>
+                                                    <option value="">Select Year</option>
+                                                </select>
+                                                <span class="or-text">OR</span>
+                                                <label>Since</label>
+                                                <input type="number" name="cancer_since_years" class="member-disease-since-years" min="0" max="100" placeholder="0" disabled>
+                                                <span class="years-suffix">years</span>
+                                            </div>
+                                            <span class="error-message cancer-since-error"></span>
                                         </div>
                                         <textarea name="cancer_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2" disabled></textarea>
                                     </div>
@@ -445,10 +523,18 @@
                                         </label>
                                     </div>
                                     <div class="disease-details-container">
-                                        <div class="disease-date-group">
-                                            <label>Disease Start Date *</label>
-                                            <input type="date" name="critical_illness_start_date" class="disease-date-input member-disease-date" disabled>
-                                            <span class="error-message critical-illness-start-date-error"></span>
+                                        <div class="disease-duration-group">
+                                            <div class="disease-duration-row">
+                                                <label>Since Year *</label>
+                                                <select name="critical_illness_since_year" class="member-disease-since-year" disabled>
+                                                    <option value="">Select Year</option>
+                                                </select>
+                                                <span class="or-text">OR</span>
+                                                <label>Since</label>
+                                                <input type="number" name="critical_illness_since_years" class="member-disease-since-years" min="0" max="100" placeholder="0" disabled>
+                                                <span class="years-suffix">years</span>
+                                            </div>
+                                            <span class="error-message critical_illness-since-error"></span>
                                         </div>
                                         <textarea name="critical_illness_details" class="disease-details-textarea" placeholder="Provide more details..." rows="2" disabled></textarea>
                                     </div>
@@ -463,10 +549,18 @@
                                         </label>
                                     </div>
                                     <div class="disease-details-container">
-                                        <div class="disease-date-group">
-                                            <label>Disease Start Date *</label>
-                                            <input type="date" name="other_start_date" class="disease-date-input member-disease-date" disabled>
-                                            <span class="error-message other-start-date-error"></span>
+                                        <div class="disease-duration-group">
+                                            <div class="disease-duration-row">
+                                                <label>Since Year *</label>
+                                                <select name="other_since_year" class="member-disease-since-year" disabled>
+                                                    <option value="">Select Year</option>
+                                                </select>
+                                                <span class="or-text">OR</span>
+                                                <label>Since</label>
+                                                <input type="number" name="other_since_years" class="member-disease-since-years" min="0" max="100" placeholder="0" disabled>
+                                                <span class="years-suffix">years</span>
+                                            </div>
+                                            <span class="error-message other-since-error"></span>
                                         </div>
                                         <textarea name="other_details" class="disease-details-textarea" placeholder="Please specify and provide details..." rows="2" disabled></textarea>
                                     </div>
