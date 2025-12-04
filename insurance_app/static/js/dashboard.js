@@ -135,7 +135,8 @@ document.addEventListener('DOMContentLoaded', function() {
           uniqueId: client.unique_id || 'N/A',
           agent: client.agent || 'N/A',
           status: normalizeStatus(rawStatus),
-          supervisor_modified_by: client.supervisor_modified_by || null  // Store who approved it
+          supervisor_modified_by: client.supervisor_modified_by || null,  // Store who approved it
+          phone: client.phone || ''  // Store phone number for search
         };
       });
 
@@ -204,6 +205,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function createTableRow(proposal) {
     const row = document.createElement('tr');
+    
+    // Store phone number as data attribute for search functionality
+    row.setAttribute('data-phone', proposal.phone || '');
 
     const initials = getInitials(proposal.name);
     const statusClass = getStatusClass(proposal.status);
@@ -478,11 +482,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     filteredRows = allRows.filter(row => {
       const name = row.querySelector('.client-name')?.textContent.toLowerCase() || '';
+      const phone = (row.getAttribute('data-phone') || '').toLowerCase();
       const statusBadge = row.querySelector('.status-badge');
       const status = statusBadge?.textContent.toLowerCase() || '';
       const agentCell = row.cells[2]?.textContent.toLowerCase() || '';
 
-      const matchesSearch = name.includes(searchTerm);
+      // Search matches if the search term is found in name OR phone
+      const matchesSearch = name.includes(searchTerm) || phone.includes(searchTerm);
       const matchesStatus = statusValue === 'all' || status.includes(statusValue);
       const matchesAgent = !agentValue || agentCell.includes(agentValue);
 
@@ -831,11 +837,13 @@ function filterTable() {
 
   filteredRows = allRows.filter(row => {
     const name = row.querySelector('.client-name')?.textContent.toLowerCase() || '';
+    const phone = (row.getAttribute('data-phone') || '').toLowerCase();
     const statusBadge = row.querySelector('.status-badge');
     const status = statusBadge?.textContent.toLowerCase() || '';
     const agentCell = row.cells[2]?.textContent.toLowerCase() || '';
 
-    const matchesSearch = name.includes(searchTerm);
+    // Search matches if the search term is found in name OR phone
+    const matchesSearch = name.includes(searchTerm) || phone.includes(searchTerm);
     const matchesStatus = statusValue === 'all' || status.includes(statusValue);
     const matchesAgent = !agentValue || agentCell.includes(agentValue);
     

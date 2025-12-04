@@ -69,7 +69,13 @@ def list_clients():
                 agent,
                 supervisor_approval_status,
                 supervisor_modified_by,
-                application_status
+                application_status,
+                COALESCE(
+                    json_extract(form_summary, '$.primaryContact.phone'),
+                    json_extract(form_summary, '$.phone'),
+                    json_extract(form_summary, '$.primaryContact.mobile'),
+                    json_extract(form_summary, '$.mobile')
+                ) AS phone
             FROM submissions
             ORDER BY timestamp DESC
         ''').fetchall()
@@ -80,7 +86,8 @@ def list_clients():
             'agent': r['agent'],
             'supervisor_status': (r['supervisor_approval_status'] or '').lower(),
             'supervisor_modified_by': r['supervisor_modified_by'],
-            'application_status': r['application_status']
+            'application_status': r['application_status'],
+            'phone': r['phone'] or ''
         } for r in rows]
         return jsonify(result), 200
     except Exception as e:
