@@ -9,11 +9,20 @@
     let selectedIndex = -1;
     let filteredOccupations = [];
 
-    function initializeOccupationDropdown() {
-        const input = document.getElementById('occupation');
-        const hiddenInput = document.getElementById('occupation-value');
-        const dropdown = document.getElementById('occupation-list');
-        const occupationalRiskDetailsGroup = document.getElementById('occupational-risk-details-group');
+    function setupOccupationDropdown(inputId, hiddenInputId, dropdownId, isMember = false) {
+        const input = document.getElementById(inputId);
+        const hiddenInput = document.getElementById(hiddenInputId);
+        const dropdown = document.getElementById(dropdownId);
+        
+        let occupationalRiskDetailsGroup;
+        if (isMember) {
+            const memberForm = input.closest('.member-form');
+            if(memberForm) {
+                occupationalRiskDetailsGroup = memberForm.querySelector('.member-occupational-risk-details-group');
+            }
+        } else {
+            occupationalRiskDetailsGroup = document.getElementById('occupational-risk-details-group');
+        }
 
         if (!input || !dropdown) return;
         // Populate dropdown with "Other" at top, followed by filtered occupations
@@ -143,7 +152,6 @@
             selectedIndex = -1;
         });
 
-
         // Keyboard navigation
         input.addEventListener('keydown', function(e) {
             const items = dropdown.querySelectorAll('li');
@@ -195,13 +203,31 @@
         });
     }
 
+    function initializeAllDropdowns() {
+        // Initialize primary occupation dropdown
+        setupOccupationDropdown('occupation', 'occupation-value', 'occupation-list');
+
+        // Initialize secondary occupation dropdown
+        setupOccupationDropdown('secondary-occupation', 'secondary-occupation-value', 'secondary-occupation-list');
+
+        // Event listener for the secondary occupation checkbox
+        const secondaryCheckbox = document.getElementById('secondary-occupation-checkbox');
+        const secondarySection = document.getElementById('secondary-occupation-section');
+        if (secondaryCheckbox && secondarySection) {
+            secondaryCheckbox.addEventListener('change', function() {
+                secondarySection.style.display = this.checked ? 'block' : 'none';
+            });
+        }
+    }
+
     // Make initialization function globally available
-    window.initializeOccupationDropdown = initializeOccupationDropdown;
+    window.initializeOccupationDropdown = initializeAllDropdowns;
+    window.setupOccupationDropdown = setupOccupationDropdown; // Expose for dynamic members
 
     // Auto-initialize if DOM is already loaded
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeOccupationDropdown);
+        document.addEventListener('DOMContentLoaded', initializeAllDropdowns);
     } else {
-        initializeOccupationDropdown();
+        initializeAllDropdowns();
     }
 })();

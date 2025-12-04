@@ -12,150 +12,6 @@
     let hasUnsavedChanges = false;
     let originalFormData = {};
 
-    // Initialize member occupation dropdown for a specific form
-    function initializeMemberOccupationDropdown(formContainer) {
-        const input = formContainer.querySelector('.member-occupation');
-        const hiddenInput = formContainer.querySelector('.member-occupation-value');
-        const dropdown = formContainer.querySelector('.member-occupation-list');
-        const occupationalRiskDetailsGroup = formContainer.querySelector('.member-occupational-risk-details-group');
-
-        if (!input || !dropdown || typeof ALL_OCCUPATIONS === 'undefined') {
-            console.warn('Occupation dropdown elements or data not found');
-            return null;
-        }
-
-        let selectedIndex = -1;
-        let filteredOccupations = [];
-
-        function populateDropdown(occupations) {
-            dropdown.innerHTML = '';
-            
-            const otherLi = document.createElement('li');
-            otherLi.textContent = 'Other';
-            otherLi.classList.add('other-option');
-            otherLi.addEventListener('click', () => selectOccupation('Other'));
-            dropdown.appendChild(otherLi);
-
-            occupations.forEach((occupation, index) => {
-                const li = document.createElement('li');
-                li.textContent = occupation;
-                li.addEventListener('click', () => selectOccupation(occupation));
-                dropdown.appendChild(li);
-            });
-
-            filteredOccupations = ['Other', ...occupations];
-        }
-
-        function filterOccupations(searchTerm) {
-            if (!searchTerm.trim()) {
-                return ALL_OCCUPATIONS;
-            }
-            const term = searchTerm.toLowerCase();
-            return ALL_OCCUPATIONS.filter(occupation => 
-                occupation.toLowerCase().includes(term)
-            );
-        }
-
-        function selectOccupation(occupation) {
-            input.value = occupation;
-            hiddenInput.value = occupation;
-            dropdown.classList.remove('show');
-            selectedIndex = -1;
-            updateOccupationalRisk(occupation);
-            markFormAsModified();
-        }
-
-        function updateOccupationalRisk(occupation) {
-            const yesRadio = formContainer.querySelector('input[name="member-occupational-risk"][value="yes"]');
-            const noRadio = formContainer.querySelector('input[name="member-occupational-risk"][value="no"]');
-
-            if (!yesRadio || !noRadio || typeof isHazardousOccupation === 'undefined') {
-                return;
-            }
-
-            const isHazardous = isHazardousOccupation(occupation);
-
-            if (isHazardous === null) {
-                return;
-            }
-
-            if (isHazardous) {
-                yesRadio.checked = true;
-                yesRadio.dispatchEvent(new Event('change', { bubbles: true }));
-                if (occupationalRiskDetailsGroup) {
-                    occupationalRiskDetailsGroup.style.display = 'block';
-                }
-            } else {
-                noRadio.checked = true;
-                noRadio.dispatchEvent(new Event('change', { bubbles: true }));
-                if (occupationalRiskDetailsGroup) {
-                    occupationalRiskDetailsGroup.style.display = 'none';
-                    const detailsTextarea = formContainer.querySelector('.member-occupational-risk-details');
-                    if (detailsTextarea) detailsTextarea.value = '';
-                }
-            }
-        }
-
-        function highlightItem(index) {
-            const items = dropdown.querySelectorAll('li');
-            items.forEach((item, i) => {
-                if (i === index) {
-                    item.classList.add('highlighted');
-                    item.scrollIntoView({ block: 'nearest' });
-                } else {
-                    item.classList.remove('highlighted');
-                }
-            });
-        }
-
-        input.addEventListener('focus', function() {
-            const filtered = filterOccupations(input.value);
-            populateDropdown(filtered);
-            dropdown.classList.add('show');
-            selectedIndex = -1;
-        });
-
-        input.addEventListener('input', function(e) {
-            if (!e.isTrusted) return;
-            const filtered = filterOccupations(input.value);
-            populateDropdown(filtered);
-            dropdown.classList.add('show');
-            selectedIndex = -1;
-            markFormAsModified();
-        });
-
-        input.addEventListener('keydown', function(e) {
-            const items = dropdown.querySelectorAll('li');
-            
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
-                highlightItem(selectedIndex);
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                selectedIndex = Math.max(selectedIndex - 1, 0);
-                highlightItem(selectedIndex);
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                if (selectedIndex >= 0 && selectedIndex < filteredOccupations.length) {
-                    selectOccupation(filteredOccupations[selectedIndex]);
-                }
-            } else if (e.key === 'Escape') {
-                dropdown.classList.remove('show');
-                selectedIndex = -1;
-            }
-        });
-
-        document.addEventListener('click', function(e) {
-            if (!input.contains(e.target) && !dropdown.contains(e.target)) {
-                dropdown.classList.remove('show');
-                selectedIndex = -1;
-            }
-        });
-
-        return { updateOccupationalRisk };
-    }
-
     // Initialize disease details toggles for a form
     function initializeMemberDiseaseDetails(formContainer) {
         const container = formContainer.querySelector('.member-disease-list');
@@ -367,7 +223,6 @@
             detailsGroup.style.display = show ? 'block' : 'none';
             const textarea = detailsGroup.querySelector('textarea');
             if (textarea) textarea.disabled = !show;
-            if (!show && textarea) textarea.value = '';
         }
 
         if (yesRadio) {
@@ -383,6 +238,260 @@
             });
         }
         render();
+    }
+
+    // Initialize member occupation dropdown for a specific form
+    function initializeMemberOccupationDropdown(formContainer) {
+        const input = formContainer.querySelector('.member-occupation');
+        const hiddenInput = formContainer.querySelector('.member-occupation-value');
+        const dropdown = formContainer.querySelector('.member-occupation-list');
+        const occupationalRiskDetailsGroup = formContainer.querySelector('.member-occupational-risk-details-group');
+
+        if (!input || !dropdown || typeof ALL_OCCUPATIONS === 'undefined') {
+            console.warn('Occupation dropdown elements or data not found');
+            return null;
+        }
+
+        let selectedIndex = -1;
+        let filteredOccupations = [];
+
+        function populateDropdown(occupations) {
+            dropdown.innerHTML = '';
+            
+            const otherLi = document.createElement('li');
+            otherLi.textContent = 'Other';
+            otherLi.classList.add('other-option');
+            otherLi.addEventListener('click', () => selectOccupation('Other'));
+            dropdown.appendChild(otherLi);
+
+            occupations.forEach((occupation, index) => {
+                const li = document.createElement('li');
+                li.textContent = occupation;
+                li.addEventListener('click', () => selectOccupation(occupation));
+                dropdown.appendChild(li);
+            });
+
+            filteredOccupations = ['Other', ...occupations];
+        }
+
+        function filterOccupations(searchTerm) {
+            if (!searchTerm.trim()) {
+                return ALL_OCCUPATIONS;
+            }
+            const term = searchTerm.toLowerCase();
+            return ALL_OCCUPATIONS.filter(occupation => 
+                occupation.toLowerCase().includes(term)
+            );
+        }
+
+        function selectOccupation(occupation) {
+            input.value = occupation;
+            hiddenInput.value = occupation;
+            dropdown.classList.remove('show');
+            selectedIndex = -1;
+            updateOccupationalRisk(occupation);
+            markFormAsModified();
+        }
+
+        function updateOccupationalRisk(occupation) {
+            const yesRadio = formContainer.querySelector('input[name="member-occupational-risk"][value="yes"]');
+            const noRadio = formContainer.querySelector('input[name="member-occupational-risk"][value="no"]');
+
+            if (!yesRadio || !noRadio || typeof isHazardousOccupation === 'undefined') {
+                return;
+            }
+
+            const isHazardous = isHazardousOccupation(occupation);
+
+            if (isHazardous === null) {
+                return;
+            }
+
+            if (isHazardous) {
+                yesRadio.checked = true;
+                yesRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                if (occupationalRiskDetailsGroup) {
+                    occupationalRiskDetailsGroup.style.display = 'block';
+                }
+            } else {
+                noRadio.checked = true;
+                noRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                if (occupationalRiskDetailsGroup) {
+                    occupationalRiskDetailsGroup.style.display = 'none';
+                    const detailsTextarea = formContainer.querySelector('.member-occupational-risk-details');
+                    if (detailsTextarea) detailsTextarea.value = '';
+                }
+            }
+        }
+
+        function highlightItem(index) {
+            const items = dropdown.querySelectorAll('li');
+            items.forEach((item, i) => {
+                if (i === index) {
+                    item.classList.add('highlighted');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('highlighted');
+                }
+            });
+        }
+
+        input.addEventListener('focus', function() {
+            const filtered = filterOccupations(input.value);
+            populateDropdown(filtered);
+            dropdown.classList.add('show');
+            selectedIndex = -1;
+        });
+
+        input.addEventListener('input', function(e) {
+            if (!e.isTrusted) return;
+            const filtered = filterOccupations(input.value);
+            populateDropdown(filtered);
+            dropdown.classList.add('show');
+            selectedIndex = -1;
+            markFormAsModified();
+        });
+
+        input.addEventListener('keydown', function(e) {
+            const items = dropdown.querySelectorAll('li');
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                highlightItem(selectedIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, 0);
+                highlightItem(selectedIndex);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (selectedIndex >= 0 && selectedIndex < filteredOccupations.length) {
+                    selectOccupation(filteredOccupations[selectedIndex]);
+                }
+            } else if (e.key === 'Escape') {
+                dropdown.classList.remove('show');
+                selectedIndex = -1;
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('show');
+                selectedIndex = -1;
+            }
+        });
+
+        return { updateOccupationalRisk };
+    }
+
+    // Initialize member secondary occupation dropdown for a specific form
+    function initializeMemberSecondaryOccupationDropdown(formContainer) {
+        const input = formContainer.querySelector('.member-secondary-occupation');
+        const hiddenInput = formContainer.querySelector('.member-secondary-occupation-value');
+        const dropdown = formContainer.querySelector('.member-secondary-occupation-list');
+
+        if (!input || !hiddenInput || !dropdown || typeof ALL_OCCUPATIONS === 'undefined') {
+            return null;
+        }
+
+        let selectedIndex = -1;
+        let filteredOccupations = [];
+
+        function populateDropdown(occupations) {
+            dropdown.innerHTML = '';
+
+            const otherLi = document.createElement('li');
+            otherLi.textContent = 'Other';
+            otherLi.classList.add('other-option');
+            otherLi.addEventListener('click', () => selectOccupation('Other'));
+            dropdown.appendChild(otherLi);
+
+            occupations.forEach((occupation) => {
+                const li = document.createElement('li');
+                li.textContent = occupation;
+                li.addEventListener('click', () => selectOccupation(occupation));
+                dropdown.appendChild(li);
+            });
+
+            filteredOccupations = ['Other', ...occupations];
+        }
+
+        function filterOccupations(searchTerm) {
+            if (!searchTerm.trim()) {
+                return ALL_OCCUPATIONS;
+            }
+            const term = searchTerm.toLowerCase();
+            return ALL_OCCUPATIONS.filter(occupation =>
+                occupation.toLowerCase().includes(term)
+            );
+        }
+
+        function selectOccupation(occupation) {
+            input.value = occupation;
+            hiddenInput.value = occupation;
+            dropdown.classList.remove('show');
+            selectedIndex = -1;
+            markFormAsModified();
+        }
+
+        function highlightItem(index) {
+            const items = dropdown.querySelectorAll('li');
+            items.forEach((item, i) => {
+                if (i === index) {
+                    item.classList.add('highlighted');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('highlighted');
+                }
+            });
+        }
+
+        input.addEventListener('focus', function() {
+            const filtered = filterOccupations(input.value);
+            populateDropdown(filtered);
+            dropdown.classList.add('show');
+            selectedIndex = -1;
+        });
+
+        input.addEventListener('input', function(e) {
+            if (!e.isTrusted) return;
+            const filtered = filterOccupations(input.value);
+            populateDropdown(filtered);
+            dropdown.classList.add('show');
+            selectedIndex = -1;
+            markFormAsModified();
+        });
+
+        input.addEventListener('keydown', function(e) {
+            const items = dropdown.querySelectorAll('li');
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                highlightItem(selectedIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, 0);
+                highlightItem(selectedIndex);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (selectedIndex >= 0 && selectedIndex < filteredOccupations.length) {
+                    selectOccupation(filteredOccupations[selectedIndex]);
+                }
+            } else if (e.key === 'Escape') {
+                dropdown.classList.remove('show');
+                selectedIndex = -1;
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('show');
+                selectedIndex = -1;
+            }
+        });
+
+        return true;
     }
 
     // Mark form as modified
@@ -414,6 +523,7 @@
             name: formContainer.querySelector('.member-name').value.trim(),
             relationship: formContainer.querySelector('.relationship').value,
             occupation: formContainer.querySelector('.member-occupation').value.trim(),
+            secondary_occupation: formContainer.querySelector('.member-secondary-occupation')?.value.trim() || '',
             gender: formContainer.querySelector('.member-gender').value,
             dob: formContainer.querySelector('.member-dob').value,
             age: formContainer.querySelector('.member-age').value,
@@ -490,6 +600,14 @@
         formContainer.querySelector('.member-name').value = memberData.name || '';
         formContainer.querySelector('.relationship').value = memberData.relationship || '';
         formContainer.querySelector('.member-occupation').value = memberData.occupation || '';
+        if (formContainer.querySelector('.member-secondary-occupation')) {
+            formContainer.querySelector('.member-secondary-occupation').value = memberData.secondary_occupation || '';
+            const secondaryCheckbox = formContainer.querySelector('.member-secondary-occupation-checkbox');
+            if (secondaryCheckbox) {
+                secondaryCheckbox.checked = !!memberData.secondary_occupation;
+                secondaryCheckbox.dispatchEvent(new Event('change'));
+            }
+        }
         formContainer.querySelector('.member-gender').value = memberData.gender || '';
         formContainer.querySelector('.member-dob').value = memberData.dob || '';
         formContainer.querySelector('.member-age').value = memberData.age || '';
@@ -629,6 +747,16 @@
             occRiskDetails.style.display = 'none';
         }
 
+        // Hide secondary occupation
+        const secondarySection = formContainer.querySelector('.member-secondary-occupation-section');
+        if (secondarySection) {
+            secondarySection.style.display = 'none';
+            const secondaryCheckbox = formContainer.querySelector('.member-secondary-occupation-checkbox');
+            if (secondaryCheckbox) {
+                secondaryCheckbox.checked = false;
+            }
+        }
+
         // Clear readonly fields
         formContainer.querySelector('.member-age').value = '';
         formContainer.querySelector('.member-bmi').value = '';
@@ -696,9 +824,19 @@
         initializeMemberDiseaseDetails(contentDiv);
         initializeMemberOccupationalRisk(contentDiv);
         initializeMemberOccupationDropdown(contentDiv);
+        initializeMemberSecondaryOccupationDropdown(contentDiv);
+
+        const secondaryCheckbox = contentDiv.querySelector('.member-secondary-occupation-checkbox');
+        const secondarySection = contentDiv.querySelector('.member-secondary-occupation-section');
+        if (secondaryCheckbox && secondarySection) {
+            secondaryCheckbox.addEventListener('change', function() {
+                secondarySection.style.display = this.checked ? 'block' : 'none';
+            });
+        }
+        
         initializeAgeCalculation(contentDiv);
         initializeBmiCalculation(contentDiv);
-
+        
         // Add change listeners to all form inputs
         formContainer.querySelectorAll('input, select, textarea').forEach(input => {
             input.addEventListener('input', markFormAsModified);

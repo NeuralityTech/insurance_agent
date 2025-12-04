@@ -12,7 +12,7 @@
 
     <fieldset>
 
-        <!-- Policy Type and Term -->
+        <!-- Policy Type, Term and Payment Mode (moved) -->
         <div class="form-row">
             <div class="form-group">
                 <label for="policy-type">Policy Type</label>
@@ -32,6 +32,16 @@
                     <option value="3-years">3 Years (Multi-Year)</option>
                 </select>
             </div>
+            <div class="form-group">
+                <label for="payment-mode">Payment Mode Preference</label>
+                <select id="payment-mode" name="payment-mode">
+                    <option>Select</option>
+                    <option value="annual">Annual</option>
+                    <option value="half-yearly">Half-Yearly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="monthly">Monthly (if available)</option>
+                </select>
+            </div>
         </div>
 
         <!-- Sum Insured, Budget, and Payment Mode -->
@@ -45,15 +55,10 @@
                 <input type="text" id="annual-budget" name="annual-budget" pattern="[0-9]+" title="Please enter only numbers.">
             </div>
             <div class="form-group">
-                <label for="payment-mode">Payment Mode Preference</label>
-                <select id="payment-mode" name="payment-mode">
-                    <option>Select</option>
-                    <option value="annual">Annual</option>
-                    <option value="half-yearly">Half-Yearly</option>
-                    <option value="quarterly">Quarterly</option>
-                    <option value="monthly">Monthly (if available)</option>
-                </select>
+                <label for="annual-income">Annual Income (₹) PA</label>
+                <input type="text" id="annual-income" name="annual-income" pattern="[0-9]+" title="Please enter only numbers.">
             </div>
+            
         </div>
 
         <!-- Room, Co-pay, and NCB -->

@@ -65,7 +65,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let html = '';
 
-    // Function to create a summary section
+    // Helper to format keys into user-facing labels (handles special mappings)
+    function formatLabel(k) {
+        if (!k) return '';
+        if (k === 'occupation') return 'Primary Occupation';
+        if (k === 'secondary_occupation' || k === 'secondary-occupation') return 'Secondary Occupation';
+        return k.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    // Function to create summary section
     /**
      * Creates an HTML fieldset section for a given part of the summary data.
      * @param {string} title - The title of the section.
@@ -85,10 +93,10 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (!value) {
                 continue; // Skip other empty fields
             }
-            // Skip internal-only fields that should not be shown
-            if (key === 'occupation_value' || key === 'occupationValue') continue;
-            // Replace underscores and hyphens for nicer labels
-            const formattedKey = key.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            // Skip internal-only keys that should not be shown
+            if (key === 'occupation_value' || key === 'occupationValue' || key === 'secondary_occupation_value' || key === 'secondaryOccupationValue') continue;
+            // Use formatLabel for nicer labels (handles Primary/Secondary occupation mapping)
+            const formattedKey = formatLabel(key);
             sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${displayValue}</div>`;
         }
         sectionHtml += `</div></fieldset>`;
@@ -111,16 +119,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            // Hide these
+            // Hide these internal-only keys
             const excludedKeys = new Set([
                 'self-height', 'self_height', 'self-height-ft', 'self-height-in',
                 'self_height_ft', 'self_height_in', 'height_ft', 'height_in',
-                'occupation_value', 'occupationValue'
+                'occupation_value', 'occupationValue', 'secondary_occupation_value', 'secondaryOccupationValue'
             ]);
 
             // Preferred order with height before weight
             const orderedFields = [
-                'unique_id', 'applicant_name', 'gender', 'occupation', 'self-dob',
+                'unique_id', 'applicant_name', 'gender', 'occupation', 'secondary_occupation', 'self-dob',
                 'self-age',
 
                 // we inject height here
@@ -142,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!value) continue;
                 if (excludedKeys.has(field)) continue;
 
-                const formattedKey = field.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                const formattedKey = formatLabel(field);
 
                 sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${value}</div>`;
             }
@@ -179,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             // Ordered display of member fields (excluding plannedSurgeries and raw height)
             const memberFieldsOrder = [
-                'name', 'relationship', 'occupation', 'gender', 'dob', 'age', '__HEIGHT__', 'weight', 'bmi',
+                'name', 'relationship', 'occupation', 'secondary_occupation', 'gender', 'dob', 'age', '__HEIGHT__', 'weight', 'bmi',
                 'smoker', 'alcohol', 'riskyHobbies', 'occupationalRisk', 'occupationalRiskDetails'
             ];
             memberFieldsOrder.forEach(field => {

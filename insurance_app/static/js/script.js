@@ -363,6 +363,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (budgetEl && budgetEl.value.trim() && !budgetEl.value.trim().match(/^[0-9]+$/)) {
             errors.push('Annual Budget must be numeric');
         }
+        const incomeEl = document.querySelector('#cover-cost-content input[name="annual-income"]');
+        if (incomeEl && incomeEl.value.trim() && !incomeEl.value.trim().match(/^[0-9]+$/)) {
+            errors.push('Annual Income must be numeric');
+        }
 
         // ✅ Validate Disease duration for PRIMARY APPLICANT (Since Year or Since Years)
         const healthHistoryContent = document.getElementById('health-history-content');
@@ -524,6 +528,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'policy-type': 'individual',
             'sum-insured': '00',
             'annual-budget': '00',
+            'annual-income': '00',
             'payment-mode': 'annual',
             'room-preference': 'any',
             'co-pay': 'no',
@@ -798,6 +803,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 'policy-type': 'individual',
                 'sum-insured': '00',
                 'annual-budget': '00',
+                'annual-income': '00',
                 'payment-mode': 'annual',
                 'room-preference': 'any',
                 'co-pay': 'no',

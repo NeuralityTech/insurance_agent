@@ -355,7 +355,7 @@
                 const uwSection = document.getElementById('underwriter-section');
                 if (uwSection) {
                     const uwControls = uwSection.querySelectorAll(
-                        '#underwriter-approve, #underwriter-comment, #save-underwriter-decision'
+                        '#underwriter-approve, #underwriter-comment, #save-underwriter-decision, #underwriter-branch'
                     );
                     uwControls.forEach(_unlockElement);
                     
@@ -1331,6 +1331,16 @@
                                         style="width: 100%; margin-bottom: 0.5rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;" 
                                         placeholder="Enter underwriter notes">${submissionData.underwriter_comments || ''}</textarea>
 
+                                <div style="margin-top: 0.4rem; display:flex; align-items:center; gap:8px;">
+                                    <label for="underwriter-branch" style="font-weight:600; margin-right:8px;">Underwriting Branch:</label>
+                                    <select id="underwriter-branch" name="underwriter_branch" style="max-width: 240px; padding:6px;">
+                                        <option value="" disabled selected>Select branch</option>
+                                        <option value="Kukatpally">Kukatpally</option>
+                                        <option value="Nalgonda">Nalgonda</option>
+                                    </select>
+                                    <span id="underwriter-branch-status" style="margin-left:8px;color:#d9534f;display:none;">Please select a branch</span>
+                                </div>
+
                                 <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
                                     <button type="button" id="save-underwriter-decision" class="btn">Submit</button>
                                     <span id="underwriter-decision-status" style="margin-left: 1rem;"></span>
@@ -1471,16 +1481,28 @@
                 const saveUnderwriterBtn = container.querySelector('#save-underwriter-decision');
                 const underwriterStatusEl = container.querySelector('#underwriter-decision-status');
                 const underwriterCommentEl = container.querySelector('#underwriter-comment');
+                const underwriterBranchSelect = container.querySelector('#underwriter-branch');
+                const underwriterBranchStatus = container.querySelector('#underwriter-branch-status');
 
                 if (saveUnderwriterBtn) {
                     saveUnderwriterBtn.addEventListener('click', async () => {
                         const approveCheckbox = container.querySelector('#underwriter-approve');
                         const comment = (underwriterCommentEl?.value || '').trim();
+                        const branch = (underwriterBranchSelect?.value || '').trim();
 
                         if (!comment) {
                             underwriterStatusEl.textContent = 'Please provide notes for the underwriter.';
                             underwriterStatusEl.style.color = 'red';
                             return;
+                        }
+
+                        if (!branch) {
+                            if (underwriterBranchStatus) underwriterBranchStatus.style.display = 'inline';
+                            underwriterStatusEl.textContent = 'Please select an underwriting branch.';
+                            underwriterStatusEl.style.color = 'red';
+                            return;
+                        } else {
+                            if (underwriterBranchStatus) underwriterBranchStatus.style.display = 'none';
                         }
 
                         const decision = approveCheckbox.checked ? 'uw_approved' : null;
@@ -1491,8 +1513,8 @@
                             return;
                         }
 
-                        saveUnderwriterBtn.disabled = true;
-                        saveUnderwriterBtn.textContent = 'Submitting...';
+                                saveUnderwriterBtn.disabled = true;
+                                saveUnderwriterBtn.textContent = 'Submitting...';
                         underwriterStatusEl.textContent = '';
 
                         try {
@@ -1507,6 +1529,7 @@
                                     actor: 'underwriter',
                                     status: decision,
                                     comment: comment,
+                                    underwriter_branch: branch,
                                 })
                             });
 
@@ -1517,6 +1540,16 @@
                             
                             underwriterStatusEl.textContent = 'Submitted successfully! Reloading...';
                             underwriterStatusEl.style.color = 'green';
+
+                            // Immediately reflect submitted state: lock UI to show branch and controls disabled
+                            try {
+                                if (underwriterBranchSelect) underwriterBranchSelect.disabled = true;
+                                if (underwriterCommentEl) underwriterCommentEl.disabled = true;
+                                const approveCheckbox = container.querySelector('#underwriter-approve');
+                                if (approveCheckbox) approveCheckbox.disabled = true;
+                                saveUnderwriterBtn.textContent = 'Submitted';
+                                saveUnderwriterBtn.disabled = true;
+                            } catch (e) {}
 
                             setTimeout(() => {
                                 window.location.reload();
@@ -1531,6 +1564,29 @@
                         }
                     });
                 }
+                // Preselect Underwriter Branch if provided in submission data
+                try {
+                    if (underwriterBranchSelect && submissionData.underwriter_branch) {
+                        const desired = String(submissionData.underwriter_branch || '').trim().toLowerCase();
+                        let setVal = '';
+                        for (const opt of underwriterBranchSelect.options) {
+                            if (String(opt.value || '').trim().toLowerCase() === desired) { setVal = opt.value; break; }
+                        }
+                        if (setVal) underwriterBranchSelect.value = setVal;
+                    }
+                    // If underwriter status exists (already submitted), disable the controls and mark as submitted
+                    if (underwriterStatus) {
+                        if (underwriterBranchSelect) underwriterBranchSelect.disabled = true;
+                        if (underwriterCommentEl) underwriterCommentEl.disabled = true;
+                        const approveCheckbox = container.querySelector('#underwriter-approve');
+                        if (approveCheckbox) approveCheckbox.disabled = true;
+                        if (saveUnderwriterBtn) {
+                            saveUnderwriterBtn.disabled = true;
+                            saveUnderwriterBtn.textContent = 'Submitted';
+                        }
+                    }
+                } catch (e) {}
+
                 const policyDecisionSelect = container.querySelector('#policy-decision-select');
                 if (policyDecisionSelect) {
                     policyDecisionSelect.addEventListener('change', async function() {
