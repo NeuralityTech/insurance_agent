@@ -2,6 +2,7 @@
 .env
 
 # Instance folder with databases
+instance/
 
 # Temporary/deleted files folder
 /delme/

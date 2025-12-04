@@ -246,6 +246,10 @@
         const hiddenInput = formContainer.querySelector('.member-occupation-value');
         const dropdown = formContainer.querySelector('.member-occupation-list');
         const occupationalRiskDetailsGroup = formContainer.querySelector('.member-occupational-risk-details-group');
+        
+        // Secondary occupation elements
+        const secondaryCheckbox = formContainer.querySelector('.member-secondary-occupation-checkbox');
+        const secondarySection = formContainer.querySelector('.member-secondary-occupation-section');
 
         if (!input || !dropdown || typeof ALL_OCCUPATIONS === 'undefined') {
             console.warn('Occupation dropdown elements or data not found');
@@ -254,6 +258,23 @@
 
         let selectedIndex = -1;
         let filteredOccupations = [];
+        
+        function updateSecondaryState() {
+            if (!secondaryCheckbox) return;
+            
+            const hasPrimary = input.value && input.value.trim() !== '';
+            
+            if (!hasPrimary) {
+                secondaryCheckbox.checked = false;
+                secondaryCheckbox.disabled = true;
+                if (secondarySection) secondarySection.style.display = 'none';
+            } else {
+                secondaryCheckbox.disabled = false;
+            }
+        }
+        
+        // Initialize state
+        updateSecondaryState();
 
         function populateDropdown(occupations) {
             dropdown.innerHTML = '';
@@ -290,6 +311,7 @@
             dropdown.classList.remove('show');
             selectedIndex = -1;
             updateOccupationalRisk(occupation);
+            updateSecondaryState();
             markFormAsModified();
         }
 
@@ -349,6 +371,7 @@
             populateDropdown(filtered);
             dropdown.classList.add('show');
             selectedIndex = -1;
+            updateSecondaryState();
             markFormAsModified();
         });
 
@@ -703,6 +726,7 @@
         // Trigger calculations
         formContainer.querySelector('.member-dob').dispatchEvent(new Event('change'));
         formContainer.querySelector('.member-height').dispatchEvent(new Event('input'));
+        formContainer.querySelector('.member-occupation').dispatchEvent(new Event('input'));
     }
 
     // Clear form
@@ -760,6 +784,12 @@
         // Clear readonly fields
         formContainer.querySelector('.member-age').value = '';
         formContainer.querySelector('.member-bmi').value = '';
+
+        // Update state of dependent fields
+        const occupationInput = formContainer.querySelector('.member-occupation');
+        if (occupationInput) {
+            occupationInput.dispatchEvent(new Event('input'));
+        }
 
         hasUnsavedChanges = false;
         if (activeMemberId) {

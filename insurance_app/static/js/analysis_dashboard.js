@@ -197,7 +197,7 @@ function createPlanCard(p, index) {
     const planId = `plan-${index}-${p['Plan Name'].replace(/[^a-zA-Z0-9]/g, '_')}`;
     const summaryId = `summary-${index}-${p['Plan Name'].replace(/[^a-zA-Z0-9]/g, '_')}`;
     
-    return `
+    let cardHtml = `
     <article class="plan-card" aria-label="${p['Plan Name']}">
       <div>
         <div class="plan-card-header">
@@ -214,6 +214,33 @@ function createPlanCard(p, index) {
         </div>
       </div>
     </article>`;
+
+    if (p['Plan Name'] && p['Plan Name'].trim() === 'Smart Health Pro') {
+        cardHtml += `
+        <article class="plan-card" style="padding: 0; overflow: hidden;">
+            <div style="padding: 10px; border-bottom: 1px solid #eee; background-color: #f9f9f9; display: flex; align-items: center; gap: 8px;">
+                 <i class="fa fa-table"></i> <span>Plan Comparison</span>
+            </div>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <thead>
+                        <tr style="background-color: #f5f5f5;">
+                            <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd; border-right: 1px solid #eee;">Plan name</th>
+                            <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd; border-right: 1px solid #eee;">Sum insured</th>
+                            <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd; border-right: 1px solid #eee;">Premium</th>
+                            <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd; border-right: 1px solid #eee;">Policy term</th>
+                            <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">One page</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparison-table-body">
+                        <!-- Populated dynamically by updateComparisonTable() -->
+                    </tbody>
+                </table>
+            </div>
+        </article>`;
+    }
+
+    return cardHtml;
 }
 
 function renderFloaterPlans(plans, container) {
@@ -389,10 +416,79 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (e.target.matches('.plan-checkbox')) {
                     plansChanged = true;
                     updateProceedState();
+                    updateComparisonTable();
                 }
             });
         }
     };
+
+    // Comparison Table Logic
+    const comparisonState = {};
+    const updateComparisonTable = () => {
+        const tbody = document.getElementById('comparison-table-body');
+        if (!tbody) return;
+
+        // Capture current state
+        tbody.querySelectorAll('input, select').forEach(inp => {
+            const plan = inp.dataset.plan;
+            const col = inp.dataset.col;
+            if (!comparisonState[plan]) comparisonState[plan] = {};
+            comparisonState[plan][col] = inp.value;
+        });
+
+        const checked = document.querySelectorAll('.plan-checkbox:checked');
+        if (checked.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:10px; text-align:center; color:#888;">Select plans to compare</td></tr>';
+            return;
+        }
+
+        let html = '';
+        checked.forEach(cb => {
+            const planName = cb.dataset.planName;
+            const data = comparisonState[planName] || {};
+            
+            const mkField = (col) => {
+                const val = data[col] || '';
+                if (col === 'term') {
+                    return `
+                        <select data-plan="${planName}" data-col="${col}" 
+                                style="width:100%; background:transparent; border:none; padding:5px;">
+                            <option value="" ${val === '' ? 'selected' : ''}>Select</option>
+                            <option value="1 Year" ${val === '1 Year' ? 'selected' : ''}>1 Year</option>
+                            <option value="2 Years" ${val === '2 Years' ? 'selected' : ''}>2 Years</option>
+                            <option value="3 Years" ${val === '3 Years' ? 'selected' : ''}>3 Years</option>
+                        </select>`;
+                }
+                return `
+                    <input type="text" data-plan="${planName}" data-col="${col}" value="${val}" 
+                           style="width:100%; background:transparent; border:none; padding:5px;">`;
+            };
+            
+            html += `
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 10px; border-right: 1px solid #eee;">${planName}</td>
+                <td style="padding: 0; border-right: 1px solid #eee;">${mkField('sum')}</td>
+                <td style="padding: 0; border-right: 1px solid #eee;">${mkField('prem')}</td>
+                <td style="padding: 0; border-right: 1px solid #eee;">${mkField('term')}</td>
+                <td style="padding: 0;">${mkField('onepage')}</td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+        
+        // Add listeners to update state on input/change
+        tbody.querySelectorAll('input, select').forEach(inp => {
+            const handler = () => {
+                const plan = inp.dataset.plan;
+                const col = inp.dataset.col;
+                if (!comparisonState[plan]) comparisonState[plan] = {};
+                comparisonState[plan][col] = inp.value;
+            };
+            inp.addEventListener('input', handler);
+            inp.addEventListener('change', handler);
+        });
+    };
+    // Call initially in case of pre-selections
+    setTimeout(updateComparisonTable, 100);
 
     if (proceedBtn && modal && closeModalBtn && selectedPlansList) {
         proceedBtn.addEventListener('click', () => {

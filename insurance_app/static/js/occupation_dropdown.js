@@ -73,6 +73,9 @@
             
             // Update occupational risk radio buttons
             updateOccupationalRisk(occupation);
+            
+            // Trigger input event to notify dependencies
+            input.dispatchEvent(new Event('input', { bubbles: true }));
         }
 
         // Update occupational risk based on selected occupation
@@ -213,10 +216,32 @@
         // Event listener for the secondary occupation checkbox
         const secondaryCheckbox = document.getElementById('secondary-occupation-checkbox');
         const secondarySection = document.getElementById('secondary-occupation-section');
+        const primaryInput = document.getElementById('occupation');
+
         if (secondaryCheckbox && secondarySection) {
             secondaryCheckbox.addEventListener('change', function() {
                 secondarySection.style.display = this.checked ? 'block' : 'none';
             });
+        }
+
+        function updateSecondaryState() {
+            if (!secondaryCheckbox || !primaryInput) return;
+            
+            const hasPrimary = primaryInput.value && primaryInput.value.trim() !== '';
+            
+            if (!hasPrimary) {
+                secondaryCheckbox.checked = false;
+                secondaryCheckbox.disabled = true;
+                if (secondarySection) secondarySection.style.display = 'none';
+            } else {
+                secondaryCheckbox.disabled = false;
+            }
+        }
+
+        if (primaryInput) {
+            primaryInput.addEventListener('input', updateSecondaryState);
+            // Initial check
+            updateSecondaryState();
         }
     }
 
