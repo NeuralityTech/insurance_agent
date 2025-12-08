@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // DATA LOADING AND TABLE POPULATION
   // ===================================
   let proposalsData = [];
+  let allAgentsFromDb = []; // Agents fetched from /agents endpoint (includes agents with 0 submissions)
   let currentAgentFilter = ''; // Will be set to logged-in user by default
 
   // Status mapping configuration - maps backend values to display values
@@ -115,14 +116,30 @@ document.addEventListener('DOMContentLoaded', function() {
       const tableBody = document.getElementById('proposalsTableBody');
       tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">Loading proposals...</td></tr>';
 
-      // Fetch clients data from backend
-      const response = await fetch('/clients');
-      if (!response.ok) {
+      // Fetch clients data and agents list in parallel
+      const [clientsResponse, agentsResponse] = await Promise.all([
+        fetch('/clients'),
+        fetch('/agents')
+      ]);
+      
+      if (!clientsResponse.ok) {
         throw new Error('Failed to fetch proposals data');
       }
 
-      const clients = await response.json();
-            console.log(clients);
+      const clients = await clientsResponse.json();
+      console.log(clients);
+      
+      // Store agents from database (includes agents with 0 submissions)
+      if (agentsResponse.ok) {
+        const agentsData = await agentsResponse.json();
+        // Extract user_id from each agent record
+        allAgentsFromDb = agentsData.map(agent => agent.user_id).filter(Boolean);
+        console.log('Agents from DB:', allAgentsFromDb);
+      } else {
+        console.warn('Failed to fetch agents list, falling back to proposals-based list');
+        allAgentsFromDb = [];
+      }
+      
       // Transform backend data to match table structure
       proposalsData = clients.map(client => {
         // Get the most recent status (prefer application_status, fallback to supervisor_approval_status)
@@ -302,8 +319,9 @@ document.addEventListener('DOMContentLoaded', function() {
   let selectedAgent = '';
 
   function initializeAgentFilter() {
-    // Get unique agents from proposals data
-    const uniqueAgents = new Set();
+    // Get agents from database (includes agents with 0 submissions)
+    // Also include any agents from proposals that might not be in the database (edge case)
+    const uniqueAgents = new Set(allAgentsFromDb);
     proposalsData.forEach(p => {
       if (p.agent && p.agent !== 'N/A') {
         uniqueAgents.add(p.agent);
@@ -1065,8 +1083,9 @@ function filterTable() {
     const select = document.getElementById('newAgentSelect');
     select.innerHTML = '<option value="">-- Select Agent --</option>';
     
-    // Get unique agents from proposals data (excluding 'All Agents' and current agent)
-    const uniqueAgents = new Set();
+    // Get agents from database (includes agents with 0 submissions)
+    // Also include any agents from proposals that might not be in the database (edge case)
+    const uniqueAgents = new Set(allAgentsFromDb);
     proposalsData.forEach(p => {
       if (p.agent && p.agent !== 'N/A') {
         uniqueAgents.add(p.agent);
