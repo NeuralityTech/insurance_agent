@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,9 +15,15 @@
 
     <script defer src="{{ url_for('static', filename='js/plan_selection_summary_v2.js') }}"></script>
     <style>
-        .comment-box { border:1px solid #ccc; padding:8px; min-height:40px; background:#fff; }
+        .comment-box {
+            border: 1px solid #ccc;
+            padding: 8px;
+            min-height: 40px;
+            background: #fff;
+        }
     </style>
 </head>
+
 <body data-sidebar="existing-applicant">
 
 
@@ -24,8 +31,10 @@
     <script type="application/json" id="analysis-data-json">{{ (analysis or {})|tojson|safe }}</script>
     <script type="application/json" id="supervisor-status-json">{{ (supervisor_status or "")|tojson|safe }}</script>
     <script type="application/json" id="supervisor-comments-json">{{ (supervisor_comments or "")|tojson|safe }}</script>
-    <script type="application/json" id="supervisor-modified-at-json">{{ (supervisor_modified_at or "")|tojson|safe }}</script>
-    <script type="application/json" id="supervisor-modified-by-json">{{ (supervisor_modified_by or "")|tojson|safe }}</script>
+    <script type="application/json"
+        id="supervisor-modified-at-json">{{ (supervisor_modified_at or "")|tojson|safe }}</script>
+    <script type="application/json"
+        id="supervisor-modified-by-json">{{ (supervisor_modified_by or "")|tojson|safe }}</script>
 
     <div class="container">
         <div class="page-header">
@@ -36,7 +45,9 @@
         <section id="supervisor-meta" class="section supervisor-meta" style="display:none;">
             <div class="form-group" style="margin-top:8px;">
                 <div><strong>Status</strong></div>
-                <div id="sup-summary" class="comment-box" role="textbox" aria-readonly="true" style="white-space:normal; font-family: inherit; font-size: inherit; line-height:1.2; min-height: 48px; padding:0; margin:0;"></div>
+                <div id="sup-summary" class="comment-box" role="textbox" aria-readonly="true"
+                    style="white-space:normal; font-family: inherit; font-size: inherit; line-height:1.2; min-height: 48px; padding:0; margin:0;">
+                </div>
             </div>
         </section>
 
@@ -49,9 +60,12 @@
 
         <section class="plan-options-section">
             <div class="tabs">
-                <button id="tab-btn-best-floater" name="tab-btn-best-floater" class="tab-link active" data-tab="tab-best-floater">Family</button>
-                <button id="tab-btn-combinations" name="tab-btn-combinations" class="tab-link" data-tab="tab-combinations">Individual</button>
-                <button id="tab-btn-browse-all" name="tab-btn-browse-all" class="tab-link" data-tab="tab-browse-all">All plans</button>
+                <button id="tab-btn-best-floater" name="tab-btn-best-floater" class="tab-link active"
+                    data-tab="tab-best-floater">Comprehensive</button>
+                <button id="tab-btn-combinations" name="tab-btn-combinations" class="tab-link"
+                    data-tab="tab-combinations">Individual</button>
+                <button id="tab-btn-browse-all" name="tab-btn-browse-all" class="tab-link" data-tab="tab-browse-all">All
+                    plans</button>
             </div>
 
             <div id="tab-best-floater" class="tab-content active">
@@ -69,7 +83,8 @@
             <div id="tab-browse-all" class="tab-content">
                 <div id="plans-table">
                     <h2>All Ranked Plans</h2>
-                    <p>The following plans have been scored based on how well they fit the entire family's needs, including specific ailments.</p>
+                    <p>The following plans have been scored based on how well they fit the entire family's needs,
+                        including specific ailments.</p>
                     <table>
                         <thead>
                             <tr>
@@ -79,30 +94,32 @@
                                 <th>Category</th>
                                 <th>Ailment Score</th>
                                 {% if analysis.member_score_columns %}
-                                    {% for col_name in analysis.member_score_columns %}
-                                        <th>{{ col_name.replace('Score_', '') }} Score</th>
-                                    {% endfor %}
+                                {% for col_name in analysis.member_score_columns %}
+                                <th>{{ col_name.replace('Score_', '') }} Score</th>
+                                {% endfor %}
                                 {% endif %}
                             </tr>
                         </thead>
                         <tbody>
                             {% for plan in analysis.browse_all %}
-                                <tr>
-                                    <td><span class="badge">{{ loop.index }}</span></td>
-                                    <td>{{ plan['Plan Name'] }}</td>
-                                    <td>{{ plan.get('Policy_Code', '') }}</td>
-                                    <td>{{ plan.Category }}</td>
-                                    <td>{{ '%.2f'|format(plan.AilmentScore|float) }}</td>
-                                    {% if analysis.member_score_columns %}
-                                        {% for col_name in analysis.member_score_columns %}
-                                            <td>{{ '%.2f'|format(plan[col_name]|float) }}</td>
-                                        {% endfor %}
-                                    {% endif %}
-                                </tr>
+                            <tr>
+                                <td><span class="badge">{{ loop.index }}</span></td>
+                                <td>{{ plan['Plan Name'] }}</td>
+                                <td>{{ plan.get('Policy_Code', '') }}</td>
+                                <td>{{ plan.Category }}</td>
+                                <td>{{ '%.2f'|format(plan.AilmentScore|float) }}</td>
+                                {% if analysis.member_score_columns %}
+                                {% for col_name in analysis.member_score_columns %}
+                                <td>{{ '%.2f'|format(plan[col_name]|float) }}</td>
+                                {% endfor %}
+                                {% endif %}
+                            </tr>
                             {% else %}
-                                <tr>
-                                    <td colspan="{{ 5 + (analysis.member_score_columns|length if analysis.member_score_columns else 0) }}">No ranked plans available.</td>
-                                </tr>
+                            <tr>
+                                <td
+                                    colspan="{{ 5 + (analysis.member_score_columns|length if analysis.member_score_columns else 0) }}">
+                                    No ranked plans available.</td>
+                            </tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -110,14 +127,17 @@
             </div>
         </section>
 
+        <!-- Include selected plans components (displayed when user checks plans) -->
+        {% include 'Comprehensive_Selected_Plans.html' %}
+        {% include 'Individual_Selected_Plans.html' %}
+
         <div class="form-actions" style="text-align: left; padding-top: 20px;">
             <button type="button" id="back-btn" name="back-btn" class="btn btn-secondary">Back</button>
             {% set sup = (supervisor_status or '') | string | lower %}
-            <button type="button"
-                    id="proceedBtn"
-                    name="proceedBtn"
-                    class="btn btn-secondary{% if sup in ['approved','pending'] %} is-disabled{% endif %}"
-                    {% if sup in ['approved','pending'] %}disabled aria-disabled="true" title="Disabled due to supervisor status"{% endif %}>
+            <button type="button" id="proceedBtn" name="proceedBtn"
+                class="btn btn-secondary{% if sup in ['approved','pending'] %} is-disabled{% endif %}" {% if sup in
+                ['approved','pending'] %}disabled aria-disabled="true" title="Disabled due to supervisor status" {%
+                endif %}>
                 Proceed
             </button>
         </div>
@@ -128,7 +148,84 @@
 
     <script src="{{ url_for('static', filename='js/analysis_dashboard.js') }}" defer></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        // Initialize localStorage role and status, then sync selected-plans components
+        document.addEventListener('DOMContentLoaded', () => {
+            // Ensure user_role is in localStorage (default to 'agent' if not present)
+            if (!localStorage.getItem('user_role')) {
+                localStorage.setItem('user_role', 'agent');
+            }
+
+            // Ensure supervisor_status is in localStorage (ALWAYS sync from server to ensure fresh state)
+            try {
+                const supJsonEl = document.getElementById('supervisor-status-json');
+                const supStatus = supJsonEl ? JSON.parse(supJsonEl.textContent) : '';
+
+                // CRITICAL FIX: Only overwrite if server provides a value, OR if local value is not locked.
+                // This prevents a stale/empty server response from unlocking the UI immediately after submission.
+                if (supStatus) {
+                    localStorage.setItem('supervisor_status', supStatus);
+                    console.log('Synced supervisor_status from server:', supStatus);
+                } else {
+                    // Server returned empty. Check if we have a locked status locally.
+                    const currentLocal = localStorage.getItem('supervisor_status');
+                    const lockedStatuses = ['sup_review', 'approved', 'pending', 'sup_approved'];
+                    if (lockedStatuses.includes(currentLocal)) {
+                        console.warn('Server returned empty status but keeping local locked status:', currentLocal);
+                    } else {
+                        // Safe to clear/set to empty
+                        localStorage.setItem('supervisor_status', '');
+                    }
+                }
+            } catch (e) {
+                console.warn('Error syncing supervisor status:', e);
+                // Fail safe: don't clear if error
+            }
+
+            // Trigger initial render of selected-plans components if functions are available
+            setTimeout(() => {
+                try { if (window.rebuildComprehensiveFromDOM) window.rebuildComprehensiveFromDOM(); } catch (e) { }
+                try { if (window.rebuildIndividualFromDOM) window.rebuildIndividualFromDOM(); } catch (e) { }
+                // Update visibility after render
+                setTimeout(() => {
+                    const isFloaterSelected = !!document.querySelector('#floater-plans-container .plan-checkbox:checked');
+                    const isIndividualSelected = !!document.querySelector('#combo-packages-container .plan-checkbox:checked');
+                    const cspRoot = document.getElementById('csp-root');
+                    const ispRoot = document.getElementById('isp-root');
+                    if (cspRoot) cspRoot.style.display = isFloaterSelected ? '' : 'none';
+                    if (ispRoot) ispRoot.style.display = isIndividualSelected ? '' : 'none';
+                }, 150);
+            }, 100);
+        });
+    </script>
+    <script>
+        // UI toggles for Selected Plans components (non-invasive: purely presentational)
+        document.addEventListener('DOMContentLoaded', () => {
+            const cspRoot = document.getElementById('csp-root');
+            const ispRoot = document.getElementById('isp-root');
+
+            function isFloaterSelected() {
+                try { return !!document.querySelector('#floater-plans-container .plan-checkbox:checked'); } catch (e) { return false; }
+            }
+            function isIndividualSelected() {
+                try { return !!document.querySelector('#combo-packages-container .plan-checkbox:checked'); } catch (e) { return false; }
+            }
+
+            function updateVisibility() {
+                if (cspRoot) cspRoot.style.display = isFloaterSelected() ? '' : 'none';
+                if (ispRoot) ispRoot.style.display = isIndividualSelected() ? '' : 'none';
+            }
+
+            // Initialize visibility state (hidden by default if no selected plans)
+            updateVisibility();
+
+            document.addEventListener('change', (e) => {
+                if (!e.target.matches || !e.target.matches('.plan-checkbox')) return;
+                setTimeout(updateVisibility, 10); // allow other handlers to update DOM first
+            }, true);
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
             const loggedInUserEl = document.getElementById('logged-in-user');
             const logoutBtn = document.getElementById('logout-btn');
             const homeBtn = document.getElementById('btn-home');
@@ -146,7 +243,7 @@
             }
 
             if (logoutBtn) {
-                logoutBtn.addEventListener('click', function() {
+                logoutBtn.addEventListener('click', function () {
                     localStorage.removeItem('loggedInUserId');
                     // Hit the Flask logout endpoint which redirects to '/'
                     window.location.href = '/logout';
@@ -290,7 +387,8 @@
 
 
     <div id="confirmationModal" class="modal-overlay is-hidden">
-        <div class="modal-content" style="max-width:900px; width:90vw; max-height:80vh; display:flex; flex-direction:column;">
+        <div class="modal-content"
+            style="max-width:900px; width:90vw; max-height:80vh; display:flex; flex-direction:column;">
             <button class="modal-close" id="closeModalBtn" name="closeModalBtn" aria-label="Close">&times;</button>
             <h2>Plans Selection Summary</h2>
             <div id="planSelectionSummary" style="overflow:auto; flex:1; min-height:0; padding:4px;"></div>
@@ -302,454 +400,509 @@
     </div>
 
     <script>
-    // Build and show confirmation table when clicking Proceed
-    (function(){
-        const proceedBtn = document.getElementById('proceedBtn');
-        const modal = document.getElementById('confirmationModal');
-        const closeBtn = document.getElementById('closeModalBtn');
-        const cancelBtn = document.getElementById('cancelSelection');
-        const confirmBtn = document.getElementById('confirmSelection');
-        const summaryHost = document.getElementById('planSelectionSummary');
+        // Build and show confirmation table when clicking Proceed
+        (function () {
+            const proceedBtn = document.getElementById('proceedBtn');
+            const modal = document.getElementById('confirmationModal');
+            const closeBtn = document.getElementById('closeModalBtn');
+            const cancelBtn = document.getElementById('cancelSelection');
+            const confirmBtn = document.getElementById('confirmSelection');
+            const summaryHost = document.getElementById('planSelectionSummary');
 
-        function showModal(){ if (modal) modal.classList.remove('is-hidden'); }
-        function hideModal(){ if (modal) modal.classList.add('is-hidden'); }
+            function showModal() { if (modal) modal.classList.remove('is-hidden'); }
+            function hideModal() { if (modal) modal.classList.add('is-hidden'); }
 
-        function escapeHtml(s){ const d=document.createElement('div'); d.textContent=String(s||''); return d.innerHTML; }
+            function escapeHtml(s) { const d = document.createElement('div'); d.textContent = String(s || ''); return d.innerHTML; }
 
-        function getUniqueId(){
-            try{
-                const u = new URLSearchParams(window.location.search).get('unique_id');
-                if (u) return u;
-                const fs = JSON.parse(localStorage.getItem('formSummary'));
-                return fs && fs.primaryContact && (fs.primaryContact['unique_id']||fs.primaryContact['Unique Id']) || null;
-            }catch(e){ return null; }
-        }
-
-        // Source system-proposed plans from localStorage 'plans' (set earlier), fallback to minimal view
-        function readSystemPlans(){
-            let data = null;
-            try { data = JSON.parse(localStorage.getItem('plans')); } catch(e) { data = null; }
-            // Expected shapes:
-            // 1) Array of plan groups; 2) Object with keys member1/member2/... each having {name, plans: []}; 3) { comprehensive_cover: {plans:[]}, member1: {...}, ... }
-            // Overlay Family tab (best floater) plans from DOM under Family
-            function readFloaterPlansFromDOM(){
+            function getUniqueId() {
                 try {
-                    const inputs = document.querySelectorAll('#floater-plans-container input.plan-checkbox');
-                    return Array.from(inputs).map(cb => ({ name: cb.getAttribute('data-plan-name') }));
-                } catch(e) { return []; }
+                    const u = new URLSearchParams(window.location.search).get('unique_id');
+                    if (u) return u;
+                    const fs = JSON.parse(localStorage.getItem('formSummary'));
+                    return fs && fs.primaryContact && (fs.primaryContact['unique_id'] || fs.primaryContact['Unique Id']) || null;
+                } catch (e) { return null; }
             }
-            let sys = (data && typeof data === 'object') ? data : {};
-            const floater = readFloaterPlansFromDOM();
-            if (Array.isArray(floater) && floater.length){
-                sys.comprehensive_cover = {
-                    name: 'Family',
-                    plans: floater
-                };
-            }
-            return sys;
-        }
 
-        function deriveMemberOrder(systemPlans){
-            const order = [];
-            // Prefer comprehensive cover first
-            if (systemPlans && systemPlans.comprehensive_cover) order.push({ key:'comprehensive_cover', name:'Family' });
-            const keys = Object.keys(systemPlans || {});
-            keys.forEach(k => {
-                if (k === 'comprehensive_cover') return;
-                const val = systemPlans[k];
-                if (val && (val.name || k)) order.push({ key:k, name: val.name || k });
-            });
-            // Fallback: if array provided
-            if (!order.length && Array.isArray(systemPlans)) {
-                systemPlans.forEach((grp, idx) => order.push({ key: String(idx), name: grp.name || `Group ${idx+1}` }));
-            }
-            return order;
-        }
-
-        function getRole(){
-            try { return (localStorage.getItem('user_role') || 'agent').toLowerCase(); } catch(e) { return 'agent'; }
-        }
-
-        function buildSummaryTable(){
-            const sys = readSystemPlans();
-            const memberOrder = deriveMemberOrder(sys);
-            const uid = getUniqueId();
-            let saved = {};
-            try { saved = JSON.parse(localStorage.getItem('agent_supervisor_selections')) || {}; } catch(e) { saved = {}; }
-
-            // Live selections on page (from both Family and Individual tabs)
-            const domChecked = Array.from(document.querySelectorAll('.plan-options-section .plan-checkbox:checked'))
-                                  .map(cb => cb.getAttribute('data-plan-name'));
-            const agentSelectedNow = new Set(domChecked);
-
-            // Build proposed map expected by renderer
-            const proposed = {};
-            memberOrder.forEach(m => {
-                let plans = [];
-                if (sys[m.key]) {
-                    if (Array.isArray(sys[m.key])) plans = sys[m.key];
-                    else if (Array.isArray(sys[m.key].plans)) plans = sys[m.key].plans;
+            // Source system-proposed plans from localStorage 'plans' (set earlier), fallback to minimal view
+            function readSystemPlans() {
+                let data = null;
+                try { data = JSON.parse(localStorage.getItem('plans')); } catch (e) { data = null; }
+                // Expected shapes:
+                // 1) Array of plan groups; 2) Object with keys member1/member2/... each having {name, plans: []}; 3) { comprehensive_cover: {plans:[]}, member1: {...}, ... }
+                // Overlay Family tab (best floater) plans from DOM under Family
+                function readFloaterPlansFromDOM() {
+                    try {
+                        const inputs = document.querySelectorAll('#floater-plans-container input.plan-checkbox');
+                        return Array.from(inputs).map(cb => ({ name: cb.getAttribute('data-plan-name') }));
+                    } catch (e) { return []; }
                 }
-                const names = plans.map(p => (p && p.name) ? p.name : (p || 'Plan')).filter(Boolean);
-                proposed[m.key] = { name: m.name || m.key, plans: names };
-            });
+                let sys = (data && typeof data === 'object') ? data : {};
+                const floater = readFloaterPlansFromDOM();
+                if (Array.isArray(floater) && floater.length) {
+                    sys.comprehensive_cover = {
+                        name: 'Family',
+                        plans: floater
+                    };
+                }
+                return sys;
+            }
 
-            // Agent selections: prefer live DOM state; else fallback to saved rowIds
-            const agentSel = new Set();
-            if (agentSelectedNow.size) {
-                agentSelectedNow.forEach(n => agentSel.add(n));
-            } else {
-                Object.keys(saved.agent || {}).forEach(rowId => {
-                    // rowId format: key__idx -> map back to name if available
-                    const [key, idxStr] = rowId.split('__');
-                    const idx = Number(idxStr);
-                    const entry = proposed[key];
-                    if (entry && Array.isArray(entry.plans) && entry.plans[idx]) agentSel.add(entry.plans[idx]);
+            function deriveMemberOrder(systemPlans) {
+                const order = [];
+                // Prefer comprehensive cover first
+                if (systemPlans && systemPlans.comprehensive_cover) order.push({ key: 'comprehensive_cover', name: 'Family' });
+                const keys = Object.keys(systemPlans || {});
+                keys.forEach(k => {
+                    if (k === 'comprehensive_cover') return;
+                    const val = systemPlans[k];
+                    if (val && (val.name || k)) order.push({ key: k, name: val.name || k });
                 });
-            }
-            // Supervisor selections (read-only here)
-            const supSel = new Set();
-            Object.keys(saved.supervisor || {}).forEach(rowId => {
-                const [key, idxStr] = rowId.split('__');
-                const idx = Number(idxStr);
-                const entry = proposed[key];
-                if (entry && Array.isArray(entry.plans) && entry.plans[idx]) supSel.add(entry.plans[idx]);
-            });
-
-            if (summaryHost) {
-                if (!memberOrder.length) {
-                    summaryHost.innerHTML = '<p class="muted">No system-proposed plans available to summarize.</p>';
-                } else {
-                    window.renderPlanSelectionSummary(summaryHost, {
-                        proposed,
-                        agentSel,
-                        supervisorSel: supSel,
-                        mode: 'analysis'
-                    });
+                // Fallback: if array provided
+                if (!order.length && Array.isArray(systemPlans)) {
+                    systemPlans.forEach((grp, idx) => order.push({ key: String(idx), name: grp.name || `Group ${idx + 1}` }));
                 }
+                return order;
             }
-            // Also serialize the summary to a plain object and send to backend for logging
-            try {
-                const summaryObj = {
-                    unique_id: uid,
-                    userId: (localStorage.getItem('loggedInUserId') || 'Unknown'),
-                    mode: 'analysis',
-                    timestamp: new Date().toISOString(),
-                    proposed,
-                    agent_selected: Array.from(agentSel || []),
-                    supervisor_selected: Array.from(supSel || [])
-                };
-                // Print in browser for quick verification
-                console.log('[PlanSelectionSummary]', summaryObj);
-                // Fire-and-forget POST so server prints it to terminal
-                if (uid) {
-                    fetch(`/log_plan_summary/${uid}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(summaryObj)
-                    }).catch(() => {});
-                }
-            } catch (e) { /* ignore logging errors */ }
-            return { uid };
-        }
 
-        function collectSelections(){
-            const role = getRole();
-            const result = { agent:{}, supervisor:{} };
-            if (role === 'supervisor') {
-                // Read supervisor choices from enabled checkboxes
-                summaryHost.querySelectorAll('input.supervisor-proposed').forEach(inp => {
-                    if (inp.disabled) return; // ignore disabled
-                    const key = inp.getAttribute('data-row');
-                    if (inp.checked) result.supervisor[key] = true;
-                });
-                // carry forward agent's existing selections unchanged
-                try {
-                    const saved = JSON.parse(localStorage.getItem('agent_supervisor_selections')) || {};
-                    result.agent = saved.agent || {};
-                } catch(e) {}
-            } else { // agent role
-                // Build agent selections from live DOM (both tabs) mapped to rowIds via system plans
+            function getRole() {
+                try { return (localStorage.getItem('user_role') || 'agent').toLowerCase(); } catch (e) { return 'agent'; }
+            }
+
+            function buildSummaryTable() {
                 const sys = readSystemPlans();
                 const memberOrder = deriveMemberOrder(sys);
+                const uid = getUniqueId();
+                let saved = {};
+                try { saved = JSON.parse(localStorage.getItem('agent_supervisor_selections')) || {}; } catch (e) { saved = {}; }
+
+                // Live selections on page (from both Family and Individual tabs)
                 const domChecked = Array.from(document.querySelectorAll('.plan-options-section .plan-checkbox:checked'))
-                                      .map(cb => cb.getAttribute('data-plan-name'));
-                const selectedNow = new Set(domChecked);
+                    .map(cb => cb.getAttribute('data-plan-name'));
+                const agentSelectedNow = new Set(domChecked);
+
+                // Build proposed map expected by renderer
+                const proposed = {};
                 memberOrder.forEach(m => {
                     let plans = [];
                     if (sys[m.key]) {
                         if (Array.isArray(sys[m.key])) plans = sys[m.key];
                         else if (Array.isArray(sys[m.key].plans)) plans = sys[m.key].plans;
                     }
-                    plans.forEach((p, idx) => {
-                        const rawName = (p && p.name) ? p.name : (p || 'Plan');
-                        const rowId = `${m.key}__${idx}`;
-                        if (selectedNow.has(rawName)) {
-                            result.agent[rowId] = true;
-                        }
-                    });
+                    const names = plans.map(p => (p && p.name) ? p.name : (p || 'Plan')).filter(Boolean);
+                    proposed[m.key] = { name: m.name || m.key, plans: names };
                 });
-                // supervisor remains as previously saved
-                try {
-                    const saved = JSON.parse(localStorage.getItem('agent_supervisor_selections')) || {};
-                    result.supervisor = saved.supervisor || {};
-                } catch(e) {}
-            }
-            return result;
-        }
 
-        // JSON-backed summary rendering and agent PATCHing
-        async function getUidForSummary(){
-            // Prefer query params, then localStorage, then last path segment
-            const qs = new URLSearchParams(window.location.search);
-            const qp = qs.get('unique_id') || qs.get('uid');
-            if (qp) return qp;
-            try {
-                const ls = localStorage.getItem('selectedUniqueId') || localStorage.getItem('currentUniqueId');
-                if (ls) return ls;
-            } catch {}
-            try { return window.location.pathname.split('/').filter(Boolean).pop(); } catch(e) { return null; }
-        }
-
-        async function fetchPlanSummary(uid){
-            const r = await fetch(`/plan_summary/${encodeURIComponent(uid)}`);
-            if (!r.ok) throw new Error('Failed to load plan summary');
-            return r.json();
-        }
-
-        // Build a 'proposed' map from current page state (Family + Individuals)
-        function buildProposedFromPage(){
-            // Reuse logic already present on the page
-            const sys = readSystemPlans();
-            const memberOrder = deriveMemberOrder(sys);
-            const proposed = {};
-            memberOrder.forEach(m => {
-                let plans = [];
-                if (sys[m.key]) {
-                    if (Array.isArray(sys[m.key])) plans = sys[m.key];
-                    else if (Array.isArray(sys[m.key].plans)) plans = sys[m.key].plans;
-                }
-                const names = plans.map(p => (p && p.name) ? p.name : (p || 'Plan')).filter(Boolean);
-                proposed[m.key] = { name: m.name || m.key, plans: names };
-            });
-            // Fallback: if we could not derive Family plans from DOM/localStorage, try analysis JSON injected
-            try {
-                const noSections = Object.keys(proposed).length === 0;
-                const fam = proposed['comprehensive_cover'];
-                const hasFamily = fam && Array.isArray(fam.plans) && fam.plans.length > 0;
-                if (noSections || !hasFamily) {
-                    const analysisEl = document.getElementById('analysis-data-json');
-                    if (analysisEl) {
-                        const analysisData = JSON.parse(analysisEl.textContent || '{}');
-                        const floater = (analysisData && analysisData.best_floater && Array.isArray(analysisData.best_floater.plans)) ? analysisData.best_floater.plans : [];
-                        const names = floater.map(p => {
-                            if (!p) return null;
-                            if (typeof p === 'string') return p;
-                            if (typeof p === 'object') return p['Plan Name'] || p.plan_name || p.name || p.plan || null;
-                            return String(p);
-                        }).filter(Boolean);
-                        if (names.length) {
-                            proposed['comprehensive_cover'] = { name: 'Family', plans: names };
-                        }
-                    }
-                }
-            } catch {}
-            return proposed;
-        }
-
-        async function renderSummaryFromJson(mode){
-            const uid = await getUidForSummary();
-            if (!uid || !summaryHost) return;
-            
-            try {
-                // CRITICAL: Always build fresh proposed from current page state
-                const proposed = buildProposedFromPage();
-                
-                // CRITICAL: Always read agent selections from LIVE DOM state, not stale JSON
-                const liveAgentSelections = Array.from(document.querySelectorAll('.plan-options-section .plan-checkbox:checked'))
-                    .map(cb => cb.getAttribute('data-plan-name'));
-                const agentSel = new Set(liveAgentSelections);
-                
-                // For supervisor and client selections, fetch from backend if available
-                let supSel = new Set();
-                let clientSel = new Set();
-                
-                try {
-                    const data = await fetchPlanSummary(uid);
-                    supSel = new Set((data && data.supervisor_selected) || []);
-                    clientSel = new Set((data && data.client_agreed) || []);
-                } catch(e) {
-                    console.warn('Could not fetch saved supervisor/client selections:', e);
-                }
-                
-                // Render with live data
-                window.renderPlanSelectionSummary(summaryHost, {
-                    proposed,
-                    agentSel,
-                    supervisorSel: supSel,
-                    clientSel,
-                    mode: mode || 'analysis'
-                });
-                
-                // Log current state for debugging
-                console.log('[PlanSelectionSummary] Rendered with:', {
-                    uid,
-                    proposed: Object.keys(proposed),
-                    agentSelected: Array.from(agentSel),
-                    supervisorSelected: Array.from(supSel),
-                    clientAgreed: Array.from(clientSel)
-                });
-                
-            } catch(e) {
-                console.error('Summary render failed:', e);
-                if (summaryHost) {
-                    summaryHost.innerHTML = '<p style="color:red;">Failed to load plan summary. Please try again.</p>';
-                }
-            }
-        }
-
-        // Proceed modal: show JSON-backed summary (analysis mode)
-        if (proceedBtn) {
-            proceedBtn.addEventListener('click', function(){
-                renderSummaryFromJson('analysis');
-                showModal();
-            });
-        }
-        if (closeBtn) closeBtn.addEventListener('click', hideModal);
-        if (cancelBtn) cancelBtn.addEventListener('click', hideModal);
-        if (confirmBtn) {
-            confirmBtn.addEventListener('click', function(){
-                const role = getRole();
-                const selections = collectSelections();
-                try { localStorage.setItem('agent_supervisor_selections', JSON.stringify(selections)); } catch(e) {}
-
-                const uid = getUniqueId();
-                if (role === 'agent' && uid) {
-                    // Build selected plan names from live page state (both tabs)
-                    const selectedNames = Array.from(document.querySelectorAll('.plan-options-section .plan-checkbox:checked'))
-                        .map(cb => cb.getAttribute('data-plan-name'));
-                    if (!selectedNames.length) {
-                        alert('Please select at least one plan before confirming.');
-                        return;
-                    }
-
-                    // 1) Save agent-selected plans to backend
-                    fetch(`/update_chosen_plans/${uid}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ selected_plans: selectedNames })
-                    })
-                    .then(r => r.json())
-                    .then(res => {
-                        if (!res || !res.success) throw new Error('Failed to save selected plans');
-                        // 2) Move case to supervisor review
-                        return fetch(`/update_approval_status/${uid}`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown')
-                            },
-                            body: JSON.stringify({ status: 'SUP_REVIEW' })
-                        });
-                    })
-                    .then(r => r.json())
-                    .then(() => {
-                        hideModal();
-                        // Briefly notify and then refresh to reflect updated status widgets
-                        try { alert('Submitted to supervisor for review. The page will refresh.'); } catch(e) {}
-                        setTimeout(() => { window.location.reload(); }, 150);
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        alert('Could not submit selection. Please try again.');
-                    });
+                // Agent selections: prefer live DOM state; else fallback to saved rowIds
+                const agentSel = new Set();
+                if (agentSelectedNow.size) {
+                    agentSelectedNow.forEach(n => agentSel.add(n));
                 } else {
-                    // Supervisor role or missing UID: just close for now (extend to POST if you expose an endpoint)
-                    hideModal();
+                    Object.keys(saved.agent || {}).forEach(rowId => {
+                        // rowId format: key__idx -> map back to name if available
+                        const [key, idxStr] = rowId.split('__');
+                        const idx = Number(idxStr);
+                        const entry = proposed[key];
+                        if (entry && Array.isArray(entry.plans) && entry.plans[idx]) agentSel.add(entry.plans[idx]);
+                    });
                 }
-            });
-        }
-    })();
+                // Supervisor selections (read-only here)
+                const supSel = new Set();
+                Object.keys(saved.supervisor || {}).forEach(rowId => {
+                    const [key, idxStr] = rowId.split('__');
+                    const idx = Number(idxStr);
+                    const entry = proposed[key];
+                    if (entry && Array.isArray(entry.plans) && entry.plans[idx]) supSel.add(entry.plans[idx]);
+                });
+
+                if (summaryHost) {
+                    if (!memberOrder.length) {
+                        summaryHost.innerHTML = '<p class="muted">No system-proposed plans available to summarize.</p>';
+                    } else {
+                        window.renderPlanSelectionSummary(summaryHost, {
+                            proposed,
+                            agentSel,
+                            supervisorSel: supSel,
+                            mode: 'analysis'
+                        });
+                    }
+                }
+                // Also serialize the summary to a plain object and send to backend for logging
+                try {
+                    const summaryObj = {
+                        unique_id: uid,
+                        userId: (localStorage.getItem('loggedInUserId') || 'Unknown'),
+                        mode: 'analysis',
+                        timestamp: new Date().toISOString(),
+                        proposed,
+                        agent_selected: Array.from(agentSel || []),
+                        supervisor_selected: Array.from(supSel || [])
+                    };
+                    // Print in browser for quick verification
+                    console.log('[PlanSelectionSummary]', summaryObj);
+                    // Fire-and-forget POST so server prints it to terminal
+                    if (uid) {
+                        fetch(`/log_plan_summary/${uid}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(summaryObj)
+                        }).catch(() => { });
+                    }
+                } catch (e) { /* ignore logging errors */ }
+                return { uid };
+            }
+
+            function collectSelections() {
+                const role = getRole();
+                const result = { agent: {}, supervisor: {} };
+                if (role === 'supervisor') {
+                    // Read supervisor choices from enabled checkboxes
+                    summaryHost.querySelectorAll('input.supervisor-proposed').forEach(inp => {
+                        if (inp.disabled) return; // ignore disabled
+                        const key = inp.getAttribute('data-row');
+                        if (inp.checked) result.supervisor[key] = true;
+                    });
+                    // carry forward agent's existing selections unchanged
+                    try {
+                        const saved = JSON.parse(localStorage.getItem('agent_supervisor_selections')) || {};
+                        result.agent = saved.agent || {};
+                    } catch (e) { }
+                } else { // agent role
+                    // Build agent selections from live DOM (both tabs) mapped to rowIds via system plans
+                    const sys = readSystemPlans();
+                    const memberOrder = deriveMemberOrder(sys);
+                    const domChecked = Array.from(document.querySelectorAll('.plan-options-section .plan-checkbox:checked'))
+                        .map(cb => cb.getAttribute('data-plan-name'));
+                    const selectedNow = new Set(domChecked);
+                    memberOrder.forEach(m => {
+                        let plans = [];
+                        if (sys[m.key]) {
+                            if (Array.isArray(sys[m.key])) plans = sys[m.key];
+                            else if (Array.isArray(sys[m.key].plans)) plans = sys[m.key].plans;
+                        }
+                        plans.forEach((p, idx) => {
+                            const rawName = (p && p.name) ? p.name : (p || 'Plan');
+                            const rowId = `${m.key}__${idx}`;
+                            if (selectedNow.has(rawName)) {
+                                result.agent[rowId] = true;
+                            }
+                        });
+                    });
+                    // supervisor remains as previously saved
+                    try {
+                        const saved = JSON.parse(localStorage.getItem('agent_supervisor_selections')) || {};
+                        result.supervisor = saved.supervisor || {};
+                    } catch (e) { }
+                }
+                return result;
+            }
+
+            // JSON-backed summary rendering and agent PATCHing
+            async function getUidForSummary() {
+                // Prefer query params, then localStorage, then last path segment
+                const qs = new URLSearchParams(window.location.search);
+                const qp = qs.get('unique_id') || qs.get('uid');
+                if (qp) return qp;
+                try {
+                    const ls = localStorage.getItem('selectedUniqueId') || localStorage.getItem('currentUniqueId');
+                    if (ls) return ls;
+                } catch { }
+                try { return window.location.pathname.split('/').filter(Boolean).pop(); } catch (e) { return null; }
+            }
+
+            async function fetchPlanSummary(uid) {
+                const r = await fetch(`/plan_summary/${encodeURIComponent(uid)}`);
+                if (!r.ok) throw new Error('Failed to load plan summary');
+                return r.json();
+            }
+
+            // Build a 'proposed' map from current page state (Family + Individuals)
+            function buildProposedFromPage() {
+                // Reuse logic already present on the page
+                const sys = readSystemPlans();
+                const memberOrder = deriveMemberOrder(sys);
+                const proposed = {};
+                memberOrder.forEach(m => {
+                    let plans = [];
+                    if (sys[m.key]) {
+                        if (Array.isArray(sys[m.key])) plans = sys[m.key];
+                        else if (Array.isArray(sys[m.key].plans)) plans = sys[m.key].plans;
+                    }
+                    const names = plans.map(p => (p && p.name) ? p.name : (p || 'Plan')).filter(Boolean);
+                    proposed[m.key] = { name: m.name || m.key, plans: names };
+                });
+                // Fallback: if we could not derive Family plans from DOM/localStorage, try analysis JSON injected
+                try {
+                    const noSections = Object.keys(proposed).length === 0;
+                    const fam = proposed['comprehensive_cover'];
+                    const hasFamily = fam && Array.isArray(fam.plans) && fam.plans.length > 0;
+                    if (noSections || !hasFamily) {
+                        const analysisEl = document.getElementById('analysis-data-json');
+                        if (analysisEl) {
+                            const analysisData = JSON.parse(analysisEl.textContent || '{}');
+                            const floater = (analysisData && analysisData.best_floater && Array.isArray(analysisData.best_floater.plans)) ? analysisData.best_floater.plans : [];
+                            const names = floater.map(p => {
+                                if (!p) return null;
+                                if (typeof p === 'string') return p;
+                                if (typeof p === 'object') return p['Plan Name'] || p.plan_name || p.name || p.plan || null;
+                                return String(p);
+                            }).filter(Boolean);
+                            if (names.length) {
+                                proposed['comprehensive_cover'] = { name: 'Family', plans: names };
+                            }
+                        }
+                    }
+                } catch { }
+                return proposed;
+            }
+
+            async function renderSummaryFromJson(mode) {
+                const uid = await getUidForSummary();
+                if (!uid || !summaryHost) return;
+
+                try {
+                    // CRITICAL: Always build fresh proposed from current page state
+                    const proposed = buildProposedFromPage();
+
+                    // CRITICAL: Always read agent selections from LIVE DOM state, not stale JSON
+                    const liveAgentSelections = Array.from(document.querySelectorAll('.plan-options-section .plan-checkbox:checked'))
+                        .map(cb => cb.getAttribute('data-plan-name'));
+                    const agentSel = new Set(liveAgentSelections);
+
+                    // For supervisor and client selections, fetch from backend if available
+                    let supSel = new Set();
+                    let clientSel = new Set();
+
+                    try {
+                        const data = await fetchPlanSummary(uid);
+                        supSel = new Set((data && data.supervisor_selected) || []);
+                        clientSel = new Set((data && data.client_agreed) || []);
+                    } catch (e) {
+                        console.warn('Could not fetch saved supervisor/client selections:', e);
+                    }
+
+                    // Render with live data
+                    window.renderPlanSelectionSummary(summaryHost, {
+                        proposed,
+                        agentSel,
+                        supervisorSel: supSel,
+                        clientSel,
+                        mode: mode || 'analysis'
+                    });
+
+                    // Log current state for debugging
+                    console.log('[PlanSelectionSummary] Rendered with:', {
+                        uid,
+                        proposed: Object.keys(proposed),
+                        agentSelected: Array.from(agentSel),
+                        supervisorSelected: Array.from(supSel),
+                        clientAgreed: Array.from(clientSel)
+                    });
+
+                } catch (e) {
+                    console.error('Summary render failed:', e);
+                    if (summaryHost) {
+                        summaryHost.innerHTML = '<p style="color:red;">Failed to load plan summary. Please try again.</p>';
+                    }
+                }
+            }
+
+            // Proceed modal: show JSON-backed summary (analysis mode)
+            if (proceedBtn) {
+                proceedBtn.addEventListener('click', function () {
+                    renderSummaryFromJson('analysis');
+                    showModal();
+                });
+            }
+            if (closeBtn) closeBtn.addEventListener('click', hideModal);
+            if (cancelBtn) cancelBtn.addEventListener('click', hideModal);
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', function () {
+                    const role = getRole();
+                    const selections = collectSelections();
+                    try { localStorage.setItem('agent_supervisor_selections', JSON.stringify(selections)); } catch (e) { }
+
+                    const uid = getUniqueId();
+                    if (role === 'agent' && uid) {
+                        // Build selected plan names from live page state (both tabs)
+                        const selectedNames = Array.from(document.querySelectorAll('.plan-options-section .plan-checkbox:checked'))
+                            .map(cb => cb.getAttribute('data-plan-name'));
+                        if (!selectedNames.length) {
+                            alert('Please select at least one plan before confirming.');
+                            return;
+                        }
+
+                        // 0) Get formSummary from localStorage with plan_meta
+                        const formSummary = localStorage.getItem('formSummary') ? JSON.parse(localStorage.getItem('formSummary')) : {};
+
+                        console.log('DEBUG: formSummary before enrichment:', JSON.stringify(formSummary, null, 2));
+
+                        // Enrich plan_meta with memberName from Individual_Selected_Plans detection
+                        const enrichedPlanMeta = formSummary.plan_meta || {};
+
+                        // Detect individual plans from DOM and ensure memberName is in plan_meta
+                        try {
+                            const comboContainer = document.getElementById('combo-packages-container');
+                            if (comboContainer) {
+                                const checked = Array.from(comboContainer.querySelectorAll('.plan-checkbox:checked'));
+                                console.log('DEBUG: Found individual plans checked:', checked.length);
+                                checked.forEach(cb => {
+                                    const planName = cb.getAttribute('data-plan-name') || cb.value || '';
+                                    let memberName = '';
+
+                                    // Extract memberName from data-member or DOM
+                                    memberName = cb.getAttribute('data-member') || cb.getAttribute('data-member-name') || '';
+
+                                    if (!memberName) {
+                                        const tr = cb.closest('tr');
+                                        if (tr) {
+                                            const th = tr.querySelector('th, td');
+                                            if (th) {
+                                                const txt = (th.textContent || '').trim();
+                                                if (txt && txt !== planName) memberName = txt;
+                                            }
+                                        }
+                                    }
+
+                                    console.log(`DEBUG: Plan "${planName}" -> memberName: "${memberName}"`);
+
+                                    // If found memberName, ensure it's in plan_meta
+                                    if (planName && memberName) {
+                                        if (!enrichedPlanMeta[planName]) enrichedPlanMeta[planName] = {};
+                                        if (!enrichedPlanMeta[planName].agent) enrichedPlanMeta[planName].agent = {};
+                                        enrichedPlanMeta[planName].agent.memberName = memberName;
+                                    }
+                                });
+                            }
+                        } catch (e) {
+                            console.warn('Could not enrich plan_meta with memberName:', e);
+                        }
+
+                        console.log('DEBUG: enrichedPlanMeta:', JSON.stringify(enrichedPlanMeta, null, 2));
+
+                        // 1) Save agent-selected plans AND enriched plan_meta to backend
+                        fetch(`/update_chosen_plans/${uid}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                selected_plans: selectedNames,
+                                plan_meta: enrichedPlanMeta
+                            })
+                        })
+                            .then(r => r.json())
+                            .then(res => {
+                                if (!res || !res.success) throw new Error('Failed to save selected plans');
+                                // 2) Move case to supervisor review
+                                return fetch(`/update_approval_status/${uid}`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown')
+                                    },
+                                    body: JSON.stringify({ status: 'SUP_REVIEW' })
+                                });
+                            })
+                            .then(r => r.json())
+                            .then(() => {
+                                hideModal();
+                                // Optimistically update local status to prevent race conditions on reload
+                                localStorage.setItem('supervisor_status', 'sup_review');
+
+                                // Briefly notify and then refresh to reflect updated status widgets
+                                try { alert('Submitted to supervisor for review. The page will refresh.'); } catch (e) { }
+                                // Increased timeout to ensure backend consistency
+                                setTimeout(() => { window.location.reload(); }, 500);
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                alert('Could not submit selection. Please try again.');
+                            });
+                    } else {
+                        // Supervisor role or missing UID: just close for now (extend to POST if you expose an endpoint)
+                        hideModal();
+                    }
+                });
+            }
+        })();
     </script>
 
     <script>
-    // Fix for loading personal information when client_data is incomplete
-    document.addEventListener('DOMContentLoaded', async function() {
-        const personalInfoSection = document.getElementById('personalInfo');
-        if (!personalInfoSection) return;
-        
-        // Get unique_id from the page title or URL
-        const titleMatch = document.title.match(/- (.+)$/);
-        const uniqueId = titleMatch ? titleMatch[1] : null;
-        
-        if (!uniqueId) {
-            console.warn('Could not determine unique_id for personal info');
-            return;
-        }
-        
-        try {
-            // Fetch the full submission data
-            const resp = await fetch(`/api/agent/submission/${encodeURIComponent(uniqueId)}`);
-            if (!resp.ok) {
-                console.error('Failed to fetch submission data');
+        // Fix for loading personal information when client_data is incomplete
+        document.addEventListener('DOMContentLoaded', async function () {
+            const personalInfoSection = document.getElementById('personalInfo');
+            if (!personalInfoSection) return;
+
+            // Get unique_id from the page title or URL
+            const titleMatch = document.title.match(/- (.+)$/);
+            const uniqueId = titleMatch ? titleMatch[1] : null;
+
+            if (!uniqueId) {
+                console.warn('Could not determine unique_id for personal info');
                 return;
             }
-            
-            const data = await resp.json();
-            console.log('Fetched submission data:', data);
-            
-            // Parse form_summary or use raw data
-            let formData = null;
+
             try {
-                if (typeof data.form_summary === 'string') {
-                    formData = JSON.parse(data.form_summary);
-                } else if (data.form_summary && typeof data.form_summary === 'object') {
-                    formData = data.form_summary;
+                // Fetch the full submission data
+                const resp = await fetch(`/api/agent/submission/${encodeURIComponent(uniqueId)}`);
+                if (!resp.ok) {
+                    console.error('Failed to fetch submission data');
+                    return;
                 }
-            } catch (e) {
-                console.error('Failed to parse form_summary:', e);
-            }
-            
-            // CRITICAL: If form_summary is incomplete, use raw data
-            if (!formData || Object.keys(formData).length < 5) {
-                console.warn('form_summary incomplete, using raw API data');
-                formData = data;
-            }
-            
-            // Extract personal info from both nested and flat structures
-            const getName = () => {
-                return formData.applicant_name || 
-                    formData.primaryContact?.applicant_name ||
-                    formData['full_name'] ||
-                    data.applicant_name ||
-                    '—';
-            };
-            
-            const getAge = () => {
-                return formData['self-age'] ||
-                    formData.primaryContact?.['self-age'] ||
-                    data['self-age'] ||
-                    '—';
-            };
-            
-            const getBMI = () => {
-                return formData['self-bmi'] ||
-                    formData.primaryContact?.['self-bmi'] ||
-                    data['self-bmi'] ||
-                    '—';
-            };
-            
-            const getGender = () => {
-                const gender = formData.gender ||
-                            formData.primaryContact?.gender ||
-                            data.gender ||
-                            '—';
-                // Capitalize first letter
-                return gender === '—' ? gender : gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase();
-            };
-            
-            // Update the personal info section
-            personalInfoSection.innerHTML = `
+
+                const data = await resp.json();
+                console.log('Fetched submission data:', data);
+
+                // Parse form_summary or use raw data
+                let formData = null;
+                try {
+                    if (typeof data.form_summary === 'string') {
+                        formData = JSON.parse(data.form_summary);
+                    } else if (data.form_summary && typeof data.form_summary === 'object') {
+                        formData = data.form_summary;
+                    }
+                } catch (e) {
+                    console.error('Failed to parse form_summary:', e);
+                }
+
+                // CRITICAL: If form_summary is incomplete, use raw data
+                if (!formData || Object.keys(formData).length < 5) {
+                    console.warn('form_summary incomplete, using raw API data');
+                    formData = data;
+                }
+
+                // Extract personal info from both nested and flat structures
+                const getName = () => {
+                    return formData.applicant_name ||
+                        formData.primaryContact?.applicant_name ||
+                        formData['full_name'] ||
+                        data.applicant_name ||
+                        '—';
+                };
+
+                const getAge = () => {
+                    return formData['self-age'] ||
+                        formData.primaryContact?.['self-age'] ||
+                        data['self-age'] ||
+                        '—';
+                };
+
+                const getBMI = () => {
+                    return formData['self-bmi'] ||
+                        formData.primaryContact?.['self-bmi'] ||
+                        data['self-bmi'] ||
+                        '—';
+                };
+
+                const getGender = () => {
+                    const gender = formData.gender ||
+                        formData.primaryContact?.gender ||
+                        data.gender ||
+                        '—';
+                    // Capitalize first letter
+                    return gender === '—' ? gender : gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase();
+                };
+
+                // Update the personal info section
+                personalInfoSection.innerHTML = `
                 <h2>Personal Information</h2>
                 <ul>
                     <li><strong>Name:</strong> ${getName()}</li>
@@ -758,22 +911,23 @@
                     <li><strong>Gender:</strong> ${getGender()}</li>
                 </ul>
             `;
-            
-            console.log('Personal info updated:', {
-                name: getName(),
-                age: getAge(),
-                bmi: getBMI(),
-                gender: getGender()
-            });
-            
-        } catch (error) {
-            console.error('Error loading personal information:', error);
-            personalInfoSection.innerHTML = `
+
+                console.log('Personal info updated:', {
+                    name: getName(),
+                    age: getAge(),
+                    bmi: getBMI(),
+                    gender: getGender()
+                });
+
+            } catch (error) {
+                console.error('Error loading personal information:', error);
+                personalInfoSection.innerHTML = `
                 <h2>Personal Information</h2>
                 <p class="error">Failed to load personal information.</p>
             `;
-        }
-    });
+            }
+        });
     </script>
 </body>
+
 </html>

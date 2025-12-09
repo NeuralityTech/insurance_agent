@@ -1,0 +1,349 @@
+<!-- Comprehensive_Selected_Plans.html -->
+<!-- Standalone component: renders Comprehensive Selected Plans grid, saves to localStorage.formSummary.plan_meta -->
+<div id="csp-root" class="csp-root" aria-live="polite">
+  <h3 class="csp-title">Comprehensive Selected Plans</h3>
+
+  <!-- Column headers -->
+  <div class="csp-grid csp-header">
+    <div class="csp-col-plan">Plans</div>
+    <div class="csp-col-premium">Premium</div>
+    <div class="csp-col-sum">Sum Insured</div>
+    <div class="csp-col-term">Policy Term</div>
+  </div>
+
+  <!-- Rows will be injected here -->
+  <div id="csp-rows" class="csp-rows"></div>
+
+  <!-- Optional small status -->
+  <div id="csp-status" class="csp-status" aria-hidden="true"></div>
+</div>
+
+<style>
+  /* Namespaced styles to avoid collisions */
+  .csp-root {
+    font-family: inherit;
+    margin: 16px 0;
+  }
+
+  .csp-title {
+    margin: 8px 0;
+    font-size: 1.05rem;
+    letter-spacing: 0.2px;
+    font-weight: 700;
+    color: #2c3e50;
+    background-color: #cff9ff;
+    padding: 10px 15px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+
+  .csp-grid {
+    display: grid;
+    grid-template-columns: 1fr 100px 120px 120px;
+    column-gap: 16px;
+    align-items: center;
+    padding: 10px 6px;
+  }
+
+  .csp-header {
+    font-weight: 600;
+    border-bottom: 1px solid #e2e6ea;
+    background: transparent;
+    margin-bottom: 8px;
+    min-width: 0;
+  }
+
+  .csp-row {
+    padding: 10px 6px;
+    border-radius: 6px;
+    background: #fff;
+    margin-bottom: 8px;
+    display: grid;
+    grid-template-columns: 1fr 100px 120px 120px;
+    column-gap: 16px;
+    align-items: center;
+    border: 1px solid #eee;
+    min-width: 0;
+  }
+
+  .csp-plan-label {
+    font-weight: 400;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .csp-input {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #d1d5d8;
+    box-sizing: border-box;
+    font-family: inherit;
+    color: #000;
+    background: #fff;
+  }
+
+  .csp-select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #d1d5d8;
+    background: #fff;
+    font-family: inherit;
+    color: #000;
+  }
+
+  .csp-note {
+    font-size: 0.9rem;
+    color: #666;
+    margin-left: 8px;
+  }
+
+  .csp-status {
+    display: none;
+    font-size: 0.9rem;
+    color: #333;
+    margin-top: 8px;
+  }
+
+  .csp-disabled {
+    background: #f5f7f8 !important;
+    color: #666 !important;
+  }
+
+  .csp-locked-badge {
+    font-size: 0.85rem;
+    color: #666;
+    margin-left: 8px;
+  }
+</style>
+
+<script>
+  (function () {
+    /* Namespaced global functions and internal helpers for Comprehensive Selected Plans */
+    const ROOT_ID = 'csp-root';
+    const ROWS_ID = 'csp-rows';
+    const STATUS_ID = 'csp-status';
+    const STORAGE_KEY = 'formSummary'; // we will store under formSummary.plan_meta
+
+    // Accepts role (string) and supervisorStatus (string)
+    function normalizeRole(r) { return String((r || 'agent')).toLowerCase(); }
+    function normalizeSup(s) { return s ? String(s).toLowerCase() : ''; }
+
+    function ensureStorage() {
+      let fs = {};
+      try {
+        fs = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {};
+      } catch (e) { fs = {}; }
+      if (!fs.plan_meta || typeof fs.plan_meta !== 'object') fs.plan_meta = {};
+      // persist possible changes
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fs));
+      return fs;
+    }
+
+    function readPlanMeta(planName, role) {
+      const fs = ensureStorage();
+      const pm = fs.plan_meta || {};
+      const p = pm[planName] || {};
+      return (p[role] && typeof p[role] === 'object') ? p[role] : { premium: '', sum_insured: '', policy_term: '', memberName: '' };
+    }
+
+    function writePlanMeta(planName, role, obj) {
+      const fs = ensureStorage();
+      fs.plan_meta = fs.plan_meta || {};
+      fs.plan_meta[planName] = fs.plan_meta[planName] || {};
+      // merge existing
+      const prev = (fs.plan_meta[planName][role] && typeof fs.plan_meta[planName][role] === 'object') ? fs.plan_meta[planName][role] : {};
+      fs.plan_meta[planName][role] = Object.assign({}, prev, obj || {});
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fs));
+    }
+
+    function shouldDisableInputs(userRole, supervisorStatus) {
+      const ur = normalizeRole(userRole);
+      const ss = normalizeSup(supervisorStatus);
+      // Debug log to trace why it might be enabled
+      // console.log('DEBUG CSP shouldDisableInputs:', { ur, ss });
+      if (ur === 'client') return true;
+      // Block editing if in review, approved, or pending
+      if (ur === 'agent' && (ss === 'sup_review' || ss === 'approved' || ss === 'pending' || ss === 'sup_approved')) return true;
+      if (ur === 'supervisor') return true;
+      return false;
+    }
+
+    function createRowElement(planName, opts) {
+      // opts: { role, supervisorStatus }
+      const role = normalizeRole(opts.role);
+      const sup = normalizeSup(opts.supervisorStatus);
+
+      const row = document.createElement('div');
+      row.className = 'csp-row';
+      const safePlan = String(planName || '').trim();
+
+      // left column: plan label
+      const labelDiv = document.createElement('div');
+      labelDiv.className = 'csp-plan-label';
+      labelDiv.textContent = safePlan || '—';
+      labelDiv.setAttribute('data-plan-name', safePlan);
+
+      // premium input
+      const inPremium = document.createElement('input');
+      inPremium.type = 'text';
+      inPremium.placeholder = 'Premium';
+      inPremium.className = 'csp-input csp-premium';
+      inPremium.setAttribute('data-field', 'premium');
+
+      // sum insured input
+      const inSum = document.createElement('input');
+      inSum.type = 'text';
+      inSum.placeholder = 'Sum Insured';
+      inSum.className = 'csp-input csp-sumins';
+      inSum.setAttribute('data-field', 'sum_insured');
+
+      // term select
+      const sel = document.createElement('select');
+      sel.className = 'csp-select csp-term';
+      sel.setAttribute('data-field', 'policy_term');
+      ['1 Year', '2 Years', '3 Years', '4 Years', '5 Years'].forEach(t => {
+        const opt = document.createElement('option'); opt.value = t; opt.textContent = t; sel.appendChild(opt);
+      });
+
+      // Loading saved values
+      const saved = readPlanMeta(safePlan, role);
+      if (saved && typeof saved === 'object') {
+        if (saved.premium) inPremium.value = saved.premium;
+        if (saved.sum_insured) inSum.value = saved.sum_insured;
+        if (saved.policy_term) {
+          // attempt to set matching option, else keep default
+          try {
+            for (let i = 0; i < sel.options.length; i++) {
+              if (sel.options[i].value === saved.policy_term) { sel.selectedIndex = i; break; }
+            }
+          } catch (e) { }
+        }
+      }
+
+      // Locking
+      const disable = shouldDisableInputs(role, sup);
+      if (disable) {
+        inPremium.disabled = true;
+        inSum.disabled = true;
+        sel.disabled = true;
+        inPremium.classList.add('csp-disabled');
+        inSum.classList.add('csp-disabled');
+        sel.classList.add('csp-disabled');
+      }
+
+      // Input event handlers — save to plan_meta under [planName][role]
+      function onFieldChange() {
+        const payload = {
+          premium: inPremium.value || '',
+          sum_insured: inSum.value || '',
+          policy_term: sel.value || ''
+        };
+        // memberName not relevant for comprehensive
+        writePlanMeta(safePlan, role, payload);
+      }
+      inPremium.addEventListener('change', onFieldChange);
+      inPremium.addEventListener('blur', onFieldChange);
+      inSum.addEventListener('change', onFieldChange);
+      inSum.addEventListener('blur', onFieldChange);
+      sel.addEventListener('change', onFieldChange);
+
+      // assemble columns
+      const col1 = labelDiv;
+      const col2 = inPremium;
+      const col3 = inSum;
+      const col4 = sel;
+
+      row.appendChild(col1);
+      row.appendChild(col2);
+      row.appendChild(col3);
+      row.appendChild(col4);
+
+      // if disabled, show a subtle locked badge to the right (non-invasive)
+      // if disabled, show a subtle locked badge to the right (non-invasive)
+      if (disable) {
+        // Badge removed per user request
+      }
+
+      return row;
+    }
+
+    // Render function: filter checked plans from floater-plans-container only (family/comprehensive plans)
+    function renderComprehensiveSelectedPlans(selectedPlans, userRole, supervisorStatus) {
+      const rowsHost = document.getElementById(ROWS_ID);
+      if (!rowsHost) return;
+      rowsHost.innerHTML = '';
+      const role = normalizeRole(userRole);
+      const sup = normalizeSup(supervisorStatus);
+
+      let plans = [];
+      // Accept explicit array of strings, or undefined -> auto-detect from floater container ONLY
+      if (Array.isArray(selectedPlans) && selectedPlans.length) {
+        plans = selectedPlans.map(x => String(x || '').trim()).filter(Boolean);
+      } else {
+        // Auto-detect: checked .plan-checkbox elements ONLY from #floater-plans-container (family/comprehensive)
+        try {
+          const floaterContainer = document.getElementById('floater-plans-container');
+          if (floaterContainer) {
+            const checked = Array.from(floaterContainer.querySelectorAll('.plan-checkbox:checked'));
+            const unique = new Set();
+            checked.forEach(cb => {
+              const name = cb.getAttribute('data-plan-name') || cb.value || cb.getAttribute('data-plan') || '';
+              if (name) unique.add(String(name).trim());
+            });
+            plans = Array.from(unique);
+          }
+        } catch (e) { plans = []; }
+      }
+
+      // Build rows in given order
+      if (!plans.length) {
+        rowsHost.innerHTML = '<p class="csp-note">No comprehensive plans selected.</p>';
+        return;
+      }
+
+      plans.forEach(pn => {
+        const r = createRowElement(pn, { role, supervisorStatus: sup });
+        rowsHost.appendChild(r);
+      });
+
+      // update status
+      const st = document.getElementById(STATUS_ID);
+      if (st) {
+        st.style.display = 'none';
+        st.textContent = '';
+      }
+    }
+
+    // Rebuild helper to be called externally if needed
+    function rebuildComprehensiveFromDOM(userRole, supervisorStatus) {
+      renderComprehensiveSelectedPlans(undefined, userRole || localStorage.getItem('user_role') || 'agent', supervisorStatus || (localStorage.getItem('supervisor_status') || ''));
+    }
+
+    // Expose globals without clobbering
+    try {
+      if (!window.renderComprehensiveSelectedPlans) window.renderComprehensiveSelectedPlans = renderComprehensiveSelectedPlans;
+      if (!window.rebuildComprehensiveFromDOM) window.rebuildComprehensiveFromDOM = rebuildComprehensiveFromDOM;
+    } catch (e) { }
+
+    // Auto-register checkbox listeners: when floater-plans-container checkboxes change we rebuild automatically (debounced)
+    (function attachCheckboxListener() {
+      let t = null;
+      document.addEventListener('change', function (e) {
+        if (!e.target.matches || !e.target.matches('.plan-checkbox')) return;
+        // Only rebuild if checkbox is in floater-plans-container
+        const floaterContainer = document.getElementById('floater-plans-container');
+        if (floaterContainer && floaterContainer.contains(e.target)) {
+          if (t) clearTimeout(t);
+          t = setTimeout(() => {
+            rebuildComprehensiveFromDOM();
+          }, 120);
+        }
+      }, true);
+    })();
+
+  })();
+</script>

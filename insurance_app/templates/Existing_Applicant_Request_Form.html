@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <link rel="stylesheet" href="/static/css/logo.css">
     <meta charset="UTF-8">
@@ -13,23 +14,54 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script defer src="{{ url_for('static', filename='js/plan_selection_summary_v2.js') }}"></script>
     <style>
-        .loader-bar { display:flex; gap:.5rem; align-items:center; margin: 3rem 0;}
-        .loader-bar input { max-width: 240px; }
-        .supervisor-meta .loader-bar label { min-width: 160px; }
-        #sup-status-input { max-width: 280px; }
-        .comment-box { border:1px solid #ccc; padding:8px; min-height:40px; background:#fff; }
-        .form-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .last-modified-inline { margin-left: auto; }
+        .loader-bar {
+            display: flex;
+            gap: .5rem;
+            align-items: center;
+            margin: 3rem 0;
+        }
+
+        .loader-bar input {
+            max-width: 240px;
+        }
+
+        .supervisor-meta .loader-bar label {
+            min-width: 160px;
+        }
+
+        #sup-status-input {
+            max-width: 280px;
+        }
+
+        .comment-box {
+            border: 1px solid #ccc;
+            padding: 8px;
+            min-height: 40px;
+            background: #fff;
+        }
+
+        .form-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .last-modified-inline {
+            margin-left: auto;
+        }
     </style>
 </head>
+
 <body data-sidebar="existing-applicant">
-    
+
     <div class="container">
         <header class="page-header">
             <link rel="stylesheet" href="/static/css/logo.css">
             <h1>Existing Applicant Request Form</h1>
         </header>
-        <p id="page-description" style="margin: 2em 0; text-align: center;">Please enter a Unique ID below and select "Load." This will instantly retrieve the saved details, allowing you to review the policy request.</p>
+        <p id="page-description" style="margin: 2em 0; text-align: center;">Please enter a Unique ID below and select
+            "Load." This will instantly retrieve the saved details, allowing you to review the policy request.</p>
 
         <div class="loader-bar" id="member-load">
             <label for="load-unique-id"><strong>Unique ID</strong></label>
@@ -43,7 +75,9 @@
             <section id="supervisor-meta" class="section supervisor-meta" style="display:none;">
                 <div class="form-group" style="margin-top:8px;">
                     <div><strong>Status</strong></div>
-                    <div id="sup-summary" class="comment-box" role="textbox" aria-readonly="true" style="white-space:normal; font-family: inherit; font-size: inherit; line-height:1.2; min-height: 48px; padding:0; margin:0;"></div>
+                    <div id="sup-summary" class="comment-box" role="textbox" aria-readonly="true"
+                        style="white-space:normal; font-family: inherit; font-size: inherit; line-height:1.2; min-height: 48px; padding:0; margin:0;">
+                    </div>
                 </div>
             </section>
 
@@ -55,6 +89,7 @@
             <div id="claims-service-placeholder" class="section"></div>
             <div id="Finance-Documentation-placeholder" class="section"></div>
             <div id="comments-noted-placeholder" class="section"></div>
+            <div id="one-pager-placeholder" class="section"></div>
 
             <div class="form-actions">
                 <button type="button" id="preview-btn" class="btn">Proceed</button>
@@ -74,22 +109,33 @@
     <script src="../js/occupation_dropdown.js"></script>
     <script src="../js/progress_bar.js" defer></script>
     <script src="../js/existing_prefill.js"></script>
+    <script src="../js/one_pager.js"></script>
     <script src="../js/script.js" defer></script>
     <script src="../js/data_fetch.js" defer></script>
 
     <script>
+        // Utility to escape HTML for safe rendering
+        function escapeHtmlClient(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&gt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
 
         function formatTimestampForDisplay(timestampStr) {
             if (!timestampStr) return '—';
-            
+
             try {
                 let dt = null;
-                
+
                 try {
                     dt = new Date(timestampStr.replace('Z', ''));
                     if (isNaN(dt.getTime())) dt = null;
-                } catch (e) {}
-                
+                } catch (e) { }
+
                 if (!dt && timestampStr.includes('_')) {
                     try {
                         const parts = timestampStr.split('_');
@@ -98,9 +144,9 @@
                             const timePart = parts[1].replace(/-/g, ':');
                             dt = new Date(`${datePart}T${timePart}`);
                         }
-                    } catch (e) {}
+                    } catch (e) { }
                 }
-                
+
                 if (dt) {
                     return dt.toLocaleString('en-IN', {
                         year: 'numeric', month: '2-digit', day: '2-digit',
@@ -108,7 +154,7 @@
                         timeZone: 'Asia/Kolkata'
                     });
                 }
-                
+
                 return timestampStr;
             } catch (e) {
                 console.warn('Error formatting timestamp:', e);
@@ -138,9 +184,9 @@
             const currentLower = String(currentUserId).trim().toLowerCase();
             const agentLower = String(applicationAgent).trim().toLowerCase();
             // Check for exact match or partial match (user ID contained in agent field)
-            return currentLower === agentLower || 
-                   agentLower.includes(currentLower) || 
-                   currentLower.includes(agentLower);
+            return currentLower === agentLower ||
+                agentLower.includes(currentLower) ||
+                currentLower.includes(agentLower);
         }
 
         // Returns true if applicant details should be editable by the role at the given status
@@ -178,21 +224,21 @@
         function _canAgentSelectPlans(role, statusStr, currentUserId, applicationAgent) {
             const roleL = (role || '').toLowerCase();
             const status = _normalize(statusStr);
-            
+
             // Check if status allows plan selection
             const statusAllows = ROLE_STATUS.SUPERVISOR_APPROVED.includes(status);
             if (!statusAllows) return false;
-            
+
             // Agents must own the application
             if (roleL === 'agent') {
                 return _isOwner(currentUserId, applicationAgent);
             }
-            
+
             // Supervisors can select plans for any application at this stage
             if (roleL === 'supervisor') {
                 return true;
             }
-            
+
             return false;
         }
         // Returns true if agent or supervisor can submit to UW (CLIENT_APPROVED stage only)
@@ -200,20 +246,20 @@
         function _canSubmitToUnderwriter(role, statusStr, currentUserId, applicationAgent) {
             const roleL = (role || '').toLowerCase();
             const status = _normalize(statusStr);
-            
+
             const statusAllows = ROLE_STATUS.CLIENT_APPROVED.includes(status);
             if (!statusAllows) return false;
-            
+
             // Agents must own the application
             if (roleL === 'agent') {
                 return _isOwner(currentUserId, applicationAgent);
             }
-            
+
             // Supervisors can submit for any application
             if (roleL === 'supervisor') {
                 return true;
             }
-            
+
             return false;
         }
 
@@ -257,7 +303,7 @@
                 for (const ex of exceptions) {
                     if (!ex) continue;
                     if (typeof ex === 'string') {
-                        try { if (el.matches && el.matches(ex)) return; } catch(e) {}
+                        try { if (el.matches && el.matches(ex)) return; } catch (e) { }
                     } else if (ex instanceof Element) {
                         if (ex.contains(el)) return;
                     }
@@ -307,7 +353,7 @@
             }
 
             // Build exceptions to don't lock the navigation; 
-            const exceptions = ['.tab-button', '.tab-navigation', '.btn-next', '.btn-back'];
+            const exceptions = ['.tab-button', '.tab-navigation', '.btn-next', '.btn-back', '.accordion-header', '.accordion-button'];
 
             if (agentCanSelectPlans) {
                 const plansPanel = document.getElementById('tab-panel-plans-selection');
@@ -320,7 +366,7 @@
             _lockFormExcept(exceptions);
 
             // Hide reset/preview:
-            ['reset-btn','preview-btn'].forEach(id => {
+            ['reset-btn', 'preview-btn'].forEach(id => {
                 const b = document.getElementById(id);
                 if (b) {
                     b.classList.add('hidden');
@@ -358,12 +404,12 @@
                         '#underwriter-approve, #underwriter-comment, #save-underwriter-decision, #underwriter-branch'
                     );
                     uwControls.forEach(_unlockElement);
-                    
+
                 }
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const statusEl = document.getElementById('load-status');
             const loadBtn = document.getElementById('btn-load');
             const idInput = document.getElementById('load-unique-id');
@@ -385,15 +431,15 @@
             async function addPlansTab(uniqueId) {
                 const tabNav = document.querySelector('.tab-navigation');
                 const tabContentContainer = document.querySelector('.tab-content-container');
-                
+
                 if (!tabNav || !tabContentContainer) return;
                 if (document.getElementById('tab-plans-selection')) return;
-                
+
                 const tabIndex = 8;
-                
+
                 const li = document.createElement('li');
                 li.setAttribute('role', 'presentation');
-                
+
                 const button = document.createElement('button');
                 button.className = 'tab-button';
                 button.setAttribute('role', 'tab');
@@ -403,7 +449,7 @@
                 button.setAttribute('type', 'button');
                 button.textContent = 'Plans';
                 button.dataset.index = tabIndex;
-                
+
                 button.addEventListener('click', () => {
                     document.querySelectorAll('.tab-button').forEach((btn, i) => {
                         btn.classList.remove('active');
@@ -411,31 +457,31 @@
                     });
                     button.classList.add('active');
                     button.setAttribute('aria-selected', 'true');
-                    
+
                     document.querySelectorAll('.tab-content-wrapper').forEach(wrapper => {
                         wrapper.classList.remove('active');
                     });
                     const plansWrapper = document.getElementById('tab-panel-plans-selection');
                     if (plansWrapper) plansWrapper.classList.add('active');
                 });
-                
+
                 li.appendChild(button);
                 tabNav.appendChild(li);
-                
+
                 const contentWrapper = document.createElement('div');
                 contentWrapper.className = 'tab-content-wrapper';
                 contentWrapper.setAttribute('role', 'tabpanel');
                 contentWrapper.setAttribute('id', 'tab-panel-plans-selection');
                 contentWrapper.setAttribute('aria-labelledby', 'tab-plans-selection');
                 contentWrapper.dataset.index = tabIndex;
-                
+
                 const contentDiv = document.createElement('div');
                 contentDiv.id = 'plans-selection-content';
                 contentWrapper.appendChild(contentDiv);
-                
+
                 const navButtons = document.createElement('div');
                 navButtons.className = 'tab-navigation-buttons';
-                
+
                 const backBtn = document.createElement('button');
                 backBtn.type = 'button';
                 backBtn.className = 'btn tab-nav-btn btn-back';
@@ -444,14 +490,101 @@
                     const commentsTab = document.getElementById('tab-comments-noted');
                     if (commentsTab) commentsTab.click();
                 });
-                
+
                 navButtons.appendChild(backBtn);
                 contentWrapper.appendChild(navButtons);
-                
+
                 tabContentContainer.appendChild(contentWrapper);
-                
+
                 if (typeof window.renderPlansTab === 'function') {
                     await window.renderPlansTab(contentDiv, uniqueId);
+                }
+            }
+
+            async function addOnePagerTab(uniqueId) {
+                const tabNav = document.querySelector('.tab-navigation');
+                const tabContentContainer = document.querySelector('.tab-content-container');
+
+                if (!tabNav || !tabContentContainer) return;
+                if (document.getElementById('tab-one-pager')) return;
+
+                const tabIndex = 9;
+
+                const li = document.createElement('li');
+                li.setAttribute('role', 'presentation');
+
+                const button = document.createElement('button');
+                button.className = 'tab-button';
+                button.setAttribute('role', 'tab');
+                button.setAttribute('aria-selected', 'false');
+                button.setAttribute('aria-controls', 'tab-panel-one-pager');
+                button.setAttribute('id', 'tab-one-pager');
+                button.setAttribute('type', 'button');
+                button.textContent = 'One Pager';
+                button.dataset.index = tabIndex;
+
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-button').forEach((btn) => {
+                        btn.classList.remove('active');
+                        btn.setAttribute('aria-selected', 'false');
+                    });
+                    button.classList.add('active');
+                    button.setAttribute('aria-selected', 'true');
+
+                    document.querySelectorAll('.tab-content-wrapper').forEach(wrapper => {
+                        wrapper.classList.remove('active');
+                    });
+                    const wrapper = document.getElementById('tab-panel-one-pager');
+                    if (wrapper) wrapper.classList.add('active');
+
+                    const contentD = document.getElementById('one-pager-content');
+                    if (contentD && typeof window.renderOnePager === 'function') {
+                        window.renderOnePager(contentD, uniqueId);
+                    }
+                });
+
+                li.appendChild(button);
+                tabNav.appendChild(li);
+
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'tab-content-wrapper';
+                contentWrapper.setAttribute('role', 'tabpanel');
+                contentWrapper.setAttribute('id', 'tab-panel-one-pager');
+                contentWrapper.setAttribute('aria-labelledby', 'tab-one-pager');
+                contentWrapper.dataset.index = tabIndex;
+
+                const contentDiv = document.createElement('div');
+                contentDiv.id = 'one-pager-content';
+                contentWrapper.appendChild(contentDiv);
+
+                const navButtons = document.createElement('div');
+                navButtons.className = 'tab-navigation-buttons';
+                const backBtn = document.createElement('button');
+                backBtn.type = 'button';
+                backBtn.className = 'btn tab-nav-btn btn-back';
+                backBtn.textContent = 'Back';
+                backBtn.addEventListener('click', () => {
+                    const plansTab = document.getElementById('tab-plans-selection');
+                    if (plansTab) plansTab.click();
+                });
+                navButtons.appendChild(backBtn);
+                contentWrapper.appendChild(navButtons);
+
+                tabContentContainer.appendChild(contentWrapper);
+
+                try {
+                    const resp = await fetch('One_Pager.html');
+                    if (resp.ok) {
+                        contentDiv.innerHTML = await resp.text();
+                        if (typeof window.renderOnePager === 'function') {
+                            await window.renderOnePager(contentDiv, uniqueId);
+                        }
+                    } else {
+                        contentDiv.innerHTML = '<p class="error">Failed to load One Pager template.</p>';
+                    }
+                } catch (e) {
+                    console.error("Error loading One Pager:", e);
+                    contentDiv.innerHTML = '<p class="error">Error loading section.</p>';
                 }
             }
 
@@ -496,7 +629,7 @@
                         if (summaryContent) summaryContent.innerHTML = '<p class="placeholder-text">Hover over a member to see their details.</p>';
                         if (window.loadMembersGlobal) window.loadMembersGlobal();
                         if (window.updatePeopleCounter) window.updatePeopleCounter();
-                    } catch(e) { }
+                    } catch (e) { }
 
                     try {
                         if (typeof window.clearCommentsSession === 'function') {
@@ -509,7 +642,7 @@
                             const noMsg = document.getElementById('no-comments-message');
                             if (noMsg) noMsg.style.display = 'block';
                         }
-                    } catch(e) { }
+                    } catch (e) { }
 
                     statusEl.textContent = '';
                     const supSummary = document.getElementById('sup-summary');
@@ -523,7 +656,7 @@
                         localStorage.removeItem('currentUniqueId');
                         const progressBar = document.querySelector('.progress-bar-container');
                         if (progressBar) progressBar.remove();
-                    } catch(e) { }
+                    } catch (e) { }
 
                     setActionButtonsEnabled(true);
                 } catch (e) {
@@ -532,7 +665,7 @@
             }
 
             if (resetBtn) {
-                resetBtn.addEventListener('click', function(ev){
+                resetBtn.addEventListener('click', function (ev) {
                     ev.preventDefault();
                     hardResetForm();
                 });
@@ -572,7 +705,7 @@
                     { by: data.close_status_modified_by, at: data.close_status_modified_at, source: 'application' },
                     { by: data.first_created_by, at: data.first_created_at, source: 'created' }
                 ];
-                
+
                 const validTimestamps = timestampSources
                     .filter(ts => ts.by && ts.at)
                     .sort((a, b) => {
@@ -584,7 +717,7 @@
                             return 0;
                         }
                     });
-                
+
                 if (validTimestamps.length > 0) {
                     const latest = validTimestamps[0];
                     modifiedBy = latest.by;
@@ -609,13 +742,13 @@
                 const policyDecisionSelect = document.getElementById('policy-decision-select');
                 const policyDecisionLabel = document.getElementById('policy-decision-label');
                 const viewSummaryBtn = document.getElementById('view-policy-summary-btn');
-                
+
                 // Hide/disable everything by default
                 if (policyDecisionSelect) {
                     policyDecisionSelect.style.display = 'none';
                     policyDecisionSelect.disabled = true;
                 }
-                if (policyDecisionLabel) { 
+                if (policyDecisionLabel) {
                     policyDecisionLabel.style.display = 'none';
                 }
                 if (viewSummaryBtn) {
@@ -623,19 +756,19 @@
                 }
 
                 const normalizedStatus = (applicationStatus || '').toUpperCase().trim();
-                
+
                 // Show the dropdown when the status is 'With_UW'
                 const showDecisionDropdown = normalizedStatus === 'WITH_UW';
                 // Show the view summary button when the status is 'Policy_Created' or 'Policy_Denied'
                 const showViewSummaryButton = normalizedStatus === 'POLICY_CREATED' || normalizedStatus === 'POLICY_DENIED';
-                
+
                 if (policyDecisionSelect && showDecisionDropdown) {
                     policyDecisionSelect.style.display = 'inline-block';
                     policyDecisionSelect.disabled = false;
                 }
 
-                if (policyDecisionLabel && showDecisionDropdown) { 
-                    policyDecisionLabel.style.display = 'inline-block'; 
+                if (policyDecisionLabel && showDecisionDropdown) {
+                    policyDecisionLabel.style.display = 'inline-block';
                 }
 
                 if (viewSummaryBtn && showViewSummaryButton) {
@@ -647,7 +780,7 @@
                 const uid = (uniqueId || '').trim();
                 statusEl.textContent = '';
                 if (!uid) { statusEl.textContent = 'Please enter Unique ID.'; return; }
-                
+
                 const allControls = document.querySelectorAll('input, select, textarea');
                 allControls.forEach(el => {
                     el.removeAttribute('readonly');
@@ -656,7 +789,7 @@
                     el.style.opacity = '';
                     el.style.backgroundColor = '';
                 });
-                
+
                 try {
                     const resp = await fetch(`/api/agent/submission/${encodeURIComponent(uid)}`);
                     if (!resp.ok) { statusEl.textContent = 'Submission not found.'; return; }
@@ -679,7 +812,7 @@
                             }
                         } catch (e) { }
                     }
-                    
+
                     if (!formPayload) formPayload = data;
                     console.log('Final formPayload being sent to prefill:', formPayload);
                     if (window.prefillExistingForm) {
@@ -808,8 +941,8 @@
                                     }
                                     const by = meta.supervisor_modified_by || '—';
                                     const summaryHtml = '<strong>Application Status:</strong> ' + statusDisp + '<br>' +
-                                                    '<strong>Supervisor Notes:</strong> ' + comments + '<br>' +
-                                                    '<strong>Last Updated by:</strong> ' + by + ' <strong>Last Updated at:</strong> ' + tsStr;
+                                        '<strong>Supervisor Notes:</strong> ' + comments + '<br>' +
+                                        '<strong>Last Updated by:</strong> ' + by + ' <strong>Last Updated at:</strong> ' + tsStr;
                                     supSummary.innerHTML = summaryHtml;
 
                                     const norm = String(statusDisp || '').trim().toUpperCase();
@@ -821,10 +954,11 @@
                             console.warn('Failed to fetch supervisor meta', e);
                         }
                     }
-                    
+
                     const statusForTab = (data.final_status || data.supervisor_approval_status || '').toUpperCase();
                     if (statusForTab === 'SUP_APPROVED') {
                         await addPlansTab(uid);
+                        await addOnePagerTab(uid);
                     }
 
                     const userRole = localStorage.getItem('userRole');
@@ -833,14 +967,14 @@
                         applyRoleAndStatusRestrictions(userRole, data, userId);
                     }
 
-                    
+
                 } catch (e) {
                     console.error(e);
                     statusEl.textContent = 'Failed to load data.';
                 }
             }
 
-            loadBtn.addEventListener('click', async function(){
+            loadBtn.addEventListener('click', async function () {
                 await loadById(idInput.value);
             });
 
@@ -860,10 +994,10 @@
             })();
 
             if (previewBtn) {
-                previewBtn.addEventListener('click', function(e) {
+                previewBtn.addEventListener('click', function (e) {
                     e.preventDefault();
                     e.stopImmediatePropagation();
-                    
+
                     // Trigger form submission which will run all validation
                     const submitEvent = new Event('submit', {
                         bubbles: true,
@@ -874,7 +1008,7 @@
             }
 
 
-            form.addEventListener('submit', async function(e) {
+            form.addEventListener('submit', async function (e) {
                 e.preventDefault();
 
                 if (previewBtn) {
@@ -911,7 +1045,7 @@
                                 // Check if at least one of year or years is filled
                                 const hasYear = sinceYearSelect && sinceYearSelect.value && sinceYearSelect.value !== '';
                                 const hasYears = sinceYearsInput && sinceYearsInput.value && sinceYearsInput.value !== '' && parseInt(sinceYearsInput.value) >= 0;
-                                
+
                                 if (!hasYear && !hasYears) {
                                     const headerLabel = entry.querySelector('.disease-header label');
                                     const diseaseLabel = headerLabel ? headerLabel.textContent.trim() : 'the selected disease';
@@ -929,42 +1063,42 @@
                         // If there are disease duration errors, stop submission
                         if (diseaseErrors.length > 0) {
                             alert('Please fix the following errors before submitting:\n\n• ' + diseaseErrors.join('\n• '));
-                            
+
                             if (previewBtn) {
                                 previewBtn.textContent = "Proceed";
                                 previewBtn.disabled = false;
                             }
                             if (resetBtn) resetBtn.disabled = false;
-                            
+
                             // Scroll to first error
                             const firstError = healthHistoryContent.querySelector('.input-error');
                             if (firstError) {
                                 firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                 setTimeout(() => firstError.focus(), 300);
                             }
-                            
+
                             return false;
                         }
                     }
 
                     const uniqueId = (idInput?.value || '').trim();
-                    
+
                     const formObj = {};
                     const allInputs = form.querySelectorAll('input, select, textarea');
-                    
+
                     // Get reference to members section to identify inputs we should skip
                     const membersCoveredContent = document.getElementById('members-covered-content');
 
                     allInputs.forEach(el => {
                         if (!el.name) return;
                         if (el.disabled) return; // skip disabled/read-only fields entirely
-                        
+
                         if (membersCoveredContent && membersCoveredContent.contains(el)) {
                             // This input is inside the members section
                             // Member data is handled separately via localStorage 'members'
                             return;
                         }
-                        
+
                         // Also skip inputs inside any .member-form container
                         if (el.closest('.member-form') || el.closest('.member-tab-content')) {
                             return;
@@ -1003,9 +1137,9 @@
                         ];
                         for (const sel of trySelectors) {
                             const el = form.querySelector(sel);
-                            if (el && el.value && String(el.value).trim()) { 
-                                foundName = String(el.value).trim(); 
-                                break; 
+                            if (el && el.value && String(el.value).trim()) {
+                                foundName = String(el.value).trim();
+                                break;
                             }
                         }
                         if (foundName) formObj.applicant_name = foundName;
@@ -1020,7 +1154,7 @@
                             const c = window.getCommentsData();
                             if (c && typeof c === 'object') formObj.comments_noted = c.comments_noted;
                         }
-                    } catch {}
+                    } catch { }
 
                     // ====================================================================
                     // CRITICAL: Include members in formObj for server submission
@@ -1051,7 +1185,7 @@
 
                     const resp = await fetch('/submit', {
                         method: 'POST',
-                        headers: { 
+                        headers: {
                             'Content-Type': 'application/json',
                             'X-User-Id': userId
                         },
@@ -1131,7 +1265,7 @@
                             }
                             else if ([
                                 'existing-policies', 'port-policy', 'critical-illness', 'worldwide-cover',
-                                'policy-type-category', 'insurer-name', 'existing-policy-number', 
+                                'policy-type-category', 'insurer-name', 'existing-policy-number',
                                 'existing-sum-insured', 'policy-since-date'
                             ].includes(key)) {
                                 summaryData.existingCoverage[key] = value;
@@ -1161,19 +1295,19 @@
                     }
 
                     alert('Form submitted successfully!\n\nSubmission ID: ' + (result.submissionId || formObj.unique_id));
-                    
+
                     window.location.href = `Summary.html?unique_id=${encodeURIComponent(formObj.unique_id)}`;
 
                 } catch (err) {
                     console.error(err);
                     let errorMessage = err.message || 'Failed to submit. Please review required fields.';
-                    
+
                     if (err.name === 'TypeError' && err.message.includes('fetch')) {
                         errorMessage = 'Network connection failed. Please check your internet connection.';
                     }
-                    
+
                     alert(`Submission failed: ${errorMessage}`);
-                    
+
                     statusEl.textContent = `Submission failed: ${errorMessage}`;
                     statusEl.style.color = 'red';
                     if (previewBtn) {
@@ -1185,107 +1319,537 @@
                 }
             });
 
-
-        window.renderPlansTab = async function(container, uniqueId) {
-            if (!container || !uniqueId) return;
-
-            container.innerHTML = '<p>Loading plans...</p>';
-
-            try {
-                let planSummaryData = null;
+            // Render supervisor approved inputs (readonly)
+            async function renderSupervisorApprovedInputs(host, uid) {
                 try {
-                    const resp = await fetch(`/plan_summary/${encodeURIComponent(uniqueId)}`);
-                    if (resp.ok) planSummaryData = await resp.json();
-                } catch (e) {
-                    console.warn('Could not load from plan_summary endpoint:', e);
-                }
-
-                if (!planSummaryData || !planSummaryData.proposed || Object.keys(planSummaryData.proposed).length === 0) {
+                    let submissionData = {};
                     try {
-                        const submissionResp = await fetch(`/api/agent/submission/${encodeURIComponent(uniqueId)}`);
-                        if (submissionResp.ok) {
-                            const submissionData = await submissionResp.json();
-                            let proposedPlans = submissionData.proposed_plans;
-                            if (proposedPlans && typeof proposedPlans === 'string') {
-                                proposedPlans = JSON.parse(proposedPlans);
-                            }
-                            if (proposedPlans && Object.keys(proposedPlans).length > 0) {
-                                await fetch(`/plan_summary/${encodeURIComponent(uniqueId)}/init_or_update`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ proposed: proposedPlans })
-                                });
-                                const resp2 = await fetch(`/plan_summary/${encodeURIComponent(uniqueId)}`);
-                                if (resp2.ok) planSummaryData = await resp2.json();
-                            }
-                        }
-                    } catch (e) {
-                        console.error('Error initializing plan_summary from submission:', e);
+                        const r = await fetch(`/api/agent/submission/${encodeURIComponent(uid)}`);
+                        if (r.ok) submissionData = await r.json();
+                    } catch (e) { console.warn('Could not fetch submission:', e); }
+
+                    let formSummary = {};
+                    if (typeof submissionData.form_summary === 'string') {
+                        try { formSummary = JSON.parse(submissionData.form_summary); } catch (e) { }
+                    } else if (typeof submissionData.form_summary === 'object') {
+                        formSummary = submissionData.form_summary;
                     }
-                }
 
-                let agentSelected = [];
-                if (planSummaryData?.agent_selected) {
-                    agentSelected = Array.isArray(planSummaryData.agent_selected) ? planSummaryData.agent_selected : [];
-                }
-                if (agentSelected.length === 0) {
+                    const planMeta = formSummary.plan_meta || {};
+                    console.log('DEBUG: Loaded planMeta from form_summary:', planMeta);
+
+                    // Get supervisor selected plans from plan_summary endpoint (which has supervisor_selected list)
+                    let supervisorMetadata = {};
+                    let proposed = {};
                     try {
-                        const submissionResp = await fetch(`/api/agent/submission/${encodeURIComponent(uniqueId)}`);
-                        if (submissionResp.ok) {
-                            const submissionData = await submissionResp.json();
-                            const possibleFields = ['agent_selected_plans', 'Agent_Selected_Plans', 'chosen_plans', 'plans_chosen'];
-                            for (const field of possibleFields) {
-                                if (submissionData[field]) {
-                                    try {
-                                        const parsed = typeof submissionData[field] === 'string'
-                                            ? JSON.parse(submissionData[field])
-                                            : submissionData[field];
-                                        if (Array.isArray(parsed) && parsed.length > 0) {
-                                            agentSelected = parsed;
-                                            break;
+                        const planSummaryResp = await fetch(`/plan_summary/${encodeURIComponent(uid)}`);
+                        if (planSummaryResp.ok) {
+                            const planSummaryData = await planSummaryResp.json();
+                            proposed = planSummaryData.proposed || {};
+                            console.log('DEBUG: Loaded proposed structure from plan_summary:', proposed);
+
+                            // Load supervisor metadata if available
+                            try {
+                                const metaResp = await fetch(`/supervisor_plan_metadata/${encodeURIComponent(uid)}`);
+                                if (metaResp.ok) {
+                                    const metaData = await metaResp.json();
+                                    supervisorMetadata = metaData.supervisor_meta || {};
+                                    console.log('DEBUG: Loaded supervisorMetadata from /supervisor_plan_metadata:', supervisorMetadata);
+                                }
+                            } catch (e) { console.warn('Could not load supervisor metadata:', e); }
+                        }
+                    } catch (e) { console.warn('Could not load plan summary:', e); }
+
+                    // Get supervisor selected list - try multiple sources
+                    let supSelectedPlans = [];
+                    try {
+                        const planSummaryResp = await fetch(`/plan_summary/${encodeURIComponent(uid)}`);
+                        if (planSummaryResp.ok) {
+                            const ps = await planSummaryResp.json();
+                            supSelectedPlans = ps.supervisor_selected || [];
+                            console.log('DEBUG: Loaded supervisor_selected from plan_summary:', supSelectedPlans);
+                        }
+                    } catch (e) { console.warn('Could not load plan summary:', e); }
+                    if (!Array.isArray(supSelectedPlans)) supSelectedPlans = [];
+
+                    const comprehensivePlans = [];
+                    const individualPlans = [];
+
+                    try {
+                        supSelectedPlans.forEach(planName => {
+                            try {
+                                const meta = planMeta[planName] || {};
+                                // Get agent metadata first (contains memberName)
+                                const agentInputs = meta.agent || {};
+                                // Get supervisor metadata for values (premium, sum_insured, policy_term)
+                                const supervisorInputs = supervisorMetadata[planName] || meta.supervisor || {};
+
+                                // Try to get memberName from:
+                                // 1. Agent metadata (but ignore if it's the internal 'comprehensive_cover' marker)
+                                // 2. Supervisor metadata (but ignore if it's the internal 'comprehensive_cover' marker)
+                                // 3. Proposed structure (find which member has this plan)
+                                let memberName = agentInputs.memberName || supervisorInputs.memberName || '';
+
+                                // DEFENSIVE: Never allow 'comprehensive_cover' to be classified as an individual member
+                                if (String(memberName).toLowerCase() === 'comprehensive_cover') {
+                                    console.log(`DEFENSIVE: Clearing memberName='comprehensive_cover' for plan "${planName}" (internal marker, not individual)`);
+                                    memberName = '';
+                                }
+
+                                if (!memberName) {
+                                    // Search in proposed structure for which member has this plan
+                                    for (const key in proposed) {
+                                        // Skip comprehensive_cover on first pass
+                                        if (key === 'comprehensive_cover') continue;
+
+                                        const member = proposed[key];
+                                        if (member && member.plans && Array.isArray(member.plans)) {
+                                            if (member.plans.includes(planName)) {
+                                                // Found the member, use their name
+                                                memberName = member.name || key;
+                                                break;
+                                            }
                                         }
-                                    } catch (e) {}
+                                    }
                                 }
-                            }
-                            if (agentSelected.length > 0) {
-                                try {
-                                    await fetch(`/plan_summary/${encodeURIComponent(uniqueId)}/agent`, {
-                                        method: 'PATCH',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ agent_selected: agentSelected })
+
+                                console.log(`DEBUG: Processing supervisor plan "${planName}":`, {
+                                    agentInputs,
+                                    supervisorInputs,
+                                    memberName,
+                                    proposedStructure: proposed
+                                });
+
+                                // Only add to individual if it has a member name
+                                if (memberName && String(memberName).trim()) {
+                                    individualPlans.push({
+                                        planName,
+                                        premium: supervisorInputs.premium || '',
+                                        sumInsured: supervisorInputs.sum_insured || '',
+                                        policyTerm: supervisorInputs.policy_term || '',
+                                        memberName: memberName
                                     });
-                                } catch (e) {
-                                    console.error('Failed to sync agent selections:', e);
+                                } else {
+                                    // Add to comprehensive only if there's no member name
+                                    comprehensivePlans.push({
+                                        planName,
+                                        premium: supervisorInputs.premium || '',
+                                        sumInsured: supervisorInputs.sum_insured || '',
+                                        policyTerm: supervisorInputs.policy_term || ''
+                                    });
+                                }
+                            } catch (itemError) {
+                                console.error(`Error processing plan "${planName}":`, itemError);
+                            }
+                        });
+                    } catch (loopError) {
+                        console.error('Error in forEach loop:', loopError);
+                        throw loopError;
+                    }
+
+                    let html = '';
+
+                    // Comprehensive Plans
+                    if (comprehensivePlans.length > 0) {
+                        html += '<div style="margin: 16px 0; min-width: 0; overflow: hidden;">';
+                        html += '<h4 style="margin: 8px 0; font-size: 0.95rem; letter-spacing: 0.2px; font-weight: 700; color: #2c3e50; background-color: #cff9ff; padding: 10px 15px; border-radius: 6px; display: inline-block;">Comprehensive Selected Plans</h4>';
+                        html += '<div style="display: grid; grid-template-columns: 1fr 100px 120px 120px; column-gap: 16px; align-items: center; padding: 10px 6px; font-weight: 600; border-bottom: 1px solid #e2e6ea; background: transparent; margin-bottom: 8px; min-width: 0;">';
+                        html += '<div>Plans</div><div>Premium</div><div>Sum Insured</div><div>Policy Term</div></div>';
+
+                        comprehensivePlans.forEach(plan => {
+                            html += `<div style="padding: 10px 6px; border-radius: 6px; background: #fff; margin-bottom: 8px; display: grid; grid-template-columns: 1fr 100px 120px 120px; column-gap: 16px; align-items: center; border: 1px solid #eee; min-width: 0;">
+                            <div style="font-weight: 400; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtmlClient(plan.planName)}">${escapeHtmlClient(plan.planName)}</div>
+                            <input type="text" value="${escapeHtmlClient(plan.premium)}" readonly style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; box-sizing: border-box; background: #f5f7f8 !important; color: #666;">
+                            <input type="text" value="${escapeHtmlClient(plan.sumInsured)}" readonly style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; box-sizing: border-box; background: #f5f7f8 !important; color: #666;">
+                            <select disabled style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; background: #f5f7f8; color: #666;">
+                                <option selected>${escapeHtmlClient(plan.policyTerm || 'N/A')}</option>
+                            </select>
+                        </div>`;
+                        });
+                        html += '</div>';
+                    }
+
+                    // Individual Plans
+                    if (individualPlans.length > 0) {
+                        html += '<div style="margin: 16px 0; min-width: 0; overflow: hidden;">';
+                        html += '<h4 style="margin: 8px 0; font-size: 0.95rem; letter-spacing: 0.2px; font-weight: 700; color: #2c3e50; background-color: #cff9ff; padding: 10px 15px; border-radius: 6px; display: inline-block;">Individual Selected Plans</h4>';
+                        html += '<div style="display: grid; grid-template-columns: 1fr 100px 120px 120px; column-gap: 16px; align-items: center; padding: 10px 6px; font-weight: 600; border-bottom: 1px solid #e2e6ea; background: transparent; margin-bottom: 8px; min-width: 0;">';
+                        html += '<div>Plans</div><div>Premium</div><div>Sum Insured</div><div>Policy Term</div></div>';
+
+                        individualPlans.forEach(plan => {
+                            const memberPlanLabel = (plan.memberName ? (plan.memberName + ' — ') : '') + plan.planName;
+                            html += `<div style="padding: 10px 6px; border-radius: 6px; background: #fff; margin-bottom: 8px; display: grid; grid-template-columns: 1fr 100px 120px 120px; column-gap: 16px; align-items: center; border: 1px solid #eee; min-width: 0;">
+                            <div style="font-weight: 400; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtmlClient(memberPlanLabel)}">${escapeHtmlClient(memberPlanLabel)}</div>
+                            <input type="text" value="${escapeHtmlClient(plan.premium)}" readonly style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; box-sizing: border-box; background: #f5f7f8 !important; color: #666;">
+                            <input type="text" value="${escapeHtmlClient(plan.sumInsured)}" readonly style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; box-sizing: border-box; background: #f5f7f8 !important; color: #666;">
+                            <select disabled style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; background: #f5f7f8; color: #666;">
+                                <option selected>${escapeHtmlClient(plan.policyTerm || 'N/A')}</option>
+                            </select>
+                        </div>`;
+                        });
+                        html += '</div>';
+                    }
+
+                    if (comprehensivePlans.length === 0 && individualPlans.length === 0) {
+                        html = '<p style="color: #888; font-style: italic;">No supervisor approved plans available.</p>';
+                    }
+
+                    host.innerHTML = html;
+                } catch (e) {
+                    console.error('CRITICAL ERROR in renderSupervisorApprovedInputs:', e);
+                    console.error('Error message:', e.message);
+                    console.error('Error stack:', e.stack);
+                    host.innerHTML = '<p style="color: #b91c1c;">Error loading supervisor approved inputs: ' + e.message + '</p>';
+                }
+            }
+
+            // Render client agreed inputs (editable)
+            async function renderClientAgreedInputs(host, uid, proposedPlans, clientSelected, clientStatus) {
+                try {
+                    // Determine if we should show read-only view
+                    const status = (clientStatus || '').toLowerCase();
+                    const isReadOnly = status === 'client_approved' || status === 'with_uw' || status === 'policy_created' || status === 'policy_denied';
+
+                    let submissionData = {};
+                    try {
+                        const r = await fetch(`/api/agent/submission/${encodeURIComponent(uid)}`);
+                        if (r.ok) submissionData = await r.json();
+                    } catch (e) { console.warn('Could not fetch submission:', e); }
+
+                    let formSummary = {};
+                    if (typeof submissionData.form_summary === 'string') {
+                        try { formSummary = JSON.parse(submissionData.form_summary); } catch (e) { }
+                    } else if (typeof submissionData.form_summary === 'object') {
+                        formSummary = submissionData.form_summary;
+                    }
+
+                    const planMeta = formSummary.plan_meta || {};
+                    const clientSelectedList = Array.from(clientSelected || []);
+
+                    // Load proposed structure for member lookups
+                    let proposed = {};
+                    try {
+                        const planSummaryResp = await fetch(`/plan_summary/${encodeURIComponent(uid)}`);
+                        if (planSummaryResp.ok) {
+                            const planSummaryData = await planSummaryResp.json();
+                            proposed = planSummaryData.proposed || {};
+                        }
+                    } catch (e) { console.warn('Could not load proposed structure:', e); }
+
+                    const comprehensivePlans = [];
+                    const individualPlans = [];
+
+                    clientSelectedList.forEach(planName => {
+                        const trimmedPlanName = String(planName || '').trim();
+
+                        // Try to find metadata entry - try exact match first, then trimmed versions
+                        let meta = planMeta[trimmedPlanName] || planMeta[planName];
+                        if (!meta) {
+                            // Try to find by trimming all keys
+                            for (const key in planMeta) {
+                                if (String(key).trim() === trimmedPlanName) {
+                                    meta = planMeta[key];
+                                    break;
                                 }
                             }
                         }
-                    } catch (e) {
-                        console.error('Error loading agent selections from submission:', e);
+                        meta = meta || {};
+
+                        const agentInputs = meta.agent || {};
+                        const supervisorInputs = meta.supervisor || {};
+                        const clientInputs = meta.client || {};
+
+                        // Try to get memberName from:
+                        // 1. Agent metadata
+                        // 2. Client metadata
+                        // 3. Supervisor metadata
+                        // 4. Proposed structure (find which member has this plan)
+                        let memberName = (agentInputs.memberName || '').trim() || (clientInputs.memberName || '').trim() || (supervisorInputs.memberName || '').trim() || '';
+
+                        if (!memberName) {
+                            // Search in proposed structure for which member has this plan
+                            for (const key in proposed) {
+                                // SKIP comprehensive_cover - those are family/comprehensive plans
+                                if (key === 'comprehensive_cover') {
+                                    continue;
+                                }
+
+                                const member = proposed[key];
+                                if (member && member.plans && Array.isArray(member.plans)) {
+                                    const foundExact = member.plans.includes(trimmedPlanName);
+                                    const foundTrimmed = !foundExact && member.plans.some(p => String(p).trim() === trimmedPlanName);
+                                    if (foundExact || foundTrimmed) {
+                                        // Found the member, use their name
+                                        memberName = member.name || key;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        // CRITICAL: Only add to individual if it has a member name
+                        if (memberName && String(memberName).trim()) {
+                            individualPlans.push({
+                                planName: trimmedPlanName,
+                                // CRITICAL: Show client value if available, otherwise ONLY supervisor value (NOT agent)
+                                // This ensures only supervisor-approved values are shown as defaults
+                                premium: clientInputs.premium || supervisorInputs.premium || '',
+                                sumInsured: clientInputs.sum_insured || supervisorInputs.sum_insured || '',
+                                policyTerm: clientInputs.policy_term || supervisorInputs.policy_term || '',
+                                memberName: memberName
+                            });
+                        } else {
+                            // Add to comprehensive only if there's no member name
+                            comprehensivePlans.push({
+                                planName: trimmedPlanName,
+                                // CRITICAL: Show client value if available, otherwise ONLY supervisor value (NOT agent)
+                                // This ensures only supervisor-approved values are shown as defaults
+                                premium: clientInputs.premium || supervisorInputs.premium || '',
+                                sumInsured: clientInputs.sum_insured || supervisorInputs.sum_insured || '',
+                                policyTerm: clientInputs.policy_term || supervisorInputs.policy_term || ''
+                            });
+                        }
+                    });
+
+                    let html = '';
+
+                    // Comprehensive Plans
+                    if (comprehensivePlans.length > 0) {
+                        html += '<div style="margin: 16px 0; min-width: 0; overflow: hidden;">';
+                        html += '<h4 style="margin: 8px 0; font-size: 0.95rem; letter-spacing: 0.2px; font-weight: 700; color: #2c3e50; background-color: #cff9ff; padding: 10px 15px; border-radius: 6px; display: inline-block;">Comprehensive Selected Plans</h4>';
+                        html += '<div style="display: grid; grid-template-columns: 1fr 100px 120px 120px 50px; column-gap: 16px; align-items: center; padding: 10px 6px; font-weight: 600; border-bottom: 1px solid #e2e6ea; background: transparent; margin-bottom: 8px; min-width: 0;">';
+                        html += '<div>Plans</div><div>Premium <span style="color: #ef4444;">*</span></div><div>Sum Insured <span style="color: #ef4444;">*</span></div><div>Policy Term <span style="color: #ef4444;">*</span></div><div></div></div>';
+
+                        comprehensivePlans.forEach((plan, idx) => {
+                            const termOptions = ['1 Year', '2 Years', '3 Years', '4 Years', '5 Years'];
+                            let termOptionsHtml = '';
+                            const policyTerm = plan.policyTerm || '';
+                            termOptions.forEach(opt => {
+                                const isSelected = (policyTerm === opt || (policyTerm && policyTerm.includes(opt.split(' ')[0]))) ? 'selected' : '';
+                                termOptionsHtml += `<option ${isSelected}>${opt}</option>`;
+                            });
+
+                            const inputReadonly = isReadOnly ? 'readonly' : '';
+                            const inputBg = isReadOnly ? '#f5f7f8 !important' : '#fff';
+                            const inputColor = isReadOnly ? '#666' : '#000';
+                            const selectDisabled = isReadOnly ? 'disabled' : '';
+                            const selectBg = isReadOnly ? '#f5f7f8' : '#fff';
+                            const selectColor = isReadOnly ? '#666' : '#000';
+                            const deleteBtn = isReadOnly ? '' : `<button type="button" class="delete-client-plan" style="padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">−</button>`;
+
+                            html += `<div style="padding: 10px 6px; border-radius: 6px; background: #fff; margin-bottom: 8px; display: grid; grid-template-columns: 1fr 100px 120px 120px 50px; column-gap: 16px; align-items: center; border: 1px solid #eee; min-width: 0;" class="client-plan-row" data-plan="${escapeHtmlClient(plan.planName)}">
+                            <div style="font-weight: 400; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtmlClient(plan.planName)}">${escapeHtmlClient(plan.planName)}</div>
+                            <input type="text" placeholder="Premium" value="${escapeHtmlClient(plan.premium)}" ${inputReadonly} class="client-premium-input" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; box-sizing: border-box; background: ${inputBg}; color: ${inputColor};">
+                            <input type="text" placeholder="Sum Insured" value="${escapeHtmlClient(plan.sumInsured)}" ${inputReadonly} class="client-sumins-input" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; box-sizing: border-box; background: ${inputBg}; color: ${inputColor};">
+                            <select class="client-term-select" ${selectDisabled} style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; background: ${selectBg}; color: ${selectColor};">${termOptionsHtml}</select>
+                            ${deleteBtn}
+                        </div>`;
+                        });
+                        html += '</div>';
                     }
-                }
 
-                const proposed = planSummaryData?.proposed || {};
-                const agentSel = new Set(agentSelected);
-                const supervisorSel = new Set(planSummaryData?.supervisor_selected || []);
-                const clientSel = new Set(planSummaryData?.client_agreed || []);
+                    // Individual Plans
+                    if (individualPlans.length > 0) {
+                        html += '<div style="margin: 16px 0; min-width: 0; overflow: hidden;">';
+                        html += '<h4 style="margin: 8px 0; font-size: 0.95rem; letter-spacing: 0.2px; font-weight: 700; color: #2c3e50; background-color: #cff9ff; padding: 10px 15px; border-radius: 6px; display: inline-block;">Individual Selected Plans</h4>';
+                        html += '<div style="display: grid; grid-template-columns: 1fr 100px 120px 120px 50px; column-gap: 16px; align-items: center; padding: 10px 6px; font-weight: 600; border-bottom: 1px solid #e2e6ea; background: transparent; margin-bottom: 8px; min-width: 0;">';
+                        html += '<div>Plans</div><div>Premium <span style="color: #ef4444;">*</span></div><div>Sum Insured <span style="color: #ef4444;">*</span></div><div>Policy Term <span style="color: #ef4444;">*</span></div><div></div></div>';
 
-                let submissionData = {};
-                try {
-                    const submissionResp = await fetch(`/api/agent/submission/${encodeURIComponent(uniqueId)}`);
-                    if (submissionResp.ok) submissionData = await submissionResp.json();
+                        individualPlans.forEach((plan, idx) => {
+                            const memberPlanLabel = (plan.memberName ? (plan.memberName + ' — ') : '') + plan.planName;
+                            const termOptions = ['1 Year', '2 Years', '3 Years', '4 Years', '5 Years'];
+                            let termOptionsHtml = '';
+                            const policyTerm = plan.policyTerm || '';
+                            termOptions.forEach(opt => {
+                                const isSelected = (policyTerm === opt || (policyTerm && policyTerm.includes(opt.split(' ')[0]))) ? 'selected' : '';
+                                termOptionsHtml += `<option ${isSelected}>${opt}</option>`;
+                            });
+
+                            const inputReadonly = isReadOnly ? 'readonly' : '';
+                            const inputBg = isReadOnly ? '#f5f7f8 !important' : '#fff';
+                            const inputColor = isReadOnly ? '#666' : '#000';
+                            const selectDisabled = isReadOnly ? 'disabled' : '';
+                            const selectBg = isReadOnly ? '#f5f7f8' : '#fff';
+                            const selectColor = isReadOnly ? '#666' : '#000';
+                            const deleteBtn = isReadOnly ? '' : `<button type="button" class="delete-client-plan" style="padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">−</button>`;
+
+                            html += `<div style="padding: 10px 6px; border-radius: 6px; background: #fff; margin-bottom: 8px; display: grid; grid-template-columns: 1fr 100px 120px 120px 50px; column-gap: 16px; align-items: center; border: 1px solid #eee; min-width: 0;" class="client-plan-row" data-plan="${escapeHtmlClient(plan.planName)}" data-member="${escapeHtmlClient(plan.memberName)}">
+                            <div style="font-weight: 400; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtmlClient(memberPlanLabel)}">${escapeHtmlClient(memberPlanLabel)}</div>
+                            <input type="text" placeholder="Premium" value="${escapeHtmlClient(plan.premium)}" ${inputReadonly} class="client-premium-input" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; box-sizing: border-box; background: ${inputBg}; color: ${inputColor};">
+                            <input type="text" placeholder="Sum Insured" value="${escapeHtmlClient(plan.sumInsured)}" ${inputReadonly} class="client-sumins-input" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; box-sizing: border-box; background: ${inputBg}; color: ${inputColor};">
+                            <select class="client-term-select" ${selectDisabled} style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; background: ${selectBg}; color: ${selectColor};">${termOptionsHtml}</select>
+                            ${deleteBtn}
+                        </div>`;
+                        });
+                        html += '</div>';
+                    }
+
+                    if (comprehensivePlans.length === 0 && individualPlans.length === 0) {
+                        html = '<p style="color: #888; font-style: italic;">Select plans from the matrix above to add them here.</p>';
+                    }
+
+                    host.innerHTML = html;
+
+                    // Attach delete event listeners
+                    host.querySelectorAll('.delete-client-plan').forEach(btn => {
+                        btn.addEventListener('click', async (e) => {
+                            e.preventDefault();
+                            const planRow = btn.closest('.client-plan-row');
+                            const planName = planRow.getAttribute('data-plan');
+
+                            planRow.remove();
+                            clientSelected.delete(planName);
+
+                            // Uncheck matrix checkbox
+                            const matrixHost = document.getElementById('plans-selection-matrix');
+                            if (matrixHost) {
+                                const checkbox = matrixHost.querySelector(`input[data-plan-name="${planName}"]`);
+                                if (checkbox) {
+                                    checkbox.checked = false;
+                                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                                }
+                            }
+
+                            try {
+                                await fetch(`/plan_summary/${encodeURIComponent(uid)}/client`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ client_agreed: Array.from(clientSelected) })
+                                });
+                            } catch (e) { console.error('Failed to update client plans:', e); }
+                        });
+                    });
                 } catch (e) {
-                    console.warn('Could not load submission data for status check:', e);
+                    host.innerHTML = '<p style="color: #b91c1c;">Error loading client agreed inputs.</p>';
+                    console.error(e);
                 }
+            }
 
-                const clientStatus = (submissionData.client_status || '').toLowerCase();
-                const underwriterStatus = (submissionData.underwriter_status || '').toLowerCase();
-                const showUnderwriterSection = clientStatus === 'client_approved';
+            window.renderPlansTab = async function (container, uniqueId) {
+                if (!container || !uniqueId) return;
 
-                container.innerHTML = `
+                container.innerHTML = '<p>Loading plans...</p>';
+
+                try {
+                    let planSummaryData = null;
+                    try {
+                        const resp = await fetch(`/plan_summary/${encodeURIComponent(uniqueId)}`);
+                        if (resp.ok) planSummaryData = await resp.json();
+                    } catch (e) {
+                        console.warn('Could not load from plan_summary endpoint:', e);
+                    }
+
+                    if (!planSummaryData || !planSummaryData.proposed || Object.keys(planSummaryData.proposed).length === 0) {
+                        try {
+                            const submissionResp = await fetch(`/api/agent/submission/${encodeURIComponent(uniqueId)}`);
+                            if (submissionResp.ok) {
+                                const submissionData = await submissionResp.json();
+                                let proposedPlans = submissionData.proposed_plans;
+                                if (proposedPlans && typeof proposedPlans === 'string') {
+                                    proposedPlans = JSON.parse(proposedPlans);
+                                }
+                                if (proposedPlans && Object.keys(proposedPlans).length > 0) {
+                                    await fetch(`/plan_summary/${encodeURIComponent(uniqueId)}/init_or_update`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ proposed: proposedPlans })
+                                    });
+                                    const resp2 = await fetch(`/plan_summary/${encodeURIComponent(uniqueId)}`);
+                                    if (resp2.ok) planSummaryData = await resp2.json();
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Error initializing plan_summary from submission:', e);
+                        }
+                    }
+
+                    let agentSelected = [];
+                    if (planSummaryData?.agent_selected) {
+                        agentSelected = Array.isArray(planSummaryData.agent_selected) ? planSummaryData.agent_selected : [];
+                    }
+                    if (agentSelected.length === 0) {
+                        try {
+                            const submissionResp = await fetch(`/api/agent/submission/${encodeURIComponent(uniqueId)}`);
+                            if (submissionResp.ok) {
+                                const submissionData = await submissionResp.json();
+                                const possibleFields = ['agent_selected_plans', 'Agent_Selected_Plans', 'chosen_plans', 'plans_chosen'];
+                                for (const field of possibleFields) {
+                                    if (submissionData[field]) {
+                                        try {
+                                            const parsed = typeof submissionData[field] === 'string'
+                                                ? JSON.parse(submissionData[field])
+                                                : submissionData[field];
+                                            if (Array.isArray(parsed) && parsed.length > 0) {
+                                                agentSelected = parsed;
+                                                break;
+                                            }
+                                        } catch (e) { }
+                                    }
+                                }
+                                if (agentSelected.length > 0) {
+                                    try {
+                                        await fetch(`/plan_summary/${encodeURIComponent(uniqueId)}/agent`, {
+                                            method: 'PATCH',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ agent_selected: agentSelected })
+                                        });
+                                    } catch (e) {
+                                        console.error('Failed to sync agent selections:', e);
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Error loading agent selections from submission:', e);
+                        }
+                    }
+
+                    const proposed = planSummaryData?.proposed || {};
+                    const agentSel = new Set(agentSelected);
+                    const supervisorSel = new Set(planSummaryData?.supervisor_selected || []);
+                    const clientSel = new Set(planSummaryData?.client_agreed || []);
+
+                    let submissionData = {};
+                    try {
+                        const submissionResp = await fetch(`/api/agent/submission/${encodeURIComponent(uniqueId)}`);
+                        if (submissionResp.ok) submissionData = await submissionResp.json();
+                    } catch (e) {
+                        console.warn('Could not load submission data for status check:', e);
+                    }
+
+                    const clientStatus = (submissionData.client_status || '').toLowerCase();
+                    const underwriterStatus = (submissionData.underwriter_status || '').toLowerCase();
+                    const showUnderwriterSection = clientStatus === 'client_approved';
+
+                    container.innerHTML = `
                     <div style="padding: 1rem;">
                         <h2>Plan Selection</h2>
                         <p>Review the plans selected by the agent and supervisor, then select the plans you agree to.</p>
                         <div id="plans-selection-matrix" style="margin-top: 1rem;"></div>
+                        
+                        <div class="accordion" style="margin-top: 2rem; border-radius: 0.5rem; border: 1px solid #e5e7eb;">
+                            <div class="accordion-item">
+                                <button type="button" class="accordion-header" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background-color: #f9fafb; border: none; font-size: 0.95rem; font-weight: 700; color: #111827; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                                    Supervisor Approved Terms
+                                    <span style="font-weight: 700; color: #6b7280;">+</span>
+                                </button>
+                                <div class="accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.25s ease; background-color: #ffffff;">
+                                    <div id="supervisor-approved-inputs-host" style="padding: 0.75rem 1rem 1rem;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion" style="margin-top: 1rem; border-radius: 0.5rem; border: 1px solid #e5e7eb;">
+                            <div class="accordion-item">
+                                <button type="button" class="accordion-header" style="width: 100%; text-align: left; padding: 0.75rem 1rem; background-color: #f9fafb; border: none; font-size: 0.95rem; font-weight: 700; color: #111827; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                                    Client Agreed Terms
+                                    <span style="font-weight: 700; color: #6b7280;">+</span>
+                                </button>
+                                <div class="accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.25s ease; background-color: #ffffff;">
+                                    <div id="client-agreed-inputs-host" style="padding: 0.75rem 1rem 1rem;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div style="margin-top: 1rem;">
                             <textarea id="client-plans-comment" rows="3" style="width: 100%; margin-bottom: 0.5rem;" placeholder="Add your notes about the selected plans"></textarea>
                         </div>
@@ -1303,10 +1867,10 @@
                             <div style="background: #f9f9f9; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
                                 <strong style="display: block; margin-bottom: 0.5rem;">Client Agreed Plans:</strong>
                                 <div id="client-agreed-display" style="margin-left: 1rem;">
-                                    ${Array.from(clientSel).length > 0 
-                                        ? Array.from(clientSel).map(p => `<div style="margin-bottom: 0.25rem;">• ${p}</div>`).join('')
-                                        : '<em style="color: #888;">No plans selected by client yet</em>'
-                                    }
+                                    ${Array.from(clientSel).length > 0
+                            ? Array.from(clientSel).map(p => `<div style="margin-bottom: 0.25rem;">• ${p}</div>`).join('')
+                            : '<em style="color: #888;">No plans selected by client yet</em>'
+                        }
                                 </div>
                                 ${submissionData.client_comments ? `
                                     <div style="margin-top: 0.75rem;">
@@ -1364,325 +1928,437 @@
                     </div>
                 `;
 
-                const matrixHost = container.querySelector('#plans-selection-matrix');
-                const commentEl = container.querySelector('#client-plans-comment');
-                const saveBtn = container.querySelector('#save-client-plans');
-                const statusEl = container.querySelector('#client-plans-status');
+                    // Setup accordion event listeners
+                    const accordionHeaders = container.querySelectorAll('.accordion-header');
+                    accordionHeaders.forEach(header => {
+                        header.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
 
-                if (typeof window.renderPlanSelectionSummary === 'function') {
-                    window.renderPlanSelectionSummary(matrixHost, {
-                        proposed,
-                        agentSel,
-                        supervisorSel,
-                        clientSel,
-                        mode: 'approvals',
-                        onClientToggle: async (planName, checked) => {
-                            if (checked) clientSel.add(planName);
-                            else clientSel.delete(planName);
+                            const content = header.nextElementSibling;
+                            const span = header.querySelector('span');
+                            const isCurrentlyOpen = content.style.maxHeight && content.style.maxHeight !== '0px';
 
-                            try {
-                                await fetch(`/plan_summary/${encodeURIComponent(uniqueId)}/client`, {
-                                    method: 'PATCH',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ client_agreed: Array.from(clientSel) })
-                                });
-                            } catch (e) {
-                                console.error('Failed to save client selection:', e);
+                            if (isCurrentlyOpen) {
+                                // Collapsing
+                                content.style.maxHeight = '0px';
+                                if (span) span.textContent = '+';
+                                header.style.backgroundColor = '#f9fafb';
+                            } else {
+                                // Expanding - use setTimeout to ensure DOM is ready
+                                setTimeout(() => {
+                                    content.style.maxHeight = (content.scrollHeight + 20) + 'px';
+                                }, 0);
+                                if (span) span.textContent = '−';
+                                header.style.backgroundColor = '#eff6ff';
+                            }
+                        });
+                    });
+
+                    const matrixHost = container.querySelector('#plans-selection-matrix');
+                    const commentEl = container.querySelector('#client-plans-comment');
+                    const saveBtn = container.querySelector('#save-client-plans');
+                    const statusEl = container.querySelector('#client-plans-status');
+
+                    if (typeof window.renderPlanSelectionSummary === 'function') {
+                        window.renderPlanSelectionSummary(matrixHost, {
+                            proposed,
+                            agentSel,
+                            supervisorSel,
+                            clientSel,
+                            mode: 'approvals',
+                            onClientToggle: async (planName, checked) => {
+                                if (checked) clientSel.add(planName);
+                                else clientSel.delete(planName);
+
+                                try {
+                                    await fetch(`/plan_summary/${encodeURIComponent(uniqueId)}/client`, {
+                                        method: 'PATCH',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ client_agreed: Array.from(clientSel) })
+                                    });
+                                } catch (e) {
+                                    console.error('Failed to save client selection:', e);
+                                }
+
+                                // Re-render client agreed inputs when matrix selection changes
+                                try {
+                                    const clientHost = container.querySelector('#client-agreed-inputs-host');
+                                    if (clientHost) {
+                                        await renderClientAgreedInputs(clientHost, uniqueId, proposed, clientSel, clientStatus);
+                                    }
+                                } catch (e) { console.warn('Could not re-render client inputs:', e); }
+                            }
+                        });
+                    }
+
+                    // Render Supervisor Approved Inputs (readonly)
+                    try {
+                        const supHost = container.querySelector('#supervisor-approved-inputs-host');
+                        if (supHost) {
+                            await renderSupervisorApprovedInputs(supHost, uniqueId);
+                        }
+                    } catch (e) { console.warn('Could not render supervisor approved inputs:', e); }
+
+                    // Render Client Agreed Inputs (editable)
+                    try {
+                        const clientHost = container.querySelector('#client-agreed-inputs-host');
+                        if (clientHost) {
+                            await renderClientAgreedInputs(clientHost, uniqueId, proposed, clientSel, clientStatus);
+                        }
+                    } catch (e) { console.warn('Could not render client agreed inputs:', e); }
+
+                    // Pre-fill saved client selections if they exist
+                    try {
+                        const submissionResp = await fetch(`/api/agent/submission/${encodeURIComponent(uniqueId)}`);
+                        if (submissionResp.ok) {
+                            const submissionData = await submissionResp.json();
+
+                            if (submissionData.client_comments) {
+                                commentEl.value = submissionData.client_comments;
+                            }
+
+                            if (submissionData.Client_Agreed_Plans) {
+                                try {
+                                    const savedPlans = JSON.parse(submissionData.Client_Agreed_Plans);
+                                    if (Array.isArray(savedPlans) && savedPlans.length > 0) {
+                                        savedPlans.forEach(planName => {
+                                            clientSel.add(planName);
+                                            const checkbox = matrixHost.querySelector(`input.pss-client[data-plan-name="${planName}"]`);
+                                            if (checkbox) checkbox.checked = true;
+                                        });
+                                    }
+                                } catch (e) {
+                                    console.error('Error parsing saved plans:', e);
+                                }
                             }
                         }
-                    });
-                }
+                    } catch (e) {
+                        console.error('Error loading existing selections:', e);
+                    }
 
-                // Pre-fill saved client selections if they exist
-                try {
-                    const submissionResp = await fetch(`/api/agent/submission/${encodeURIComponent(uniqueId)}`);
-                    if (submissionResp.ok) {
-                        const submissionData = await submissionResp.json();
-                        
-                        if (submissionData.client_comments) {
-                            commentEl.value = submissionData.client_comments;
-                        }
+                    // Client save handler - never lock, always allow re-doing
+                    if (saveBtn) {
+                        saveBtn.addEventListener('click', async () => {
+                            const selected = Array.from(clientSel);
+                            const comment = (commentEl?.value || '').trim();
 
-                        if (submissionData.Client_Agreed_Plans) {
+                            if (selected.length === 0) {
+                                statusEl.textContent = 'Please select at least one plan.';
+                                statusEl.style.color = 'red';
+                                return;
+                            }
+
+                            // Validate that all required fields are filled
+                            const clientHost = container.querySelector('#client-agreed-inputs-host');
+                            if (clientHost) {
+                                const planRows = clientHost.querySelectorAll('.client-plan-row');
+                                let allFieldsFilled = true;
+                                let emptyFieldPlan = null;
+
+                                planRows.forEach(row => {
+                                    const planName = row.getAttribute('data-plan');
+                                    const premium = (row.querySelector('.client-premium-input')?.value || '').trim();
+                                    const sumInsured = (row.querySelector('.client-sumins-input')?.value || '').trim();
+                                    const policyTerm = (row.querySelector('.client-term-select')?.value || '').trim();
+
+                                    if (!premium || !sumInsured || !policyTerm) {
+                                        allFieldsFilled = false;
+                                        if (!emptyFieldPlan) {
+                                            emptyFieldPlan = planName;
+                                        }
+                                    }
+                                });
+
+                                if (!allFieldsFilled) {
+                                    statusEl.textContent = `Please fill in all required fields (Premium, Sum Insured, Policy Term) for all plans. Missing fields in: ${emptyFieldPlan}`;
+                                    statusEl.style.color = 'red';
+                                    return;
+                                }
+                            }
+
+                            // Collect client input values from the editable section
+                            const clientMeta = {};
                             try {
-                                const savedPlans = JSON.parse(submissionData.Client_Agreed_Plans);
-                                if (Array.isArray(savedPlans) && savedPlans.length > 0) {
-                                    savedPlans.forEach(planName => {
-                                        clientSel.add(planName);
-                                        const checkbox = matrixHost.querySelector(`input.pss-client[data-plan-name="${planName}"]`);
-                                        if (checkbox) checkbox.checked = true;
+                                const clientHost = container.querySelector('#client-agreed-inputs-host');
+                                if (clientHost) {
+                                    const planRows = clientHost.querySelectorAll('.client-plan-row');
+                                    planRows.forEach(row => {
+                                        const planName = row.getAttribute('data-plan');
+                                        const premium = row.querySelector('.client-premium-input')?.value || '';
+                                        const sumInsured = row.querySelector('.client-sumins-input')?.value || '';
+                                        const policyTerm = row.querySelector('.client-term-select')?.value || '';
+                                        const memberName = row.getAttribute('data-member') || '';
+
+                                        clientMeta[planName] = {
+                                            premium,
+                                            sum_insured: sumInsured,
+                                            policy_term: policyTerm,
+                                            memberName
+                                        };
                                     });
                                 }
-                            } catch (e) { 
-                                console.error('Error parsing saved plans:', e); 
-                            }
-                        }
-                    }
-                } catch (e) { 
-                    console.error('Error loading existing selections:', e); 
-                }
+                            } catch (e) { console.warn('Could not collect client inputs:', e); }
 
-                // Client save handler - never lock, always allow re-doing
-                if (saveBtn) {
-                    saveBtn.addEventListener('click', async () => {
-                        const selected = Array.from(clientSel);
-                        const comment = (commentEl?.value || '').trim();
+                            saveBtn.disabled = true;
+                            saveBtn.textContent = 'Saving...';
+                            statusEl.textContent = '';
 
-                        if (selected.length === 0) {
-                            statusEl.textContent = 'Please select at least one plan.';
-                            statusEl.style.color = 'red';
-                            return;
-                        }
-
-                        saveBtn.disabled = true;
-                        saveBtn.textContent = 'Saving...';
-                        statusEl.textContent = '';
-
-                        try {
-                            const resp = await fetch('/api/agent/update_status', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown')
-                                },
-                                body: JSON.stringify({
-                                    unique_id: uniqueId,
-                                    actor: 'client',
-                                    client_review: true,
-                                    status: 'client_reviewed',
-                                    comment: comment || 'Client agreed to selected plans',
-                                    client_agreed_plans: selected,
-                                    client_status: 'client_approved'
-                                })
-                            });
-
-                            if (!resp.ok) {
-                                const errorText = await resp.text().catch(() => '');
-                                throw new Error(errorText || 'Save failed');
-                            }
-
-                            statusEl.textContent = 'Saved successfully! Reloading...';
-                            statusEl.style.color = 'green';
-
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 1500);
-
-                        } catch (err) {
-                            console.error(err);
-                            statusEl.textContent = 'Failed to save: ' + (err.message || 'Unknown error');
-                            statusEl.style.color = 'red';
-                            saveBtn.disabled = false;
-                            saveBtn.textContent = 'Save Client Selection';
-                        }
-                    });
-                }
-
-                const saveUnderwriterBtn = container.querySelector('#save-underwriter-decision');
-                const underwriterStatusEl = container.querySelector('#underwriter-decision-status');
-                const underwriterCommentEl = container.querySelector('#underwriter-comment');
-                const underwriterBranchSelect = container.querySelector('#underwriter-branch');
-                const underwriterBranchStatus = container.querySelector('#underwriter-branch-status');
-
-                if (saveUnderwriterBtn) {
-                    saveUnderwriterBtn.addEventListener('click', async () => {
-                        const approveCheckbox = container.querySelector('#underwriter-approve');
-                        const comment = (underwriterCommentEl?.value || '').trim();
-                        const branch = (underwriterBranchSelect?.value || '').trim();
-
-                        if (!comment) {
-                            underwriterStatusEl.textContent = 'Please provide notes for the underwriter.';
-                            underwriterStatusEl.style.color = 'red';
-                            return;
-                        }
-
-                        if (!branch) {
-                            if (underwriterBranchStatus) underwriterBranchStatus.style.display = 'inline';
-                            underwriterStatusEl.textContent = 'Please select an underwriting branch.';
-                            underwriterStatusEl.style.color = 'red';
-                            return;
-                        } else {
-                            if (underwriterBranchStatus) underwriterBranchStatus.style.display = 'none';
-                        }
-
-                        const decision = approveCheckbox.checked ? 'uw_approved' : null;
-
-                        if (!decision) {
-                            underwriterStatusEl.textContent = 'Please check the checkbox to submit to underwriter.';
-                            underwriterStatusEl.style.color = 'red';
-                            return;
-                        }
-
-                                saveUnderwriterBtn.disabled = true;
-                                saveUnderwriterBtn.textContent = 'Submitting...';
-                        underwriterStatusEl.textContent = '';
-
-                        try {
-                            const resp = await fetch('/api/agent/update_status', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown')
-                                },
-                                body: JSON.stringify({
-                                    unique_id: uniqueId,
-                                    actor: 'underwriter',
-                                    status: decision,
-                                    comment: comment,
-                                    underwriter_branch: branch,
-                                })
-                            });
-
-                            if (!resp.ok) {
-                                const errorText = await resp.text().catch(() => '');
-                                throw new Error(errorText || 'Submission failed');
-                            }
-                            
-                            underwriterStatusEl.textContent = 'Submitted successfully! Reloading...';
-                            underwriterStatusEl.style.color = 'green';
-
-                            // Immediately reflect submitted state: lock UI to show branch and controls disabled
                             try {
-                                if (underwriterBranchSelect) underwriterBranchSelect.disabled = true;
-                                if (underwriterCommentEl) underwriterCommentEl.disabled = true;
-                                const approveCheckbox = container.querySelector('#underwriter-approve');
-                                if (approveCheckbox) approveCheckbox.disabled = true;
-                                saveUnderwriterBtn.textContent = 'Submitted';
-                                saveUnderwriterBtn.disabled = true;
-                            } catch (e) {}
+                                // Save client inputs to plan_summary endpoint
+                                if (Object.keys(clientMeta).length > 0) {
+                                    await fetch(`/plan_summary/${encodeURIComponent(uniqueId)}/client_meta`, {
+                                        method: 'PATCH',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ client_meta: clientMeta })
+                                    }).catch(e => console.warn('Could not save client meta:', e));
+                                }
 
-                            setTimeout(() => {
-                                window.location.reload();
-                            });
+                                const resp = await fetch('/api/agent/update_status', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown')
+                                    },
+                                    body: JSON.stringify({
+                                        unique_id: uniqueId,
+                                        actor: 'client',
+                                        client_review: true,
+                                        status: 'client_reviewed',
+                                        comment: comment || 'Client agreed to selected plans',
+                                        client_agreed_plans: selected,
+                                        client_status: 'client_approved'
+                                    })
+                                });
 
-                        } catch (err) {
-                            console.error(err);
-                            underwriterStatusEl.textContent = 'Failed to submit: ' + (err.message || 'Unknown error');
-                            underwriterStatusEl.style.color = 'red';
-                            saveUnderwriterBtn.disabled = false;
-                            saveUnderwriterBtn.textContent = 'Submit';
-                        }
-                    });
-                }
-                // Preselect Underwriter Branch if provided in submission data
-                try {
-                    if (underwriterBranchSelect && submissionData.underwriter_branch) {
-                        const desired = String(submissionData.underwriter_branch || '').trim().toLowerCase();
-                        let setVal = '';
-                        for (const opt of underwriterBranchSelect.options) {
-                            if (String(opt.value || '').trim().toLowerCase() === desired) { setVal = opt.value; break; }
-                        }
-                        if (setVal) underwriterBranchSelect.value = setVal;
+                                if (!resp.ok) {
+                                    const errorText = await resp.text().catch(() => '');
+                                    throw new Error(errorText || 'Save failed');
+                                }
+
+                                statusEl.textContent = 'Saved successfully! Reloading...';
+                                statusEl.style.color = 'green';
+
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 1500);
+
+                            } catch (err) {
+                                console.error(err);
+                                statusEl.textContent = 'Failed to save: ' + (err.message || 'Unknown error');
+                                statusEl.style.color = 'red';
+                                saveBtn.disabled = false;
+                                saveBtn.textContent = 'Save Client Selection';
+                            }
+                        });
                     }
-                    // If underwriter status exists (already submitted), disable the controls and mark as submitted
-                    if (underwriterStatus) {
-                        if (underwriterBranchSelect) underwriterBranchSelect.disabled = true;
-                        if (underwriterCommentEl) underwriterCommentEl.disabled = true;
-                        const approveCheckbox = container.querySelector('#underwriter-approve');
-                        if (approveCheckbox) approveCheckbox.disabled = true;
-                        if (saveUnderwriterBtn) {
+
+                    const saveUnderwriterBtn = container.querySelector('#save-underwriter-decision');
+                    const underwriterStatusEl = container.querySelector('#underwriter-decision-status');
+                    const underwriterCommentEl = container.querySelector('#underwriter-comment');
+                    const underwriterBranchSelect = container.querySelector('#underwriter-branch');
+                    const underwriterBranchStatus = container.querySelector('#underwriter-branch-status');
+
+                    if (saveUnderwriterBtn) {
+                        saveUnderwriterBtn.addEventListener('click', async () => {
+                            const approveCheckbox = container.querySelector('#underwriter-approve');
+                            const comment = (underwriterCommentEl?.value || '').trim();
+                            const branch = (underwriterBranchSelect?.value || '').trim();
+
+                            if (!comment) {
+                                underwriterStatusEl.textContent = 'Please provide notes for the underwriter.';
+                                underwriterStatusEl.style.color = 'red';
+                                return;
+                            }
+
+                            if (!branch) {
+                                if (underwriterBranchStatus) underwriterBranchStatus.style.display = 'inline';
+                                underwriterStatusEl.textContent = 'Please select an underwriting branch.';
+                                underwriterStatusEl.style.color = 'red';
+                                return;
+                            } else {
+                                if (underwriterBranchStatus) underwriterBranchStatus.style.display = 'none';
+                            }
+
+                            const decision = approveCheckbox.checked ? 'uw_approved' : null;
+
+                            if (!decision) {
+                                underwriterStatusEl.textContent = 'Please check the checkbox to submit to underwriter.';
+                                underwriterStatusEl.style.color = 'red';
+                                return;
+                            }
+
                             saveUnderwriterBtn.disabled = true;
-                            saveUnderwriterBtn.textContent = 'Submitted';
-                        }
+                            saveUnderwriterBtn.textContent = 'Submitting...';
+                            underwriterStatusEl.textContent = '';
+
+                            try {
+                                const resp = await fetch('/api/agent/update_status', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown')
+                                    },
+                                    body: JSON.stringify({
+                                        unique_id: uniqueId,
+                                        actor: 'underwriter',
+                                        status: decision,
+                                        comment: comment,
+                                        underwriter_branch: branch,
+                                    })
+                                });
+
+                                if (!resp.ok) {
+                                    const errorText = await resp.text().catch(() => '');
+                                    throw new Error(errorText || 'Submission failed');
+                                }
+
+                                underwriterStatusEl.textContent = 'Submitted successfully! Reloading...';
+                                underwriterStatusEl.style.color = 'green';
+
+                                // Immediately reflect submitted state: lock UI to show branch and controls disabled
+                                try {
+                                    if (underwriterBranchSelect) underwriterBranchSelect.disabled = true;
+                                    if (underwriterCommentEl) underwriterCommentEl.disabled = true;
+                                    const approveCheckbox = container.querySelector('#underwriter-approve');
+                                    if (approveCheckbox) approveCheckbox.disabled = true;
+                                    saveUnderwriterBtn.textContent = 'Submitted';
+                                    saveUnderwriterBtn.disabled = true;
+                                } catch (e) { }
+
+                                setTimeout(() => {
+                                    window.location.reload();
+                                });
+
+                            } catch (err) {
+                                console.error(err);
+                                underwriterStatusEl.textContent = 'Failed to submit: ' + (err.message || 'Unknown error');
+                                underwriterStatusEl.style.color = 'red';
+                                saveUnderwriterBtn.disabled = false;
+                                saveUnderwriterBtn.textContent = 'Submit';
+                            }
+                        });
                     }
-                } catch (e) {}
-
-                const policyDecisionSelect = container.querySelector('#policy-decision-select');
-                if (policyDecisionSelect) {
-                    policyDecisionSelect.addEventListener('change', async function() {
-                        const decision = policyDecisionSelect.value;
-                        await handlePolicyDecision(uniqueId, decision);
-                    });
-                }
-
-                // Add the event listener for the view policy summary button
-                const viewSummaryBtn = container.querySelector('#view-policy-summary-btn');
-                if (viewSummaryBtn) {
-                    viewSummaryBtn.addEventListener('click', function() {
-                        if (!uniqueId) {
-                            alert('No Unique ID found. Please load an application first.');
-                            return;
+                    // Preselect Underwriter Branch if provided in submission data
+                    try {
+                        if (underwriterBranchSelect && submissionData.underwriter_branch) {
+                            const desired = String(submissionData.underwriter_branch || '').trim().toLowerCase();
+                            let setVal = '';
+                            for (const opt of underwriterBranchSelect.options) {
+                                if (String(opt.value || '').trim().toLowerCase() === desired) { setVal = opt.value; break; }
+                            }
+                            if (setVal) underwriterBranchSelect.value = setVal;
                         }
-                        window.location.href = `/html/Policy_Creation.html?uid=${encodeURIComponent(uniqueId)}&view=summary`;
-                    });
+                        // If underwriter status exists (already submitted), disable the controls and mark as submitted
+                        if (underwriterStatus) {
+                            if (underwriterBranchSelect) underwriterBranchSelect.disabled = true;
+                            if (underwriterCommentEl) underwriterCommentEl.disabled = true;
+                            const approveCheckbox = container.querySelector('#underwriter-approve');
+                            if (approveCheckbox) approveCheckbox.disabled = true;
+                            if (saveUnderwriterBtn) {
+                                saveUnderwriterBtn.disabled = true;
+                                saveUnderwriterBtn.textContent = 'Submitted';
+                            }
+                        }
+                    } catch (e) { }
+
+                    const policyDecisionSelect = container.querySelector('#policy-decision-select');
+                    if (policyDecisionSelect) {
+                        policyDecisionSelect.addEventListener('change', async function () {
+                            const decision = policyDecisionSelect.value;
+                            await handlePolicyDecision(uniqueId, decision);
+                        });
+                    }
+
+                    // Add the event listener for the view policy summary button
+                    const viewSummaryBtn = container.querySelector('#view-policy-summary-btn');
+                    if (viewSummaryBtn) {
+                        viewSummaryBtn.addEventListener('click', function () {
+                            if (!uniqueId) {
+                                alert('No Unique ID found. Please load an application first.');
+                                return;
+                            }
+                            window.location.href = `/html/Policy_Creation.html?uid=${encodeURIComponent(uniqueId)}&view=summary`;
+                        });
+                    }
+
+                } catch (err) {
+                    console.error('Error rendering plans tab:', err);
+                    container.innerHTML = '<p style="color: red;">Failed to load plans. Please try again.</p>';
                 }
 
-            } catch (err) {
-                console.error('Error rendering plans tab:', err);
-                container.innerHTML = '<p style="color: red;">Failed to load plans. Please try again.</p>';
-            }
+            };
 
-        };
+            /**
+             * Handles the final policy decision (Created/Denied).
+             * @param {string} uniqueId - The unique ID of the application.
+             * @param {string} decision - 'policy_created' or 'policy_denied'.
+             */
+            async function handlePolicyDecision(uniqueId, decision) {
+                const statusEl = document.getElementById('policy-decision-status');
+                const selectEl = document.getElementById('policy-decision-select');
+                const userRole = localStorage.getItem('userRole');
+                if (!uniqueId || !decision) return;
 
-        /**
-         * Handles the final policy decision (Created/Denied).
-         * @param {string} uniqueId - The unique ID of the application.
-         * @param {string} decision - 'policy_created' or 'policy_denied'.
-         */
-        async function handlePolicyDecision(uniqueId, decision) {
-            const statusEl = document.getElementById('policy-decision-status');
-            const selectEl = document.getElementById('policy-decision-select');
-            const userRole = localStorage.getItem('userRole');
-            if (!uniqueId || !decision) return;
-
-            if (decision === 'policy_created') {
-                // Policy Created option: Navigate to the policy creation page
-                window.location.href = `/html/Policy_Creation.html?uid=${encodeURIComponent(uniqueId)}`;
-                return;
-            }
-
-            if (decision === 'policy_denied') {
-                // Policy Denied option: Update status and reload
-                if (!confirm("Are you sure you want to mark this application as Policy Denied? This action cannot be undone.")) {
-                    selectEl.value = ''; // Reset dropdown
+                if (decision === 'policy_created') {
+                    // Policy Created option: Navigate to the policy creation page
+                    window.location.href = `/html/Policy_Creation.html?uid=${encodeURIComponent(uniqueId)}`;
                     return;
                 }
 
-                if (selectEl) {
-                    selectEl.disabled = true;
-                }
-                statusEl.textContent = 'Processing denial...';
-                statusEl.style.color = 'orange';
-
-                try {
-                    const resp = await fetch('/api/agent/update_status', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown')
-                        },
-                        body: JSON.stringify({
-                            unique_id: uniqueId,
-                            actor: 'underwriter',
-                            status: 'Policy_Denied', // Matches the desired final status
-                            comment: 'Application denied at the final policy stage.',
-                            application_status: 'Policy_Denied' // Ensure canonical status is set
-                        })
-                    });
-
-                    if (!resp.ok) {
-                        const errorText = await resp.text().catch(() => '');
-                        throw new Error(errorText || 'Denial update failed');
+                if (decision === 'policy_denied') {
+                    // Policy Denied option: Update status and reload
+                    if (!confirm("Are you sure you want to mark this application as Policy Denied? This action cannot be undone.")) {
+                        selectEl.value = ''; // Reset dropdown
+                        return;
                     }
 
-                    statusEl.textContent = 'Policy Denied status set. Reloading...';
-                    statusEl.style.color = 'green';
-                    
-                    // Reload the page to reflect the new status and lock the form
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
+                    if (selectEl) {
+                        selectEl.disabled = true;
+                    }
+                    statusEl.textContent = 'Processing denial...';
+                    statusEl.style.color = 'orange';
 
-                } catch (err) {
-                    console.error(err);
-                    statusEl.textContent = 'Failed to set denial status: ' + (err.message || 'Unknown error');
-                    statusEl.style.color = 'red';
-                    if (selectEl) selectEl.disabled = false;
-                    selectEl.value = ''; // Reset dropdown
+                    try {
+                        const resp = await fetch('/api/agent/update_status', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-User-Id': (localStorage.getItem('loggedInUserId') || 'Unknown')
+                            },
+                            body: JSON.stringify({
+                                unique_id: uniqueId,
+                                actor: 'underwriter',
+                                status: 'Policy_Denied', // Matches the desired final status
+                                comment: 'Application denied at the final policy stage.',
+                                application_status: 'Policy_Denied' // Ensure canonical status is set
+                            })
+                        });
+
+                        if (!resp.ok) {
+                            const errorText = await resp.text().catch(() => '');
+                            throw new Error(errorText || 'Denial update failed');
+                        }
+
+                        statusEl.textContent = 'Policy Denied status set. Reloading...';
+                        statusEl.style.color = 'green';
+
+                        // Reload the page to reflect the new status and lock the form
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+
+                    } catch (err) {
+                        console.error(err);
+                        statusEl.textContent = 'Failed to set denial status: ' + (err.message || 'Unknown error');
+                        statusEl.style.color = 'red';
+                        if (selectEl) selectEl.disabled = false;
+                        selectEl.value = ''; // Reset dropdown
+                    }
                 }
             }
-        }
         });
     </script>
 </body>
+
 </html>

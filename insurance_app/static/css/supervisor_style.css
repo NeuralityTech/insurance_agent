@@ -86,7 +86,7 @@ body {
     background-color: var(--bg-white, #ffffff);
     padding: 1.75rem;
     border-radius: 12px;
-    box-shadow: var(--shadow-sm, 0 2px 4px rgba(0,0,0,0.08));
+    box-shadow: var(--shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.08));
     border: none;
     margin-bottom: 2rem;
 }
@@ -125,12 +125,13 @@ body {
     background-color: var(--bg-white, #ffffff);
     padding: 1rem;
     border-radius: 10px;
-    box-shadow: var(--shadow-sm, 0 2px 4px rgba(0,0,0,0.08));
+    box-shadow: var(--shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.08));
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
-    border: none;   /* no left stripe, no border */
+    border: none;
+    /* no left stripe, no border */
     transition: var(--transition, all 0.3s ease);
     cursor: default;
 }
@@ -377,7 +378,7 @@ legend {
     overflow: hidden;
 }
 
-.accordion-item + .accordion-item {
+.accordion-item+.accordion-item {
     border-top: 1px solid #e5e7eb;
 }
 
@@ -417,8 +418,15 @@ legend {
     background-color: #ffffff;
 }
 
-.accordion-content > * {
+.accordion-header.active+.accordion-content {
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+.accordion-content>* {
     padding: 0.75rem 1rem 1rem;
+    min-width: 0;
+    overflow: hidden;
 }
 
 /* ==================================
@@ -547,6 +555,25 @@ legend {
    RESPONSIVE
    ================================== */
 
+/* Plan row and section styling for proper grid overflow */
+#supervisor-selected-inputs-host>div,
+#agent-selected-inputs-host>div {
+    min-width: 0;
+    overflow: hidden;
+}
+
+#supervisor-selected-inputs-host>div>div,
+#agent-selected-inputs-host>div>div {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.sup-plan-row,
+.agent-plan-row {
+    min-width: 0 !important;
+    overflow: visible;
+}
+
 @media (max-width: 1024px) {
     .dashboard-stats .stats-container {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -556,7 +583,8 @@ legend {
 @media (max-width: 768px) {
     .main-content {
         padding: 1.25rem;
-        padding-top: 3.5rem; /* extra space for mobile menu button from sidebar.css */
+        padding-top: 3.5rem;
+        /* extra space for mobile menu button from sidebar.css */
     }
 
     .dashboard-stats .stats-container {

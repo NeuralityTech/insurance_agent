@@ -12,6 +12,29 @@ from ..analysis.query_fetcher import generate, clean_and_parse
 
 analysis_bp = Blueprint('analysis_bp', __name__)
 
+@analysis_bp.route('/api/plans/all', methods=['GET'])
+def get_all_plans():
+    """Fetch all unique active plan names from the database."""
+    try:
+        derived_conn = get_derived_db_connection()
+        # Fetch distinct plan names
+        query = "SELECT DISTINCT `Plan_Name` FROM features ORDER BY `Plan_Name` ASC"
+        plans_df = pd.read_sql_query(query, derived_conn)
+        derived_conn.close()
+        
+        # Convert to list
+        if not plans_df.empty:
+             # Handle case where column might be named 'Plan Name' or 'Plan_Name' depending on schema version
+            col = 'Plan_Name' if 'Plan_Name' in plans_df.columns else 'Plan Name'
+            plans_list = plans_df[col].dropna().tolist()
+            return jsonify({'plans': plans_list}), 200
+        else:
+            return jsonify({'plans': []}), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error fetching all plans: {e}")
+        return jsonify({'error': 'Failed to fetch plans'}), 500
+
 def _clean_nan(data):
     """Recursively converts NaN values in a nested data structure to None.
     Retained for backward compatibility with modules that import this helper.

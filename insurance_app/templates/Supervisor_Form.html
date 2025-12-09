@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,8 +12,7 @@
     <link rel="stylesheet" href="../css/supervisor_style.css">
 
     <!-- Font Awesome -->
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <script defer src="{{ url_for('static', filename='js/plan_selection_summary_v2.js') }}"></script>
 </head>
@@ -81,8 +81,7 @@
 
                     <div id="sup-selected-summary" style="display:none;"></div>
 
-                    <textarea id="decision-comments"
-                              placeholder="Enter your notes..."></textarea>
+                    <textarea id="decision-comments" placeholder="Enter your notes..."></textarea>
 
                     <div class="modal-actions">
                         <button id="decision-cancel" class="btn btn-secondary">
@@ -131,19 +130,19 @@
 
         function buildSummaryHTML(summaryData = {}) {
             let html = '';
-            
+
             // Check if data is already structured (has expected keys) or is flat
-            const isStructured = summaryData.primaryContact || summaryData.healthHistory || 
-                                 summaryData.coverAndCost || summaryData.existingCoverage || 
-                                 summaryData.claimsAndService || summaryData.financeAndDocumentation;
-            
+            const isStructured = summaryData.primaryContact || summaryData.healthHistory ||
+                summaryData.coverAndCost || summaryData.existingCoverage ||
+                summaryData.claimsAndService || summaryData.financeAndDocumentation;
+
             let displayData = summaryData;
-            
+
             // If data is flat, convert it to structured format
             if (!isStructured && Object.keys(summaryData).length > 0) {
                 displayData = convertFlatToStructured(summaryData);
             }
-            
+
             if (displayData.primaryContact && Object.keys(displayData.primaryContact).length > 0) {
                 html += buildSection('Primary Contact', displayData.primaryContact);
             }
@@ -197,7 +196,7 @@
             }
             return html;
         }
-        
+
         /**
          * Convert flat form data to structured format for display
          * This handles data submitted from forms that store flat key-value pairs
@@ -213,21 +212,21 @@
                 financeAndDocumentation: {},
                 otherNotes: {}
             };
-            
+
             // Define field mappings
             const primaryContactFields = [
                 'unique_id', 'applicant_name', 'gender', 'email', 'phone', 'address',
                 'self-dob', 'self-height', 'self-weight', 'self-age', 'self_dob', 'self_height', 'self_weight', 'self_age',
                 'occupation', 'city', 'hubs', 'pincode', 'state', 'country', 'mobile', 'alternate_phone'
             ];
-            
+
             const coverAndCostFields = [
                 'policy-type', 'policy_type', 'sum-insured', 'sum_insured', 'annual-budget', 'annual_budget',
                 'payment-mode', 'payment_mode', 'room-preference', 'room_preference', 'co-pay', 'co_pay',
-                'ncb-importance', 'ncb_importance', 'maternity-cover', 'maternity_cover', 
+                'ncb-importance', 'ncb_importance', 'maternity-cover', 'maternity_cover',
                 'opd-cover', 'opd_cover', 'top-up', 'top_up', 'deductible', 'premium_budget'
             ];
-            
+
             const existingCoverageFields = [
                 'existing-policies', 'existing_policies', 'port-policy', 'port_policy',
                 'critical-illness', 'critical_illness', 'worldwide-cover', 'worldwide_cover',
@@ -235,43 +234,43 @@
                 'existing-policy-number', 'existing_policy_number', 'existing-sum-insured', 'existing_sum_insured',
                 'policy-since-date', 'policy_since_date', 'portability', 'current_insurer'
             ];
-            
+
             const claimsAndServiceFields = [
-                'past-claims', 'past_claims', 'claim-issues', 'claim_issues', 
+                'past-claims', 'past_claims', 'claim-issues', 'claim_issues',
                 'service-expectations', 'service_expectations', 'network-hospitals', 'network_hospitals',
                 'network-hospital-1st', 'network_hospital_1st', 'network-hospital-2nd', 'network_hospital_2nd',
                 'network-hospital-3rd', 'network_hospital_3rd', 'preferred_hospitals', 'claim_history'
             ];
-            
+
             const financeFields = [
                 'tax-benefit', 'tax_benefit', 'address_proof_details', 'gst-number', 'gst_number',
                 'pan_number', 'aadhar_number', 'bank_details', 'payment_method'
             ];
-            
+
             // Process each field
             Object.keys(flatData).forEach(key => {
                 const value = flatData[key];
-                
+
                 // Skip null, undefined, empty values and internal fields
                 if (value === null || value === undefined || value === '') return;
                 if (key === 'unique_id' && structured.primaryContact['unique_id']) return;
-                
+
                 // Check for members array (already structured)
                 if (key === 'members' && Array.isArray(value)) {
                     structured.members = value;
                     return;
                 }
-                
+
                 // Map to appropriate section
                 if (primaryContactFields.includes(key)) {
                     structured.primaryContact[key] = value;
                 }
                 else if (key.startsWith('medical-') || key.startsWith('medical_') ||
-                         key.startsWith('disease-') || key.startsWith('disease_') ||
-                         key === 'self-details' || key === 'self_details' ||
-                         key === 'disease' || key.endsWith('_details') || 
-                         key.endsWith('_start_date') || key.endsWith('_since_year') || 
-                         key.endsWith('_since_years') || key.includes('health')) {
+                    key.startsWith('disease-') || key.startsWith('disease_') ||
+                    key === 'self-details' || key === 'self_details' ||
+                    key === 'disease' || key.endsWith('_details') ||
+                    key.endsWith('_start_date') || key.endsWith('_since_year') ||
+                    key.endsWith('_since_years') || key.includes('health')) {
                     structured.healthHistory[key] = value;
                 }
                 else if (coverAndCostFields.includes(key)) {
@@ -291,7 +290,7 @@
                     structured.otherNotes[key] = value;
                 }
             });
-            
+
             return structured;
         }
 
@@ -357,6 +356,18 @@
                             <div id="selection-summary-matrix"></div>
                         </div>
                     </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header">Agent Selected Terms</button>
+                        <div class="accordion-content">
+                            <div id="agent-selected-inputs-host"></div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header">Supervisor Approved Terms</button>
+                        <div class="accordion-content">
+                            <div id="supervisor-selected-inputs-host"></div>
+                        </div>
+                    </div>
                 </div>
             `;
 
@@ -371,11 +382,11 @@
                         try {
                             const parsed = JSON.parse(data.plans_chosen);
                             if (Array.isArray(parsed)) agentChosen = parsed;
-                        } catch {}
+                        } catch { }
                     }
                     window._agentSelected = agentChosen;
-                } catch {}
-            } catch(e) {}
+                } catch { }
+            } catch (e) { }
 
             const accordionHeaders = document.querySelectorAll('.accordion-header');
             accordionHeaders.forEach(header => {
@@ -393,14 +404,14 @@
                                 window._renderSupSummary();
                             }
                         }
-                    } catch(e) {}
+                    } catch (e) { }
                 });
             });
 
             try {
                 const host = document.getElementById('selection-summary-matrix');
                 if (host) {
-                    window._renderSupSummary = async function(uidParam){
+                    window._renderSupSummary = async function (uidParam) {
                         const uid = uidParam || (document.getElementById('client-uniqueid-search')?.value || '').trim() || '';
                         if (!uid) return;
                         try {
@@ -417,7 +428,7 @@
                                         });
                                         r = await fetch(`/plan_summary/${encodeURIComponent(uid)}`);
                                     }
-                                } catch(e) {}
+                                } catch (e) { }
                             }
                             if (!r.ok) throw new Error('load failed');
                             ps = await r.json();
@@ -427,17 +438,17 @@
 
                             // keep server-side cache in sync
                             if (Object.keys(fresh).length) {
-                            fetch(`/plan_summary/${encodeURIComponent(uid)}/init_or_update`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ proposed: fresh })
-                            }).catch(() => {});
+                                fetch(`/plan_summary/${encodeURIComponent(uid)}/init_or_update`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ proposed: fresh })
+                                }).catch(() => { });
                             }
                             try {
                                 if (proposed && proposed.comprehensive_cover) {
                                     if (!proposed.comprehensive_cover.name) proposed.comprehensive_cover.name = 'Family';
                                 }
-                            } catch {}
+                            } catch { }
                             let agentSel = new Set(Array.isArray(ps.agent_selected) ? ps.agent_selected : (Array.isArray(ps.agent_selected_plans) ? ps.agent_selected_plans : []));
                             if (agentSel.size === 0 && Array.isArray(window._agentSelected)) {
                                 agentSel = new Set(window._agentSelected);
@@ -460,7 +471,7 @@
                                             proposed = fallback;
                                         }
                                     }
-                                } catch {}
+                                } catch { }
                             }
                             window.renderPlanSelectionSummary(host, {
                                 proposed,
@@ -475,23 +486,595 @@
                                             headers: { 'Content-Type': 'application/json' },
                                             body: JSON.stringify({ supervisor_selected: Array.from(supSel) })
                                         });
-                                    } catch {}
+                                    } catch { }
                                     try {
                                         const modal = document.getElementById('decision-modal');
-                                        if (modal && modal.style.display === 'flex' && typeof buildSupervisorSelectionSummary === 'function'){
+                                        if (modal && modal.style.display === 'flex' && typeof buildSupervisorSelectionSummary === 'function') {
                                             const box = document.getElementById('sup-selected-summary');
                                             if (box) box.innerHTML = buildSupervisorSelectionSummary();
                                         }
-                                    } catch {}
+                                    } catch { }
                                 }
                             });
-                            try { window._proposedPlans = proposed; } catch(e) {}
+                            try { window._proposedPlans = proposed; } catch (e) { }
+                            // Render Agent Selected Inputs (readonly)
+                            try {
+                                const agentHost = document.getElementById('agent-selected-inputs-host');
+                                if (agentHost) {
+                                    renderAgentSelectedInputs(agentHost, uid);
+                                }
+                            } catch (e) { console.warn('Could not render agent inputs:', e); }
+
+                            // Render Supervisor Selected Inputs (editable)
+                            // CRITICAL: Delay this to ensure matrix is fully rendered first
+                            try {
+                                const supHost = document.getElementById('supervisor-selected-inputs-host');
+                                if (supHost) {
+                                    // Defer execution to allow matrix rendering to complete
+                                    setTimeout(() => {
+                                        renderSupervisorSelectedInputs(supHost, uid);
+                                    }, 100);
+                                }
+                            } catch (e) { console.warn('Could not render supervisor inputs:', e); }
                         } catch (e) {
                             host.innerHTML = '<div style="padding:8px; color:#b91c1c;">Unable to load plan summary.</div>';
                         }
                     }
                 }
             } catch (e) { console.error(e); }
+        }
+
+        async function renderAgentSelectedInputs(host, uid) {
+            try {
+                // Fetch submission data
+                let submissionData = {};
+                try {
+                    const r = await fetch(`/api/agent/submission/${encodeURIComponent(uid)}`);
+                    if (r.ok) {
+                        submissionData = await r.json();
+                    }
+                } catch (e) {
+                    console.warn('Could not fetch submission:', e);
+                }
+
+                console.log('DEBUG renderAgentSelectedInputs - submissionData:', JSON.stringify(submissionData, null, 2));
+
+                // Get agent selected plans from submissionData.plans_chosen
+                let agentSelectedPlans = submissionData.plans_chosen || [];
+
+                // If it's a string, parse it
+                if (typeof agentSelectedPlans === 'string') {
+                    try {
+                        agentSelectedPlans = JSON.parse(agentSelectedPlans);
+                    } catch (e) {
+                        agentSelectedPlans = [];
+                    }
+                }
+
+                // Ensure it's an array
+                if (!Array.isArray(agentSelectedPlans)) {
+                    agentSelectedPlans = [];
+                }
+
+                console.log('DEBUG renderAgentSelectedInputs - agentSelectedPlans:', agentSelectedPlans);
+
+                // Parse form_summary to get plan_meta if available
+                let formSummary = {};
+                if (typeof submissionData.form_summary === 'string') {
+                    try {
+                        formSummary = JSON.parse(submissionData.form_summary);
+                    } catch (e) {
+                        console.warn('Could not parse form_summary:', e);
+                    }
+                } else if (typeof submissionData.form_summary === 'object') {
+                    formSummary = submissionData.form_summary;
+                }
+
+                const planMeta = formSummary.plan_meta || {};
+                console.log('DEBUG planMeta:', JSON.stringify(planMeta, null, 2));
+
+                // Fetch proposed structure to determine memberName for plans not in metadata
+                let proposed = {};
+                try {
+                    const planSummaryResp = await fetch(`/plan_summary/${encodeURIComponent(uid)}`);
+                    if (planSummaryResp.ok) {
+                        const planSummaryData = await planSummaryResp.json();
+                        proposed = planSummaryData.proposed || {};
+                        console.log('DEBUG renderAgentSelectedInputs - proposed structure:', JSON.stringify(proposed, null, 2));
+                    }
+                } catch (e) {
+                    console.warn('Could not load proposed structure:', e);
+                }
+
+                // Separate comprehensive and individual plans
+                const comprehensivePlans = [];
+                const individualPlans = [];
+
+                agentSelectedPlans.forEach(planName => {
+                    const meta = planMeta[planName] || {};
+                    const agentInputs = meta.agent || {};
+
+                    // Trim the plan name to avoid whitespace issues
+                    const trimmedPlanName = String(planName || '').trim();
+
+                    console.log(`DEBUG: Processing plan "${trimmedPlanName}":`, JSON.stringify(agentInputs));
+
+                    // Try to get memberName from:
+                    // 1. Agent metadata
+                    // 2. Proposed structure (find which member has this plan)
+                    let memberName = agentInputs.memberName || '';
+
+                    if (!memberName) {
+                        // Search in proposed structure for which member has this plan
+                        console.log(`DEBUG: Searching for plan "${trimmedPlanName}" in proposed structure`);
+                        for (const key in proposed) {
+                            // SKIP comprehensive_cover - those are family/comprehensive plans
+                            if (key === 'comprehensive_cover') {
+                                console.log(`DEBUG: Skipping comprehensive_cover section`);
+                                continue;
+                            }
+
+                            const member = proposed[key];
+                            if (member && member.plans && Array.isArray(member.plans)) {
+                                console.log(`DEBUG: Checking member "${key}" with plans:`, member.plans);
+                                // Try exact match first, then trim if needed
+                                const foundExact = member.plans.includes(trimmedPlanName);
+                                const foundTrimmed = !foundExact && member.plans.some(p => String(p).trim() === trimmedPlanName);
+
+                                if (foundExact || foundTrimmed) {
+                                    // Found the member, use their name
+                                    memberName = member.name || key;
+                                    console.log(`DEBUG: Found "${trimmedPlanName}" in member "${key}", memberName="${memberName}"`);
+                                    break;
+                                }
+                            }
+                        }
+                        if (!memberName) {
+                            console.log(`DEBUG: Plan "${trimmedPlanName}" not found in proposed structure`);
+                        }
+                    }
+
+                    // Check if it's individual (has memberName)
+                    if (memberName && String(memberName).trim()) {
+                        individualPlans.push({
+                            planName: trimmedPlanName,
+                            premium: agentInputs.premium || '',
+                            sumInsured: agentInputs.sum_insured || '',
+                            policyTerm: agentInputs.policy_term || '',
+                            memberName: memberName
+                        });
+                    } else {
+                        comprehensivePlans.push({
+                            planName: trimmedPlanName,
+                            premium: agentInputs.premium || '',
+                            sumInsured: agentInputs.sum_insured || '',
+                            policyTerm: agentInputs.policy_term || ''
+                        });
+                    }
+                });
+
+                console.log('DEBUG comprehensivePlans:', JSON.stringify(comprehensivePlans));
+                console.log('DEBUG individualPlans:', JSON.stringify(individualPlans));
+
+                let html = '';
+
+                // Comprehensive (Family) Plans - using exact same styling as Analysis_Dashboard
+                if (comprehensivePlans.length > 0) {
+                    html += '<div style="margin: 16px 0; min-width: 0; overflow: hidden;">';
+                    html += '<h4 style="margin: 8px 0; font-size: 0.95rem; letter-spacing: 0.2px; font-weight: 700; color: #2c3e50; background-color: #cff9ff; padding: 10px 15px; border-radius: 6px; display: inline-block;">Comprehensive Selected Plans</h4>';
+                    html += '<div style="display: grid; grid-template-columns: 1fr 100px 120px 120px; column-gap: 16px; align-items: center; padding: 10px 6px; font-weight: 600; border-bottom: 1px solid #e2e6ea; background: transparent; margin-bottom: 8px; min-width: 0;">';
+                    html += '<div style="min-width: 0; overflow: hidden;">Plans</div><div>Premium</div><div>Sum Insured</div><div>Policy Term</div></div>';
+
+                    comprehensivePlans.forEach(plan => {
+                        html += `<div style="padding: 10px 6px; border-radius: 6px; background: #fff; margin-bottom: 8px; display: grid; grid-template-columns: 1fr 100px 120px 120px; column-gap: 16px; align-items: center; border: 1px solid #eee; min-width: 0;">
+                            <div style="font-weight: 400; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(plan.planName)}">${escapeHtml(plan.planName)}</div>
+                            <input type="text" placeholder="Premium" value="${escapeHtml(plan.premium)}" readonly style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; box-sizing: border-box; background: #f5f7f8; color: #666;">
+                            <input type="text" placeholder="Sum Insured" value="${escapeHtml(plan.sumInsured)}" readonly style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; box-sizing: border-box; background: #f5f7f8; color: #666;">
+                            <select disabled style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; background: #f5f7f8; color: #666;">
+                                <option selected>${escapeHtml(plan.policyTerm || 'N/A')}</option>
+                            </select>
+                        </div>`;
+                    });
+                    html += '</div>';
+                }
+
+                // Individual Plans - using exact same styling as Analysis_Dashboard
+                if (individualPlans.length > 0) {
+                    html += '<div style="margin: 16px 0; min-width: 0; overflow: hidden;">';
+                    html += '<h4 style="margin: 8px 0; font-size: 0.95rem; letter-spacing: 0.2px; font-weight: 700; color: #2c3e50; background-color: #cff9ff; padding: 10px 15px; border-radius: 6px; display: inline-block;">Individual Selected Plans</h4>';
+                    html += '<div style="display: grid; grid-template-columns: 1fr 100px 120px 120px; column-gap: 16px; align-items: center; padding: 10px 6px; font-weight: 600; border-bottom: 1px solid #e2e6ea; background: transparent; margin-bottom: 8px; min-width: 0;">';
+                    html += '<div style="min-width: 0; overflow: hidden;">Plans</div><div>Premium</div><div>Sum Insured</div><div>Policy Term</div></div>';
+
+                    individualPlans.forEach(plan => {
+                        const memberPlanLabel = (plan.memberName ? (plan.memberName + ' — ') : '') + plan.planName;
+                        html += `<div style="padding: 10px 6px; border-radius: 6px; background: #fff; margin-bottom: 8px; display: grid; grid-template-columns: 1fr 100px 120px 120px; column-gap: 16px; align-items: center; border: 1px solid #eee; min-width: 0;">
+                            <div style="font-weight: 400; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(memberPlanLabel)}">${escapeHtml(memberPlanLabel)}</div>
+                            <input type="text" placeholder="Premium" value="${escapeHtml(plan.premium)}" readonly style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; box-sizing: border-box; background: #f5f7f8; color: #666;">
+                            <input type="text" placeholder="Sum Insured" value="${escapeHtml(plan.sumInsured)}" readonly style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; box-sizing: border-box; background: #f5f7f8; color: #666;">
+                            <select disabled style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; background: #f5f7f8; color: #666;">
+                                <option selected>${escapeHtml(plan.policyTerm || 'N/A')}</option>
+                            </select>
+                        </div>`;
+                    });
+                    html += '</div>';
+                }
+
+                if (comprehensivePlans.length === 0 && individualPlans.length === 0) {
+                    html = '<p style="color: #888; font-style: italic;">The agent has not selected any plans yet. Once the agent selects plans and completes the submission from the Analysis Dashboard, they will appear here.</p>';
+                }
+
+                host.innerHTML = html;
+            } catch (e) {
+                host.innerHTML = '<p style="color: #b91c1c;">Error loading agent inputs.</p>';
+                console.error(e);
+            }
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text || '').replace(/[&<>"']/g, m => map[m]);
+        }
+
+        async function renderSupervisorSelectedInputs(host, uid) {
+            try {
+                // Fetch submission data to get agent's selected plans and values
+                let submissionData = {};
+                try {
+                    const r = await fetch(`/api/agent/submission/${encodeURIComponent(uid)}`);
+                    if (r.ok) {
+                        submissionData = await r.json();
+                    }
+                } catch (e) {
+                    console.warn('Could not fetch submission:', e);
+                }
+
+                // Parse form_summary to get plan_meta
+                let formSummary = {};
+                if (typeof submissionData.form_summary === 'string') {
+                    try {
+                        formSummary = JSON.parse(submissionData.form_summary);
+                    } catch (e) {
+                        console.warn('Could not parse form_summary:', e);
+                    }
+                } else if (typeof submissionData.form_summary === 'object') {
+                    formSummary = submissionData.form_summary;
+                }
+
+                const planMeta = formSummary.plan_meta || {};
+
+                // CRITICAL: Get supervisor selected plans from the backend, NOT from checkboxes
+                let supSelectedPlans = [];
+                try {
+                    const planSummaryResp = await fetch(`/plan_summary/${encodeURIComponent(uid)}`);
+                    if (planSummaryResp.ok) {
+                        const planSummaryData = await planSummaryResp.json();
+                        supSelectedPlans = planSummaryData.supervisor_selected || [];
+                        console.log('DEBUG: Loaded supervisor_selected from backend:', supSelectedPlans);
+                    }
+                } catch (e) {
+                    console.warn('Could not load supervisor selected plans from backend:', e);
+                }
+
+                // Load supervisor metadata if available (saved supervisor values)
+                let supervisorMetadata = {};
+                try {
+                    const metaResp = await fetch(`/supervisor_plan_metadata/${encodeURIComponent(uid)}`);
+                    if (metaResp.ok) {
+                        const metaData = await metaResp.json();
+                        supervisorMetadata = metaData.supervisor_meta || {};
+                        console.log('DEBUG: Loaded supervisorMetadata from /supervisor_plan_metadata:', supervisorMetadata);
+                    }
+                } catch (e) { console.warn('Could not load supervisor metadata:', e); }
+
+                // Fetch proposed structure to determine memberName for plans
+                let proposed = {};
+                try {
+                    const planSummaryResp = await fetch(`/plan_summary/${encodeURIComponent(uid)}`);
+                    if (planSummaryResp.ok) {
+                        const planSummaryData = await planSummaryResp.json();
+                        proposed = planSummaryData.proposed || {};
+                        console.log('DEBUG renderSupervisorSelectedInputs - proposed structure:', JSON.stringify(proposed, null, 2));
+                    } else {
+                        console.error('Failed to load proposed structure, status:', planSummaryResp.status);
+                    }
+                } catch (e) {
+                    console.error('ERROR loading proposed structure:', e);
+                }
+
+                // CRITICAL: If proposed is empty, try to find it in window or data
+                if (!proposed || Object.keys(proposed).length === 0) {
+                    console.error('CRITICAL: proposed structure is EMPTY! Cannot determine memberName');
+                    proposed = {};
+                }
+
+                // Separate supervisor selected plans into comprehensive and individual
+                const comprehensivePlans = [];
+                const individualPlans = [];
+
+                supSelectedPlans.forEach(planName => {
+                    const trimmedPlanName = String(planName || '').trim();
+
+                    // Try to find metadata entry - try exact match first, then trimmed versions
+                    let meta = planMeta[trimmedPlanName] || planMeta[planName];
+                    if (!meta) {
+                        // Try to find by trimming all keys
+                        for (const key in planMeta) {
+                            if (String(key).trim() === trimmedPlanName) {
+                                meta = planMeta[key];
+                                console.log(`  - Found metadata via trimmed key match: "${key}" -> "${trimmedPlanName}"`);
+                                break;
+                            }
+                        }
+                    }
+                    meta = meta || {};
+
+                    const agentInputs = meta.agent || {};
+                    const supervisorInputs = supervisorMetadata[planName] || meta.supervisor || {};
+
+                    console.log(`DEBUG supervisorInputs: Processing plan "${trimmedPlanName}"`);
+                    console.log(`  - Exact key in planMeta: ${trimmedPlanName in planMeta}`);
+                    console.log(`  - Original key in planMeta: ${planName in planMeta}`);
+                    console.log(`  - meta:`, meta);
+                    console.log(`  - agentInputs:`, agentInputs);
+                    console.log(`  - supervisorInputs:`, supervisorInputs);
+
+                    // Try to get memberName from:
+                    // 1. Agent metadata (but ignore if it's the internal 'comprehensive_cover' marker)
+                    // 2. Supervisor metadata (but ignore if it's the internal 'comprehensive_cover' marker)
+                    // 3. Proposed structure (find which member has this plan) - ONLY if not in metadata
+                    let memberName = (agentInputs.memberName || '').trim() || (supervisorInputs.memberName || '').trim() || '';
+
+                    // DEFENSIVE: Never allow 'comprehensive_cover' to be classified as an individual member
+                    if (String(memberName).toLowerCase() === 'comprehensive_cover') {
+                        console.log(`DEFENSIVE: Clearing memberName='comprehensive_cover' for plan "${trimmedPlanName}" (internal marker, not individual)`);
+                        memberName = '';
+                    }
+
+                    console.log(`  - memberName from metadata: "${memberName}" (empty=${!memberName})`);
+
+                    // CRITICAL: If we have a valid memberName from metadata, USE IT and don't search proposed structure
+                    // Metadata is the authoritative source for plan classification
+                    if (!memberName) {
+                        // Only search proposed structure if metadata doesn't have memberName
+                        console.log(`  - Searching in proposed structure...`);
+                        console.log(`  - Proposed keys:`, Object.keys(proposed));
+
+                        for (const key in proposed) {
+                            // SKIP comprehensive_cover ON FIRST PASS - those are family/comprehensive plans
+                            if (key === 'comprehensive_cover') {
+                                console.log(`  - Skipping comprehensive_cover section on first pass`);
+                                continue;
+                            }
+
+                            const member = proposed[key];
+                            if (member && member.plans && Array.isArray(member.plans)) {
+                                console.log(`    - Checking member "${key}" (${member.name}): plans=`, member.plans);
+
+                                // Try exact match first
+                                const foundExact = member.plans.includes(trimmedPlanName);
+                                if (foundExact) {
+                                    memberName = member.name || key;
+                                    console.log(`    - EXACT MATCH found! memberName="${memberName}"`);
+                                    break;
+                                }
+
+                                // Try trim-based match
+                                const foundTrimmed = member.plans.some(p => {
+                                    const trimmedP = String(p).trim();
+                                    const match = trimmedP === trimmedPlanName;
+                                    if (match) console.log(`    - TRIM MATCH: "${p}" -> "${trimmedP}" === "${trimmedPlanName}"`);
+                                    return match;
+                                });
+
+                                if (foundTrimmed) {
+                                    memberName = member.name || key;
+                                    console.log(`    - TRIM MATCH found! memberName="${memberName}"`);
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!memberName) {
+                            console.log(`  - Plan "${trimmedPlanName}" not found in member sections, checking comprehensive_cover...`);
+                            // Only return comprehensive if EXPLICITLY found in comprehensive_cover
+                            const compMember = proposed['comprehensive_cover'];
+                            if (compMember && compMember.plans) {
+                                const inComp = compMember.plans.some(p => String(p).trim() === trimmedPlanName);
+                                if (inComp) {
+                                    console.log(`  - Found "${trimmedPlanName}" in comprehensive_cover - NO memberName`);
+                                    memberName = '';
+                                } else {
+                                    console.log(`  - Plan "${trimmedPlanName}" not found ANYWHERE in proposed structure - keeping empty/comprehensive`);
+                                }
+                            }
+                        }
+                    }
+
+                    // CRITICAL: Use metadata memberName if available. Metadata is authoritative.
+                    const finalMemberName = (agentInputs.memberName || '').trim() || (supervisorInputs.memberName || '').trim() || memberName;
+
+                    // Check if it's individual (has memberName)
+                    if (finalMemberName && String(finalMemberName).trim()) {
+                        // CRITICAL: If supervisor has already filled values, use those. Otherwise use agent values as defaults
+                        const finalPremium = supervisorInputs.premium || agentInputs.premium || '';
+                        const finalSumInsured = supervisorInputs.sum_insured || agentInputs.sum_insured || '';
+                        const finalPolicyTerm = supervisorInputs.policy_term || agentInputs.policy_term || '';
+
+                        individualPlans.push({
+                            planName: trimmedPlanName,
+                            premium: finalPremium,
+                            sumInsured: finalSumInsured,
+                            policyTerm: finalPolicyTerm,
+                            memberName: finalMemberName
+                        });
+                    } else {
+                        // CRITICAL: If supervisor has already filled values, use those. Otherwise use agent values as defaults
+                        const finalPremium = supervisorInputs.premium || agentInputs.premium || '';
+                        const finalSumInsured = supervisorInputs.sum_insured || agentInputs.sum_insured || '';
+                        const finalPolicyTerm = supervisorInputs.policy_term || agentInputs.policy_term || '';
+
+                        comprehensivePlans.push({
+                            planName: trimmedPlanName,
+                            premium: finalPremium,
+                            sumInsured: finalSumInsured,
+                            policyTerm: finalPolicyTerm
+                        });
+                    }
+                });
+
+                let html = '';
+
+                // Comprehensive (Family) Plans
+                if (comprehensivePlans.length > 0) {
+                    html += '<div style="margin: 16px 0; min-width: 0; overflow: hidden;">';
+                    html += '<h4 style="margin: 8px 0; font-size: 0.95rem; letter-spacing: 0.2px; font-weight: 700; color: #2c3e50; background-color: #cff9ff; padding: 10px 15px; border-radius: 6px; display: inline-block;">Comprehensive Selected Plans</h4>';
+                    html += '<div style="display: grid; grid-template-columns: 1fr 100px 120px 120px 50px; column-gap: 16px; align-items: center; padding: 10px 6px; font-weight: 600; border-bottom: 1px solid #e2e6ea; background: transparent; margin-bottom: 8px; min-width: 0;">';
+                    html += '<div style="min-width: 0; overflow: hidden;">Plans</div><div>Premium</div><div>Sum Insured</div><div>Policy Term</div><div></div></div>';
+
+                    comprehensivePlans.forEach((plan, idx) => {
+                        const termOptions = ['1 Year', '2 Years', '3 Years', '4 Years', '5 Years'];
+                        let termOptionsHtml = '';
+                        const policyTerm = plan.policyTerm || '';
+                        termOptions.forEach(opt => {
+                            const isSelected = (policyTerm === opt || policyTerm.includes(opt.split(' ')[0])) ? 'selected' : '';
+                            termOptionsHtml += `<option ${isSelected}>${opt}</option>`;
+                        });
+                        html += `<div style="padding: 10px 6px; border-radius: 6px; background: #fff; margin-bottom: 8px; display: grid; grid-template-columns: 1fr 100px 120px 120px 50px; column-gap: 16px; align-items: center; border: 1px solid #eee; min-width: 0;" class="sup-plan-row" data-plan="${plan.planName}">
+                            <div style="font-weight: 400; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(plan.planName)}">${escapeHtml(plan.planName)}</div>
+                            <input type="text" placeholder="Premium" value="${escapeHtml(plan.premium)}" class="sup-premium-input" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; box-sizing: border-box; background: #fff; color: #000;">
+                            <input type="text" placeholder="Sum Insured" value="${escapeHtml(plan.sumInsured)}" class="sup-sumins-input" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; box-sizing: border-box; background: #fff; color: #000;">
+                            <select class="sup-term-select" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; background: #fff; color: #000;">${termOptionsHtml}</select>
+                            <button onclick="deleteSupervisorPlan(this)" style="padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; white-space: nowrap;">-</button>
+                        </div>`;
+                    });
+                    html += '</div>';
+                }
+
+                // Individual Plans
+                if (individualPlans.length > 0) {
+                    html += '<div style="margin: 16px 0; min-width: 0; overflow: hidden;">';
+                    html += '<h4 style="margin: 8px 0; font-size: 0.95rem; letter-spacing: 0.2px; font-weight: 700; color: #2c3e50; background-color: #cff9ff; padding: 10px 15px; border-radius: 6px; display: inline-block;">Individual Selected Plans</h4>';
+                    html += '<div style="display: grid; grid-template-columns: 1fr 100px 120px 120px 50px; column-gap: 16px; align-items: center; padding: 10px 6px; font-weight: 600; border-bottom: 1px solid #e2e6ea; background: transparent; margin-bottom: 8px; min-width: 0;">';
+                    html += '<div style="min-width: 0; overflow: hidden;">Plans</div><div>Premium</div><div>Sum Insured</div><div>Policy Term</div><div></div></div>';
+
+                    individualPlans.forEach((plan, idx) => {
+                        const memberPlanLabel = (plan.memberName ? (plan.memberName + ' — ') : '') + plan.planName;
+                        const termOptions = ['1 Year', '2 Years', '3 Years', '4 Years', '5 Years'];
+                        let termOptionsHtml = '';
+                        const policyTerm = plan.policyTerm || '';
+                        termOptions.forEach(opt => {
+                            const isSelected = (policyTerm === opt || policyTerm.includes(opt.split(' ')[0])) ? 'selected' : '';
+                            termOptionsHtml += `<option ${isSelected}>${opt}</option>`;
+                        });
+                        html += `<div style="padding: 10px 6px; border-radius: 6px; background: #fff; margin-bottom: 8px; display: grid; grid-template-columns: 1fr 100px 120px 120px 50px; column-gap: 16px; align-items: center; border: 1px solid #eee; min-width: 0;" class="sup-plan-row" data-plan="${plan.planName}" data-member="${plan.memberName}">
+                            <div style="font-weight: 400; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(memberPlanLabel)}">${escapeHtml(memberPlanLabel)}</div>
+                            <input type="text" placeholder="Premium" value="${escapeHtml(plan.premium)}" class="sup-premium-input" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; box-sizing: border-box; background: #fff; color: #000;">
+                            <input type="text" placeholder="Sum Insured" value="${escapeHtml(plan.sumInsured)}" class="sup-sumins-input" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; box-sizing: border-box; background: #fff; color: #000;">
+                            <select class="sup-term-select" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #d1d5d8; background: #fff; color: #000;">${termOptionsHtml}</select>
+                            <button onclick="deleteSupervisorPlan(this)" style="padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; white-space: nowrap;">-</button>
+                        </div>`;
+                    });
+                    html += '</div>';
+                }
+
+                if (comprehensivePlans.length === 0 && individualPlans.length === 0) {
+                    html += '<p style="color: #888; font-style: italic;">Expand the Selection Summary above and select plans from the matrix. The selected plans will appear here for you to edit their Premium, Sum Insured, and Policy Term values.</p>';
+                }
+
+                host.innerHTML = html;
+            } catch (e) {
+                host.innerHTML = '<p style="color: #b91c1c;">Error loading supervisor inputs.</p>';
+                console.error(e);
+            }
+        }
+
+        function deleteSupervisorPlan(button) {
+            try {
+                const planRow = button.closest('.sup-plan-row');
+                if (planRow) {
+                    const planName = planRow.getAttribute('data-plan');
+                    const memberName = planRow.getAttribute('data-member') || '';
+                    planRow.remove();
+
+                    // Uncheck the corresponding checkbox in the matrix
+                    const matrixHost = document.getElementById('selection-summary-matrix');
+                    if (matrixHost) {
+                        const checkbox = matrixHost.querySelector(`input[data-plan-name="${planName}"]`);
+                        if (checkbox) {
+                            checkbox.checked = false;
+                            // Trigger change event to sync
+                            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }
+
+                    showToast(`Plan "${planName}" removed from supervisor selected plans.`);
+                }
+            } catch (e) {
+                console.error('Error deleting plan:', e);
+            }
+        }
+
+        async function saveSupervisorPlanInputs(uid) {
+            try {
+                const supSection = document.querySelector('[id="supervisor-selected-inputs-host"]');
+                if (!supSection) {
+                    console.warn('Supervisor selected inputs section not found');
+                    return;
+                }
+
+                const planRows = supSection.querySelectorAll('.sup-plan-row');
+                const supervisorMeta = {};
+
+                planRows.forEach(row => {
+                    const planName = row.getAttribute('data-plan');
+                    const premium = row.querySelector('.sup-premium-input')?.value || '';
+                    const sumInsured = row.querySelector('.sup-sumins-input')?.value || '';
+                    const policyTerm = row.querySelector('.sup-term-select')?.value || '';
+                    const memberName = row.getAttribute('data-member') || '';
+
+                    supervisorMeta[planName] = {
+                        premium,
+                        sum_insured: sumInsured,
+                        policy_term: policyTerm,
+                        memberName
+                    };
+                });
+
+                if (Object.keys(supervisorMeta).length === 0) {
+                    console.warn('No supervisor plan rows found');
+                    return;
+                }
+
+                console.log('DEBUG: Saving supervisor plan inputs for UID:', uid, 'Metadata:', JSON.stringify(supervisorMeta, null, 2));
+
+                // Send supervisor metadata to backend
+                const response = await fetch(`/supervisor_plan_metadata/${encodeURIComponent(uid)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ supervisor_meta: supervisorMeta })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    console.error('Error saving supervisor metadata:', errData);
+                    showToast('Warning: Supervisor plan details were not saved. Status: ' + response.status);
+                    return;
+                }
+
+                const result = await response.json();
+                console.log('Supervisor metadata saved successfully:', result);
+                showToast('Supervisor plan details saved successfully');
+
+            } catch (e) {
+                console.error('Error saving supervisor inputs:', e);
+                showToast('Error saving supervisor plan details: ' + e.message);
+            }
         }
 
         async function updateApprovalStatus(uniqueId, status, comments) {
@@ -524,16 +1107,36 @@
                         badge.textContent = newUpper;
                         badge.className = `status-badge status-${newUpper.toLowerCase()}`;
                     }
+                    // Make supervisor approved terms readonly after approval
+                    if (status === 'sup_approved' || status === 'SUP_APPROVED') {
+                        const supHost = document.getElementById('supervisor-selected-inputs-host');
+                        if (supHost) {
+                            const inputs = supHost.querySelectorAll('input, select, button');
+                            inputs.forEach(input => {
+                                if (input.tagName === 'BUTTON') {
+                                    input.style.display = 'none'; // Hide delete buttons
+                                } else {
+                                    input.disabled = true;
+                                    input.style.background = '#f5f7f8';
+                                    input.style.cursor = 'not-allowed';
+                                    input.style.color = '#666';
+                                }
+                            });
+                        }
+                    }
                 } else {
                     showToast(`Error: ${result.error}`);
                 }
+                // Trigger UI rebuilds to refresh selected plans lock states
+                try { if (window.rebuildComprehensiveFromDOM) window.rebuildComprehensiveFromDOM(); } catch (e) { }
+                try { if (window.rebuildIndividualFromDOM) window.rebuildIndividualFromDOM(); } catch (e) { }
             } catch (err) {
                 console.error('Error updating status:', err);
                 showToast('An error occurred while updating the status.');
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const logoutBtn = document.querySelector('.btn-logout');
             const searchBtn = document.querySelector('.btn-search');
             const approveBtn = document.querySelector('.btn-approve');
@@ -598,9 +1201,9 @@
                                 if (typeof window._renderSupSummary === 'function') {
                                     window._renderSupSummary(uniqueId);
                                 }
-                            } catch {}
+                            } catch { }
                         } else {
-                            const msg = await response.text().catch(()=> '');
+                            const msg = await response.text().catch(() => '');
                             console.error('Fetch failed', response.status, msg);
                             detailsContainer.innerHTML = `<p>No record found for ID: ${uniqueId}</p>`;
                             lastFetchedStatus = '';
@@ -643,6 +1246,82 @@
                 }
             })();
 
+            // Add listener for plan checkbox changes to update supervisor section (append/remove plans)
+            document.addEventListener('change', async function (e) {
+                // Check if checkbox is in the matrix
+                const matrixHost = document.getElementById('selection-summary-matrix');
+                if (!matrixHost) return;
+
+                if (matrixHost.contains(e.target) && (e.target.tagName === 'INPUT' && e.target.type === 'checkbox')) {
+                    const params = new URLSearchParams(window.location.search);
+                    const uid = params.get('uid');
+                    if (!uid) return;
+
+                    const supHost = document.getElementById('supervisor-selected-inputs-host');
+                    if (!supHost) return;
+
+                    // Get the plan name from the checkbox - prioritize data-plan-name
+                    const checkbox = e.target;
+                    const planName = checkbox.getAttribute('data-plan-name') || checkbox.value;
+                    if (!planName || planName === 'on') return;
+
+                    try {
+                        if (checkbox.checked) {
+                            // Plan was checked - need to save it to supervisor_selected in plan_summary
+                            try {
+                                // Get current supervisor_selected list from backend
+                                const planSummaryResp = await fetch(`/plan_summary/${encodeURIComponent(uid)}`);
+                                if (!planSummaryResp.ok) return;
+                                const planSummaryData = await planSummaryResp.json();
+                                let supSelected = planSummaryData.supervisor_selected || [];
+
+                                // Add this plan if not already present
+                                if (!supSelected.includes(planName)) {
+                                    supSelected.push(planName);
+
+                                    // Save updated supervisor_selected list
+                                    await fetch(`/plan_summary/${encodeURIComponent(uid)}/supervisor`, {
+                                        method: 'PATCH',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ supervisor_selected: supSelected })
+                                    });
+                                }
+                            } catch (err) {
+                                console.error('Error updating supervisor_selected on check:', err);
+                            }
+                        } else {
+                            // Plan was unchecked - need to remove it from supervisor_selected
+                            try {
+                                // Get current supervisor_selected list from backend
+                                const planSummaryResp = await fetch(`/plan_summary/${encodeURIComponent(uid)}`);
+                                if (!planSummaryResp.ok) return;
+                                const planSummaryData = await planSummaryResp.json();
+                                let supSelected = planSummaryData.supervisor_selected || [];
+
+                                // Remove this plan
+                                supSelected = supSelected.filter(p => p !== planName);
+
+                                // Save updated supervisor_selected list
+                                await fetch(`/plan_summary/${encodeURIComponent(uid)}/supervisor`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ supervisor_selected: supSelected })
+                                });
+                            } catch (err) {
+                                console.error('Error updating supervisor_selected on uncheck:', err);
+                            }
+                        }
+
+                        // Re-render the supervisor inputs section with fresh data from backend
+                        if (typeof renderSupervisorSelectedInputs === 'function') {
+                            renderSupervisorSelectedInputs(supHost, uid);
+                        }
+                    } catch (err) {
+                        console.error('Error updating plan selection:', err);
+                    }
+                }
+            }, true);
+
             const modal = document.getElementById('decision-modal');
             const modalTitle = document.getElementById('decision-modal-title');
             const commentsEl = document.getElementById('decision-comments');
@@ -650,7 +1329,7 @@
             const cancelBtn = document.getElementById('decision-cancel');
             let pendingDecision = null;
 
-            function collectSupervisorMatrixSelections(){
+            function collectSupervisorMatrixSelections() {
                 const host = document.getElementById('selection-summary-matrix');
                 const chosen = [];
                 if (host) {
@@ -662,14 +1341,14 @@
                     const saved = JSON.parse(localStorage.getItem('supervisor_matrix_choices') || '{}');
                     const keys = Object.keys(saved).filter(k => !!saved[k]);
                     if (keys && keys.length) return keys;
-                } catch {}
+                } catch { }
                 try {
                     if (Array.isArray(window._loadedDataSupervisorSel)) return window._loadedDataSupervisorSel.slice();
-                } catch {}
+                } catch { }
                 return [];
             }
 
-            function buildSupervisorSelectionSummary(){
+            function buildSupervisorSelectionSummary() {
                 try {
                     const proposed = (window._proposedPlans && typeof window._proposedPlans === 'object') ? window._proposedPlans : {};
                     const selectedArr = collectSupervisorMatrixSelections();
@@ -727,7 +1406,7 @@
                             box.innerHTML = '';
                         }
                     }
-                } catch (e) {}
+                } catch (e) { }
                 modal.style.display = 'flex';
                 modal.setAttribute('aria-hidden', 'false');
                 commentsEl.focus();
@@ -768,6 +1447,30 @@
                                 return;
                             }
 
+                            // Validate that all supervisor approved plans have required fields filled
+                            const supHost = document.getElementById('supervisor-selected-inputs-host');
+                            if (supHost) {
+                                const planRows = supHost.querySelectorAll('.sup-plan-row');
+                                const missingFields = [];
+
+                                planRows.forEach(row => {
+                                    const planName = row.getAttribute('data-plan');
+                                    const premium = row.querySelector('.sup-premium-input')?.value.trim();
+                                    const sumInsured = row.querySelector('.sup-sumins-input')?.value.trim();
+                                    const policyTerm = row.querySelector('.sup-term-select')?.value.trim();
+
+                                    if (!premium) missingFields.push(`${planName}: Premium is required`);
+                                    if (!sumInsured) missingFields.push(`${planName}: Sum Insured is required`);
+                                    if (!policyTerm) missingFields.push(`${planName}: Policy Term is required`);
+                                });
+
+                                if (missingFields.length > 0) {
+                                    alert('Please fill in all required fields:\n\n' + missingFields.join('\n'));
+                                    return;
+                                }
+                            }
+
+                            // Save supervisor selected plans
                             await fetch(`/supervisor_selected_plans/${encodeURIComponent(uniqueId)}`, {
                                 method: 'POST',
                                 headers: {
@@ -776,6 +1479,9 @@
                                 },
                                 body: JSON.stringify({ selected_plans: selectedPlans })
                             });
+
+                            // Save supervisor plan inputs (premium, sum_insured, policy_term)
+                            await saveSupervisorPlanInputs(uniqueId);
                         }
 
                         await updateApprovalStatus(uniqueId, pendingDecision, comments);
@@ -812,4 +1518,5 @@
         });
     </script>
 </body>
+
 </html>

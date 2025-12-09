@@ -1,0 +1,419 @@
+<!-- Individual_Selected_Plans.html -->
+<!-- Standalone component: renders Individual Selected Plans grid, saves to localStorage.formSummary.plan_meta -->
+<div id="isp-root" class="isp-root" aria-live="polite">
+  <h3 class="isp-title">Individual Selected Plans</h3>
+
+  <!-- Column headers -->
+  <div class="isp-grid isp-header">
+    <div class="isp-col-plan">Plans</div>
+    <div class="isp-col-premium">Premium</div>
+    <div class="isp-col-sum">Sum Insured</div>
+    <div class="isp-col-term">Policy Term</div>
+  </div>
+
+  <!-- Rows will be injected here -->
+  <div id="isp-rows" class="isp-rows"></div>
+
+  <div id="isp-status" class="isp-status" aria-hidden="true"></div>
+</div>
+
+<style>
+  /* Namespaced styles to avoid collisions */
+  .isp-root {
+    font-family: inherit;
+    margin: 16px 0;
+  }
+
+  .isp-title {
+    margin: 8px 0;
+    font-size: 1.05rem;
+    letter-spacing: 0.2px;
+    font-weight: 700;
+    color: #2c3e50;
+    background-color: #cff9ff;
+    padding: 10px 15px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+
+  .isp-grid {
+    display: grid;
+    grid-template-columns: 1fr 100px 120px 120px;
+    column-gap: 16px;
+    align-items: center;
+    padding: 10px 6px;
+  }
+
+  .isp-header {
+    font-weight: 600;
+    border-bottom: 1px solid #e2e6ea;
+    background: transparent;
+    margin-bottom: 8px;
+    min-width: 0;
+  }
+
+  .isp-row {
+    padding: 10px 6px;
+    border-radius: 6px;
+    background: #fff;
+    margin-bottom: 8px;
+    display: grid;
+    grid-template-columns: 1fr 100px 120px 120px;
+    column-gap: 16px;
+    align-items: center;
+    border: 1px solid #eee;
+    min-width: 0;
+  }
+
+  .isp-plan-label {
+    font-weight: 400;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .isp-input {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #d1d5d8;
+    box-sizing: border-box;
+    font-family: inherit;
+    color: #000;
+    background: #fff;
+  }
+
+  .isp-select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #d1d5d8;
+    background: #fff;
+    font-family: inherit;
+    color: #000;
+  }
+
+  .isp-note {
+    font-size: 0.9rem;
+    color: #666;
+    margin-left: 8px;
+  }
+
+  .isp-status {
+    display: none;
+    font-size: 0.9rem;
+    color: #333;
+    margin-top: 8px;
+  }
+
+  .isp-disabled {
+    background: #f5f7f8 !important;
+    color: #666 !important;
+  }
+
+  .isp-locked-badge {
+    font-size: 0.85rem;
+    color: #666;
+    margin-left: 8px;
+  }
+</style>
+
+<script>
+  (function () {
+    /* Namespaced global functions and internal helpers for Individual Selected Plans */
+    const ROOT_ID = 'isp-root';
+    const ROWS_ID = 'isp-rows';
+    const STATUS_ID = 'isp-status';
+    const STORAGE_KEY = 'formSummary'; // use formSummary.plan_meta
+
+    function normalizeRole(r) { return String((r || 'agent')).toLowerCase(); }
+    function normalizeSup(s) { return s ? String(s).toLowerCase() : ''; }
+
+    function ensureStorage() {
+      let fs = {};
+      try {
+        fs = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {};
+      } catch (e) { fs = {}; }
+      if (!fs.plan_meta || typeof fs.plan_meta !== 'object') fs.plan_meta = {};
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fs));
+      return fs;
+    }
+
+    function readPlanMeta(planName, role) {
+      const fs = ensureStorage();
+      const pm = fs.plan_meta || {};
+      const p = pm[planName] || {};
+      return (p[role] && typeof p[role] === 'object') ? p[role] : { premium: '', sum_insured: '', policy_term: '', memberName: '' };
+    }
+
+    function writePlanMeta(planName, role, obj) {
+      const fs = ensureStorage();
+      fs.plan_meta = fs.plan_meta || {};
+      fs.plan_meta[planName] = fs.plan_meta[planName] || {};
+      const prev = (fs.plan_meta[planName][role] && typeof fs.plan_meta[planName][role] === 'object') ? fs.plan_meta[planName][role] : {};
+      fs.plan_meta[planName][role] = Object.assign({}, prev, obj || {});
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fs));
+    }
+
+    function shouldDisableInputs(userRole, supervisorStatus) {
+      const ur = normalizeRole(userRole);
+      const ss = normalizeSup(supervisorStatus);
+      if (ur === 'client') return true;
+      if (ur === 'agent' && (ss === 'sup_review' || ss === 'approved' || ss === 'pending' || ss === 'sup_approved')) return true;
+      if (ur === 'supervisor') return true;
+      return false;
+    }
+
+    function createRowElement(planName, memberName, opts) {
+      // opts: { role, supervisorStatus }
+      const role = normalizeRole(opts.role);
+      const sup = normalizeSup(opts.supervisorStatus);
+
+      const row = document.createElement('div');
+      row.className = 'isp-row';
+      const safePlan = String(planName || '').trim();
+      const safeMember = String(memberName || '').trim();
+
+      // left column: "MemberName — PlanName"
+      const labelDiv = document.createElement('div');
+      labelDiv.className = 'isp-plan-label';
+      labelDiv.textContent = (safeMember ? (safeMember + ' — ') : '') + (safePlan || '—');
+      labelDiv.setAttribute('data-plan-name', safePlan);
+      if (safeMember) labelDiv.setAttribute('data-member-name', safeMember);
+
+      // premium input
+      const inPremium = document.createElement('input');
+      inPremium.type = 'text';
+      inPremium.placeholder = 'Premium';
+      inPremium.className = 'isp-input isp-premium';
+      inPremium.setAttribute('data-field', 'premium');
+
+      // sum insured input
+      const inSum = document.createElement('input');
+      inSum.type = 'text';
+      inSum.placeholder = 'Sum Insured';
+      inSum.className = 'isp-input isp-sumins';
+      inSum.setAttribute('data-field', 'sum_insured');
+
+      // term select
+      const sel = document.createElement('select');
+      sel.className = 'isp-select isp-term';
+      sel.setAttribute('data-field', 'policy_term');
+      ['1 Year', '2 Years', '3 Years', '4 Years', '5 Years'].forEach(t => {
+        const opt = document.createElement('option'); opt.value = t; opt.textContent = t; sel.appendChild(opt);
+      });
+
+      // Loading saved values from localStorage.plan_meta[planName][role]
+      const saved = readPlanMeta(safePlan, role);
+      if (saved && typeof saved === 'object') {
+        // If saved contains memberName, prefer that for display; and load fields
+        if (saved.memberName && !safeMember) {
+          // nothing to do for label, but still keep memberName in data
+        }
+        if (saved.premium) inPremium.value = saved.premium;
+        if (saved.sum_insured) inSum.value = saved.sum_insured;
+        if (saved.policy_term) {
+          try {
+            for (let i = 0; i < sel.options.length; i++) {
+              if (sel.options[i].value === saved.policy_term) { sel.selectedIndex = i; break; }
+            }
+          } catch (e) { }
+        }
+      }
+
+      // Locking
+      const disable = shouldDisableInputs(role, sup);
+      if (disable) {
+        inPremium.disabled = true;
+        inSum.disabled = true;
+        sel.disabled = true;
+        inPremium.classList.add('isp-disabled');
+        inSum.classList.add('isp-disabled');
+        sel.classList.add('isp-disabled');
+      }
+
+      // Input event handlers — save to plan_meta under [planName][role] with memberName
+      function onFieldChange() {
+        const payload = {
+          premium: inPremium.value || '',
+          sum_insured: inSum.value || '',
+          policy_term: sel.value || '',
+          memberName: safeMember || (saved && saved.memberName) || ''
+        };
+        writePlanMeta(safePlan, role, payload);
+      }
+      inPremium.addEventListener('change', onFieldChange);
+      inPremium.addEventListener('blur', onFieldChange);
+      inSum.addEventListener('change', onFieldChange);
+      inSum.addEventListener('blur', onFieldChange);
+      sel.addEventListener('change', onFieldChange);
+
+      // assemble columns
+      const col1 = labelDiv;
+      const col2 = inPremium;
+      const col3 = inSum;
+      const col4 = sel;
+
+      row.appendChild(col1);
+      row.appendChild(col2);
+      row.appendChild(col3);
+      row.appendChild(col4);
+
+      // if disabled, show a subtle locked badge to the right (non-invasive)
+      if (disable) {
+        // Badge removed per user request
+      }
+
+      return row;
+    }
+
+    // Heuristic: detect member names for selected checkboxes ONLY from combo-packages-container (individual plans)
+    // The Analysis Dashboard's combination matrix creates inputs with an id containing memberKey,
+    // and rows may be table rows with a first cell as member name.
+    function detectSelectedIndividualPlansFromDOM() {
+      const results = []; // { planName, memberName }
+      try {
+        const comboContainer = document.getElementById('combo-packages-container');
+        if (!comboContainer) return results;
+
+        const checked = Array.from(comboContainer.querySelectorAll('.plan-checkbox:checked'));
+        if (!checked.length) return results;
+        checked.forEach(cb => {
+          const planName = cb.getAttribute('data-plan-name') || cb.value || '';
+          let memberName = '';
+
+          // strategy 1: look for a data-member attribute
+          memberName = cb.getAttribute('data-member') || cb.getAttribute('data-member-name') || '';
+          // defensive: ignore internal comprehensive marker if present on checkbox
+          if (String(memberName || '').trim().toLowerCase() === 'comprehensive_cover') {
+            memberName = '';
+          }
+
+          // strategy 2: check parent <label> or nearest <tr> first cell
+          if (!memberName) {
+            const tr = cb.closest('tr');
+            if (tr) {
+              // first th in row
+              const th = tr.querySelector('th, td');
+              if (th) {
+                const txt = (th.textContent || '').trim();
+                if (txt && txt !== planName) memberName = txt;
+              }
+            }
+          }
+
+          // strategy 3: infer from checkbox id which often contains member key in Analysis Dashboard
+          if (!memberName) {
+            const id = cb.id || '';
+            // e.g. combo-0-memberKey-planKey
+            const parts = id.split('-').filter(Boolean);
+            if (parts.length >= 3) {
+              // try the second part if it is not "combo" or numeric
+              for (let i = 1; i < parts.length - 1; i++) {
+                const part = parts[i];
+                if (isNaN(Number(part)) && part.toLowerCase() !== 'combo' && part.length > 1) {
+                  memberName = part.replace(/_/g, ' ');
+                  break;
+                }
+              }
+            }
+          }
+
+          results.push({ planName: String(planName || '').trim(), memberName: String(memberName || '').trim() });
+        });
+      } catch (e) { /* noop */ }
+      return results;
+    }
+
+    function renderIndividualSelectedPlans(selectedPlans, userRole, supervisorStatus) {
+      // selectedPlans can be array of objects: [{ planName, memberName }, ...]
+      // or array of strings (planName) → memberName inferred from saved meta or DOM
+      const rowsHost = document.getElementById(ROWS_ID);
+      if (!rowsHost) return;
+      rowsHost.innerHTML = '';
+      const role = normalizeRole(userRole);
+      const sup = normalizeSup(supervisorStatus);
+
+      let items = [];
+      if (Array.isArray(selectedPlans) && selectedPlans.length) {
+        // normalize objects
+        selectedPlans.forEach(s => {
+          if (typeof s === 'string') items.push({ planName: s, memberName: '' });
+          else if (s && typeof s === 'object') items.push({ planName: s.planName || s.name || '', memberName: s.memberName || s.member || '' });
+        });
+      } else {
+        // No explicit data: attempt DOM detection
+        items = detectSelectedIndividualPlansFromDOM();
+        // If still empty, try to use plan_meta saved memberName (iterate over keys)
+        if (!items.length) {
+          try {
+            const fs = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {};
+            const pm = fs.plan_meta || {};
+            Object.keys(pm).forEach(k => {
+              const entry = pm[k] || {};
+              const r = entry[role] || entry['agent'] || null;
+              if (r && r.memberName) {
+                items.push({ planName: k, memberName: r.memberName });
+              }
+            });
+          } catch (e) { }
+        }
+      }
+
+      if (!items.length) {
+        rowsHost.innerHTML = '<p class="isp-note">No individual plans selected.</p>';
+        return;
+      }
+
+      // Deduplicate by planName + memberName, and filter out comprehensive_cover entries
+      const uniq = [];
+      const seen = new Set();
+      items.forEach(it => {
+        // CRITICAL: Skip any entry with memberName='comprehensive_cover' (internal marker, not individual)
+        if (String(it.memberName || '').toLowerCase() === 'comprehensive_cover') {
+          console.log(`Skipping individual plans item with comprehensive_cover memberName for plan: ${it.planName}`);
+          return;
+        }
+        const key = (it.planName || '') + '||' + (it.memberName || '');
+        if (!seen.has(key)) { seen.add(key); uniq.push(it); }
+      });
+
+      uniq.forEach(it => {
+        const r = createRowElement(it.planName, it.memberName, { role, supervisorStatus: sup });
+        rowsHost.appendChild(r);
+      });
+
+      // done
+      const st = document.getElementById(STATUS_ID);
+      if (st) { st.style.display = 'none'; st.textContent = ''; }
+    }
+
+    function rebuildIndividualFromDOM(userRole, supervisorStatus) {
+      renderIndividualSelectedPlans(undefined, userRole || localStorage.getItem('user_role') || 'agent', supervisorStatus || (localStorage.getItem('supervisor_status') || ''));
+    }
+
+    // Expose global APIs
+    try {
+      if (!window.renderIndividualSelectedPlans) window.renderIndividualSelectedPlans = renderIndividualSelectedPlans;
+      if (!window.rebuildIndividualFromDOM) window.rebuildIndividualFromDOM = rebuildIndividualFromDOM;
+    } catch (e) { }
+
+    // Listen to combo-packages-container .plan-checkbox changes and rebuild automatically (debounced)
+    (function attachCheckboxListener() {
+      let t = null;
+      document.addEventListener('change', function (e) {
+        if (!e.target.matches || !e.target.matches('.plan-checkbox')) return;
+        // Only rebuild if checkbox is in combo-packages-container
+        const comboContainer = document.getElementById('combo-packages-container');
+        if (comboContainer && comboContainer.contains(e.target)) {
+          if (t) clearTimeout(t);
+          t = setTimeout(() => {
+            rebuildIndividualFromDOM();
+          }, 120);
+        }
+      }, true);
+    })();
+
+  })();
+</script>

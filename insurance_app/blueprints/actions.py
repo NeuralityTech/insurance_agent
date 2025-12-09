@@ -125,6 +125,7 @@ def update_plan_status():
 def update_chosen_plans(unique_id):
     data = request.get_json()
     selected_plans = data.get('selected_plans')
+    plan_meta = data.get('plan_meta', {})
     conn = None
     if not selected_plans:
         try:
@@ -143,11 +144,33 @@ def update_chosen_plans(unique_id):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute('UPDATE submissions SET plans_chosen = ? WHERE unique_id = ?', (json.dumps(selected_plans), unique_id))
+        
+        # First, fetch the current form_summary to preserve other data
+        cursor.execute('SELECT form_summary FROM submissions WHERE unique_id = ?', (unique_id,))
+        row = cursor.fetchone()
+        
+        form_summary = {}
+        if row and row[0]:
+            try:
+                form_summary = json.loads(row[0]) if isinstance(row[0], str) else row[0]
+            except:
+                form_summary = {}
+        
+        # Update form_summary with plan_meta
+        if not isinstance(form_summary, dict):
+            form_summary = {}
+        
+        form_summary['plan_meta'] = plan_meta
+        
+        # Update both plans_chosen and form_summary
+        cursor.execute(
+            'UPDATE submissions SET plans_chosen = ?, form_summary = ? WHERE unique_id = ?',
+            (json.dumps(selected_plans), json.dumps(form_summary), unique_id)
+        )
         conn.commit()
         if cursor.rowcount == 0:
             current_app.logger.warning(f"No rows were updated for unique_id {unique_id}. It might not exist.")
-        return jsonify({'success': True, 'message': 'Chosen plans updated successfully.'}), 200
+        return jsonify({'success': True, 'message': 'Chosen plans and plan details updated successfully.'}), 200
     except Exception as e:
         if conn: conn.rollback()
         current_app.logger.error(f"Database error while updating chosen plans for {unique_id}: {e}")
@@ -356,6 +379,213 @@ def update_supervisor_selected_plans(unique_id):
         if conn: 
             conn.rollback()
         current_app.logger.error(f"Database error while saving supervisor selected plans for {unique_id}: {e}")
+        return jsonify({'error': 'Database update failed.'}), 500
+    finally:
+        if conn: 
+            conn.close()
+
+@actions_bp.route('/supervisor_plan_metadata/<unique_id>', methods=['GET'])
+def get_supervisor_plan_metadata(unique_id):
+    """Retrieve supervisor approved plan metadata.
+    
+    Returns: {
+        supervisor_meta: { 
+            planName: {premium, sum_insured, policy_term, memberName}, 
+            ... 
+        }
+    }
+    """
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT form_summary FROM submissions WHERE unique_id = ?', (unique_id,))
+        row = cursor.fetchone()
+        
+        form_summary = {}
+        if row and row[0]:
+            try:
+                form_summary = json.loads(row[0]) if isinstance(row[0], str) else row[0]
+            except:
+                form_summary = {}
+        
+        # Extract supervisor metadata from plan_meta
+        plan_meta = form_summary.get('plan_meta', {})
+        supervisor_meta = {}
+        
+        for plan_name, meta in plan_meta.items():
+            if isinstance(meta, dict) and 'supervisor' in meta:
+                supervisor_meta[plan_name] = meta['supervisor']
+        
+        return jsonify({'supervisor_meta': supervisor_meta}), 200
+    
+    except Exception as e:
+        current_app.logger.error(f"Error retrieving supervisor metadata for {unique_id}: {e}")
+        return jsonify({'error': 'Failed to retrieve supervisor metadata'}), 500
+    finally:
+        if conn:
+            conn.close()
+
+@actions_bp.route('/supervisor_plan_metadata/<unique_id>', methods=['POST'])
+def save_supervisor_plan_metadata(unique_id):
+    """Save supervisor approved plan metadata with premium, sum_insured, policy_term values.
+    
+    Expected JSON: { 
+        supervisor_meta: { 
+            planName: {premium, sum_insured, policy_term, memberName}, 
+            ... 
+        }
+    }
+    
+    Updates form_summary.plan_meta[planName]['supervisor'] for each plan.
+    """
+    data = request.get_json()
+    supervisor_meta = data.get('supervisor_meta', {})
+    
+    if not supervisor_meta:
+        return jsonify({'error': 'No supervisor metadata provided'}), 400
+    
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Fetch current form_summary to preserve existing data
+        cursor.execute('SELECT form_summary FROM submissions WHERE unique_id = ?', (unique_id,))
+        row = cursor.fetchone()
+        
+        form_summary = {}
+        if row and row[0]:
+            try:
+                form_summary = json.loads(row[0]) if isinstance(row[0], str) else row[0]
+            except:
+                form_summary = {}
+        
+        if not isinstance(form_summary, dict):
+            form_summary = {}
+        
+        # Ensure plan_meta exists
+        if 'plan_meta' not in form_summary:
+            form_summary['plan_meta'] = {}
+        
+        # Update plan_meta with supervisor values for each plan
+        for plan_name, meta_values in supervisor_meta.items():
+            if plan_name not in form_summary['plan_meta']:
+                form_summary['plan_meta'][plan_name] = {}
+            
+            # Initialize supervisor role if not exists
+            if 'supervisor' not in form_summary['plan_meta'][plan_name]:
+                form_summary['plan_meta'][plan_name]['supervisor'] = {}
+            
+            # Update supervisor values
+            form_summary['plan_meta'][plan_name]['supervisor'].update({
+                'premium': meta_values.get('premium', ''),
+                'sum_insured': meta_values.get('sum_insured', ''),
+                'policy_term': meta_values.get('policy_term', ''),
+                'memberName': meta_values.get('memberName', '')
+            })
+        
+        # Save updated form_summary
+        cursor.execute(
+            'UPDATE submissions SET form_summary = ? WHERE unique_id = ?',
+            (json.dumps(form_summary), unique_id)
+        )
+        
+        conn.commit()
+        if cursor.rowcount == 0:
+            current_app.logger.warning(f"No rows were updated for unique_id {unique_id}. It might not exist.")
+            return jsonify({'error': 'Submission not found'}), 404
+        
+        current_app.logger.info(f"Successfully saved supervisor plan metadata for {unique_id}: {supervisor_meta}")
+        return jsonify({'success': True, 'message': 'Supervisor plan metadata saved successfully.'}), 200
+        
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        current_app.logger.error(f"Database error while saving supervisor plan metadata for {unique_id}: {e}")
+        return jsonify({'error': 'Database update failed.'}), 500
+    finally:
+        if conn:
+            conn.close()
+
+@actions_bp.route('/client_plan_metadata/<unique_id>', methods=['POST'])
+def save_client_plan_metadata(unique_id):
+    """Save client agreed plan metadata with premium, sum_insured, policy_term values.
+    
+    Expected JSON: { 
+        client_meta: { 
+            planName: {premium, sum_insured, policy_term, memberName}, 
+            ... 
+        }
+    }
+    
+    Updates form_summary.plan_meta[planName]['client'] for each plan.
+    """
+    data = request.get_json()
+    client_meta = data.get('client_meta', {})
+    
+    if not client_meta:
+        return jsonify({'error': 'No client metadata provided'}), 400
+    
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Fetch current form_summary to preserve existing data
+        cursor.execute('SELECT form_summary FROM submissions WHERE unique_id = ?', (unique_id,))
+        row = cursor.fetchone()
+        
+        form_summary = {}
+        if row and row[0]:
+            try:
+                form_summary = json.loads(row[0]) if isinstance(row[0], str) else row[0]
+            except:
+                form_summary = {}
+        
+        if not isinstance(form_summary, dict):
+            form_summary = {}
+        
+        # Ensure plan_meta exists
+        if 'plan_meta' not in form_summary:
+            form_summary['plan_meta'] = {}
+        
+        # Update plan_meta with client values for each plan
+        for plan_name, meta_values in client_meta.items():
+            if plan_name not in form_summary['plan_meta']:
+                form_summary['plan_meta'][plan_name] = {}
+            
+            # Initialize client role if not exists
+            if 'client' not in form_summary['plan_meta'][plan_name]:
+                form_summary['plan_meta'][plan_name]['client'] = {}
+            
+            # Update client values
+            form_summary['plan_meta'][plan_name]['client'].update({
+                'premium': meta_values.get('premium', ''),
+                'sum_insured': meta_values.get('sum_insured', ''),
+                'policy_term': meta_values.get('policy_term', ''),
+                'memberName': meta_values.get('memberName', '')
+            })
+        
+        # Save updated form_summary
+        cursor.execute(
+            'UPDATE submissions SET form_summary = ? WHERE unique_id = ?',
+            (json.dumps(form_summary), unique_id)
+        )
+        
+        conn.commit()
+        if cursor.rowcount == 0:
+            current_app.logger.warning(f"No rows were updated for unique_id {unique_id}. It might not exist.")
+            return jsonify({'error': 'Submission not found'}), 404
+        
+        current_app.logger.info(f"Successfully saved client plan metadata for {unique_id}: {client_meta}")
+        return jsonify({'success': True, 'message': 'Client plan metadata saved successfully.'}), 200
+        
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        current_app.logger.error(f"Database error while saving client plan metadata for {unique_id}: {e}")
         return jsonify({'error': 'Database update failed.'}), 500
     finally:
         if conn: 

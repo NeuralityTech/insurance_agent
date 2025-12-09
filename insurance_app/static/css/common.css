@@ -86,7 +86,9 @@ html {
 body {
     margin: 0;
     background:#f4f4f9;
-    font-family: Arial, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #111827; /* Align text color as well */
+    line-height: 1.5; /* Align line-height */
 }
 
 /* --- Layout Containers --- */

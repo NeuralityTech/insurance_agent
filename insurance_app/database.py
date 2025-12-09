@@ -248,13 +248,6 @@ def init_db():
         WHERE underwriter_status = 'UW_approved'
     """)
 
-    # Align any application_status carrying legacy value
-    cursor.execute("""
-        UPDATE submissions
-        SET application_status = 'With_UW'
-        WHERE application_status = 'UW_approved'
-    """)
-
     # --- Ensure client_review (boolean-like INTEGER 0/1) exists and default unchecked (0) ---
     if 'client_review' not in columns:
         cursor.execute("ALTER TABLE submissions ADD COLUMN client_review INTEGER DEFAULT 0")
@@ -322,6 +315,13 @@ def init_db():
         cursor.execute("ALTER TABLE submissions ADD COLUMN application_modified_at TEXT")
     if 'application_modified_by' not in columns:
         cursor.execute("ALTER TABLE submissions ADD COLUMN application_modified_by TEXT")
+
+    # Align any application_status carrying legacy value
+    cursor.execute("""
+        UPDATE submissions
+        SET application_status = 'With_UW'
+        WHERE application_status = 'UW_approved'
+    """)
 
     # Backfill final_* for existing rows by picking the most recent of the four subsystems
     try:
