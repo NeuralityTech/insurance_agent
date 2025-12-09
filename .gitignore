@@ -3,6 +3,7 @@
 
 # Instance folder with databases
 instance/
+justification_reports/
 
 # Temporary/deleted files folder
 /delme/
