@@ -2,6 +2,9 @@
  * This script generates the content for the form summary page (Summary.html).
  * It retrieves the form data from local storage and dynamically creates the HTML to display it.
  * It is used by: Summary.html and Preview.html
+ * 
+ * Uses simple field names (no verbose labels like "OPD/Dental/Preventive")
+ * Added proper handling for array values (checkbox fields like id-proof)
  */
 document.addEventListener('DOMContentLoaded', function() {
     const summaryContainer = document.getElementById('summary-container');
@@ -12,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // --- NEW: Fallback to derive healthHistory from submissionData if missing/empty ---
+    // --- Fallback to derive healthHistory from submissionData if missing/empty ---
     try {
         const hasHealthHistory =
             summaryData.healthHistory &&
@@ -42,7 +45,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (e) {
         console.warn('Health history fallback failed:', e);
     }
-    // --- END NEW BLOCK ---
 
     // Fallbacks to ensure Preview shows data even before final submission
     try {
@@ -65,15 +67,47 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let html = '';
 
-    // Helper to format keys into user-facing labels (handles special mappings)
+    /**
+     * Simple label formatter - converts field keys to readable labels
+     * Uses basic formatting: replaces underscores/hyphens with spaces, capitalizes words
+     */
     function formatLabel(k) {
         if (!k) return '';
-        if (k === 'occupation') return 'Primary Occupation';
-        if (k === 'secondary_occupation' || k === 'secondary-occupation') return 'Secondary Occupation';
         return k.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
 
-    // Function to create summary section
+    /**
+     * Format checkbox array values into human-readable strings
+     * e.g., ['aadhaar', 'pan'] -> "Aadhaar Card, PAN Card"
+     */
+    function formatArrayValue(key, arr) {
+        if (!Array.isArray(arr) || arr.length === 0) return null;
+        
+        // Filter out empty values
+        const filtered = arr.filter(v => v && String(v).trim() !== '');
+        if (filtered.length === 0) return null;
+        
+        // Special formatting for known checkbox fields
+        const checkboxValueMappings = {
+            'id-proof': {
+                'aadhaar': 'Aadhaar Card',
+                'pan': 'PAN Card'
+            },
+            'id_proof': {
+                'aadhaar': 'Aadhaar Card',
+                'pan': 'PAN Card'
+            }
+        };
+        
+        const mappings = checkboxValueMappings[key];
+        if (mappings) {
+            return filtered.map(v => mappings[v] || v).join(', ');
+        }
+        
+        // Default: capitalize each value
+        return filtered.map(v => String(v).replace(/\b\w/g, l => l.toUpperCase())).join(', ');
+    }
+
     /**
      * Creates an HTML fieldset section for a given part of the summary data.
      * @param {string} title - The title of the section.
@@ -85,17 +119,102 @@ document.addEventListener('DOMContentLoaded', function() {
             return ''; // nothing to render
         }
 
+        // Define fields that should show "None" or similar when empty
+        const showWhenEmpty = {
+            'planned-surgeries': 'None',
+            'plannedSurgeries': 'None',
+            'gst-number': 'Not Provided',
+            'gst_number': 'Not Provided',
+            'past-claims': 'None',
+            'claim-issues': 'None',
+            'service-expectations': 'None',
+            'policy-term': 'Not Selected',
+            'policy_term': 'Not Selected',
+            'id-proof': 'None Selected',
+            'id_proof': 'None Selected'
+        };
+        
+        // Fields to skip entirely (internal-only)
+        const skipFields = new Set([
+            'occupation_value', 'occupationValue', 
+            'secondary_occupation_value', 'secondaryOccupationValue'
+        ]);
+
         let sectionHtml = `<fieldset><legend>${title}</legend><div class="summary-grid">`;
-        for (const [key, value] of Object.entries(data)) {
-            let displayValue = value;
-            if ((key === 'planned-surgeries' || key === 'plannedSurgeries') && (!value || String(value).trim() === '')) {
-                displayValue = 'None';
-            } else if (!value) {
-                continue; // Skip other empty fields
+        
+        // Special handling for hospital network preferences - combine into one display
+        const hospitalPrefs = [];
+        const hospitalFieldsToSkip = new Set([
+            'network-hospital-1st', 'network_hospital_1st',
+            'network-hospital-2nd', 'network_hospital_2nd', 
+            'network-hospital-3rd', 'network_hospital_3rd',
+            'network-hospitals', 'network_hospitals'
+        ]);
+        
+        // Check if any hospital preference fields exist in the data
+        const hasHospitalFields = Object.keys(data).some(k => hospitalFieldsToSkip.has(k));
+        
+        if (hasHospitalFields) {
+            const val1 = data['network-hospital-1st'] || data['network_hospital_1st'] || '';
+            const val2 = data['network-hospital-2nd'] || data['network_hospital_2nd'] || '';
+            const val3 = data['network-hospital-3rd'] || data['network_hospital_3rd'] || '';
+            
+            if (val1 && val1 !== '-- Select --' && val1.trim() !== '') hospitalPrefs.push(`1st: ${val1}`);
+            if (val2 && val2 !== '-- Select --' && val2.trim() !== '') hospitalPrefs.push(`2nd: ${val2}`);
+            if (val3 && val3 !== '-- Select --' && val3.trim() !== '') hospitalPrefs.push(`3rd: ${val3}`);
+            
+            // Always show the field - either with selections or "Not Selected"
+            if (hospitalPrefs.length > 0) {
+                sectionHtml += `<div class="summary-item"><strong>Preferred Hospital Network:</strong> ${hospitalPrefs.join(', ')}</div>`;
+            } else {
+                sectionHtml += `<div class="summary-item"><strong>Preferred Hospital Network:</strong> Not Selected</div>`;
             }
-            // Skip internal-only keys that should not be shown
-            if (key === 'occupation_value' || key === 'occupationValue' || key === 'secondary_occupation_value' || key === 'secondaryOccupationValue') continue;
-            // Use formatLabel for nicer labels (handles Primary/Secondary occupation mapping)
+        }
+        
+        for (const [key, value] of Object.entries(data)) {
+            // Skip hospital fields (already handled above)
+            if (hospitalFieldsToSkip.has(key)) continue;
+            
+            // Skip internal-only keys
+            if (skipFields.has(key)) continue;
+            
+            let displayValue = value;
+            
+            // Handle array values (from checkbox groups like id-proof)
+            if (Array.isArray(value)) {
+                const formattedArray = formatArrayValue(key, value);
+                if (formattedArray) {
+                    displayValue = formattedArray;
+                } else {
+                    // Empty array - check if we should show a default
+                    if (showWhenEmpty[key]) {
+                        displayValue = showWhenEmpty[key];
+                    } else {
+                        continue; // Skip empty arrays
+                    }
+                }
+            } else {
+                // Handle empty fields - check for various empty/placeholder values
+                const isEmptyOrPlaceholder = !value || 
+                    String(value).trim() === '' || 
+                    value === '-- Select --' || 
+                    value === 'Select';
+                
+                if (isEmptyOrPlaceholder) {
+                    if (showWhenEmpty[key]) {
+                        displayValue = showWhenEmpty[key];
+                    } else {
+                        continue; // Skip other empty fields
+                    }
+                }
+            }
+            
+            // Format date fields to dd/mm/yyyy
+            if (isDateField(key) && displayValue && displayValue !== 'None' && displayValue !== 'Not Provided' && displayValue !== 'None Selected') {
+                displayValue = formatDateToDDMMYYYY(displayValue);
+            }
+            
+            // Use simple formatLabel (no verbose mappings)
             const formattedKey = formatLabel(key);
             sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${displayValue}</div>`;
         }
@@ -130,10 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const orderedFields = [
                 'unique_id', 'applicant_name', 'gender', 'occupation', 'secondary_occupation', 'self-dob',
                 'self-age',
-
-                // we inject height here
                 '__HEIGHT__',
-
                 'self-weight', 'self-bmi', 'email', 'phone', 'aadhaar_last5', 'address', 'hubs'
             ];
 
@@ -146,9 +262,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     continue;
                 }
 
-                const value = primary[field];
+                let value = primary[field];
                 if (!value) continue;
                 if (excludedKeys.has(field)) continue;
+
+                // Format date fields to dd/mm/yyyy (e.g., self-dob)
+                if (isDateField(field) && value) {
+                    value = formatDateToDDMMYYYY(value);
+                }
 
                 const formattedKey = formatLabel(field);
 
@@ -198,8 +319,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
-                const fieldValue = member[field];
+                let fieldValue = member[field];
                 if (!fieldValue) return;
+
+                // Format date fields to dd/mm/yyyy (e.g., member dob)
+                if (isDateField(field) && fieldValue) {
+                    fieldValue = formatDateToDDMMYYYY(fieldValue);
+                }
 
                 const formattedKey = field
                     .replace(/_/g, ' ')
@@ -214,14 +340,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (!disease || !detail) return;
                     
                     // Display disease details
-                    const formattedKey = disease.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ' Details';
-                    html += `<div class="summary-item"><strong>${formattedKey}:</strong> ${detail}</div>`;
+                    const formattedDiseaseName = disease.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    html += `<div class="summary-item"><strong>${formattedDiseaseName} Details:</strong> ${detail}</div>`;
                     
-                    // Display disease start date if it exists
-                    const startDateKey = `${disease}_start_date`;
-                    if (member[startDateKey]) {
-                        const startDateFormatted = disease.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ' Start Date';
-                        html += `<div class="summary-item"><strong>${startDateFormatted}:</strong> ${member[startDateKey]}</div>`;
+                    // Display disease duration - check for since_year (specific year) or since_years (number of years)
+                    const sinceYearKey = `${disease}_since_year`;
+                    const sinceYearsKey = `${disease}_since_years`;
+                    
+                    if (member[sinceYearKey] && member[sinceYearKey] !== 'Select Year' && member[sinceYearKey] !== '') {
+                        html += `<div class="summary-item"><strong>${formattedDiseaseName} Since Year:</strong> ${member[sinceYearKey]}</div>`;
+                    } else if (member[sinceYearsKey] && member[sinceYearsKey] !== '' && member[sinceYearsKey] !== '0') {
+                        html += `<div class="summary-item"><strong>${formattedDiseaseName} Duration:</strong> ${member[sinceYearsKey]} years</div>`;
                     }
                 });
             }
@@ -378,6 +507,63 @@ function escapeHtmlSummary(text) {
     const div = document.createElement('div');
     div.textContent = String(text || '');
     return div.innerHTML;
+}
+
+/**
+ * Formats a date string to dd/mm/yyyy format (India standard)
+ * Handles various input formats: yyyy-mm-dd, ISO strings, etc.
+ * @param {string} dateStr - The date string to format
+ * @returns {string} - Formatted date string in dd/mm/yyyy format, or original if invalid
+ */
+function formatDateToDDMMYYYY(dateStr) {
+    if (!dateStr || typeof dateStr !== 'string') return dateStr || '';
+    
+    // If already in dd/mm/yyyy format, return as-is
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr.trim())) {
+        return dateStr.trim();
+    }
+    
+    try {
+        let date;
+        
+        // Handle yyyy-mm-dd format (common from HTML date inputs)
+        if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+            const parts = dateStr.split('T')[0].split('-');
+            date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        } else {
+            // Try parsing as a general date
+            date = new Date(dateStr);
+        }
+        
+        if (!isNaN(date.getTime())) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+    } catch (e) {
+        console.warn('Date parsing failed for:', dateStr);
+    }
+    
+    // Return original if parsing fails
+    return dateStr;
+}
+
+/**
+ * Checks if a field key represents a date field that should be formatted
+ * @param {string} key - The field key/name
+ * @returns {boolean} - True if the field is a date field
+ */
+function isDateField(key) {
+    const dateFieldPatterns = [
+        'dob', 'self-dob', 'self_dob', 
+        'policy-since-date', 'policy_since_date',
+        'start_date', 'start-date',
+        'date_of_birth', 'date-of-birth',
+        'birth_date', 'birth-date'
+    ];
+    const keyLower = key.toLowerCase();
+    return dateFieldPatterns.some(pattern => keyLower.includes(pattern) || keyLower === pattern);
 }
 
 function cmToFeetInches(cm) {
