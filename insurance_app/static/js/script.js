@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
         { file: 'Health_History.html', id: 'health-history', title: 'Health History', init: ['initializeSelfDetailsValidation', 'initializeDiseaseDetails'] },
         { file: 'Members_to_be_Covered.html', id: 'members-covered', title: 'Members Covered', init: ['initializeMemberManagement'] },
         { file: 'Cover_&_Cost_Preferences.html', id: 'cover-cost', title: 'Cover & Cost' },
-        { file: 'Existing_Coverage_&_Portability.html', id: 'existing-coverage', title: 'Existing Coverage' },
+        { file: 'Existing_Coverage_&_Portability.html', id: 'existing-coverage', title: 'Existing Coverage', init: ['initializeExistingCoverage'] },
         { file: 'Claims_&_Service.html', id: 'claims-service', title: 'Claims & Service' },
         { file: 'Finance_&_Documentation.html', id: 'finance-documentation', title: 'Finance & Docs' },
         { file: 'Comments_Noted.html', id: 'comments-noted', title: 'Notes', init: ['initializeCommentsNoted'] }
@@ -439,6 +439,12 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
+        // Validate "Since When (Date)" is filled if it's marked as required (when document is uploaded)
+        const sinceDateInput = document.getElementById('policy-since-date');
+
+        if (sinceDateInput && sinceDateInput.hasAttribute('required') && !sinceDateInput.value.trim()) {
+            errors.push('Since When (Date) is required when a policy document is uploaded');
+        }
 
         return errors;
     }
@@ -734,6 +740,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (budgetEl && budgetEl.value.trim() && !budgetEl.value.trim().match(/^[0-9]+$/)) {
                 validationErrors.push('Annual Budget must be numeric');
             }
+
 
             // If there are validation errors, show them and stop
             if (validationErrors.length > 0) {

@@ -18,8 +18,8 @@
             memberInfoContainer.innerHTML = generateMemberHTML();
         }
 
-        // Initialize Plan Dropdowns
-        initializePlanDropdowns();
+        // Initialize Plan Dropdowns - Moved to end of setTimeout to ensure disabled state wins
+        // initializePlanDropdowns();
 
         // Note: The print button now has a complex inline onclick in HTML to handle title/filename
         // No JS event listeners needed for printing
@@ -40,6 +40,9 @@
                     el.style.backgroundColor = '#fff';
                 }
             });
+
+            // Initialize dropdowns HERE so that 'disabled' property applied by it is not removed by the loop above
+            initializePlanDropdowns();
         }, 800); // Increased delay slightly to be safe
     }
 
@@ -239,8 +242,40 @@
 
             if (box2Select) box2Select.innerHTML = optionsHtml;
             if (box3Select) box3Select.innerHTML = optionsHtml;
+
+            // Sync and Lock logic
+            if (clientAgreedSelect) {
+                const sync = () => {
+                    const val = clientAgreedSelect.value;
+                    if (box2Select) { box2Select.value = val; box2Select.disabled = true; }
+                    if (box3Select) { box3Select.value = val; box3Select.disabled = true; }
+                };
+                // Initial sync
+                sync();
+                // Add listener to Box 1
+                clientAgreedSelect.addEventListener('change', sync);
+            }
         }
     }
+
+    // Print functionality with custom filename
+    window.printOnePager = function () {
+        const plan1Select = document.getElementById('op-plan1-select');
+        let planName = 'Plan';
+        if (plan1Select && plan1Select.value) {
+            // Sanitize filename safe
+            planName = plan1Select.value.replace(/[^a-zA-Z0-9_\-]/g, '_');
+        }
+
+        const originalTitle = document.title;
+        const uid = new URLSearchParams(window.location.search).get('uid') || 'Summary';
+
+        document.title = `${planName}_Comparison_${uid}`;
+
+        window.print();
+
+        document.title = originalTitle;
+    };
 
     window.renderOnePager = renderOnePager;
 

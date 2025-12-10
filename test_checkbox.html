@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Checkbox Test</title>
+</head>
+<body>
+    <div id="policy-doc-upload-section" style="display: none; border: 1px solid blue; padding: 10px;">
+        <p>Upload section is NOW VISIBLE</p>
+        <input type="file" id="existing-policy-document">
+        <button id="upload-policy-btn">Upload</button>
+    </div>
+    <input type="checkbox" id="upload-policy-doc-checkbox">
+    <label for="upload-policy-doc-checkbox">Upload Doc</label>
+    
+    <script>
+        // Replicate the initialization function
+        function initializePolicyDocumentUpload() {
+            console.log('Initializing Policy Document Upload');
+            
+            const uploadCheckbox = document.getElementById('upload-policy-doc-checkbox');
+            const uploadSection = document.getElementById('policy-doc-upload-section');
+            
+            if (uploadCheckbox && uploadSection) {
+                console.log('Elements found! Setting up checkbox listener');
+                uploadCheckbox.addEventListener('change', function() {
+                    console.log('Checkbox changed:', this.checked);
+                    uploadSection.style.display = this.checked ? 'block' : 'none';
+                });
+                return true;
+            } else {
+                console.error('Elements NOT found');
+                return false;
+            }
+        }
+        
+        // Test the multiple initialization methods
+        console.log('DOM readyState:', document.readyState);
+        
+        if (document.readyState === 'loading') {
+            console.log('Using DOMContentLoaded approach');
+            document.addEventListener('DOMContentLoaded', initializePolicyDocumentUpload);
+        } else {
+            console.log('DOM already loaded, calling immediately');
+            initializePolicyDocumentUpload();
+        }
+        
+        // Also set setTimeout as fallback
+        setTimeout(function() {
+            if (!window.policyDocumentUploadInitialized) {
+                console.log('setTimeout fallback triggered');
+                initializePolicyDocumentUpload();
+                window.policyDocumentUploadInitialized = true;
+            }
+        }, 100);
+        
+        // Manual test: click the checkbox after a short delay
+        setTimeout(function() {
+            const checkbox = document.getElementById('upload-policy-doc-checkbox');
+            const uploadSection = document.getElementById('policy-doc-upload-section');
+            
+            console.log('\n=== MANUAL TEST ===');
+            console.log('Checkbox element found:', !!checkbox);
+            console.log('Upload section element found:', !!uploadSection);
+            console.log('Initial section display:', uploadSection.style.display);
+            
+            // Simulate checkbox click
+            checkbox.click();
+            console.log('Checkbox clicked! Section display is now:', uploadSection.style.display);
+            
+            if (uploadSection.style.display === 'block') {
+                console.log('SUCCESS: Checkbox toggle is working!');
+            } else {
+                console.log('FAILURE: Checkbox toggle did not work!');
+            }
+        }, 300);
+    </script>
+</body>
+</html>

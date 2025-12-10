@@ -68,7 +68,7 @@
             <input id="load-unique-id" type="text" placeholder="Enter Unique ID" />
             <button id="btn-load" class="btn btn-secondary" type="button">Load</button>
         </div>
-        <form id="insurance-form" novalidate>
+        <form id="insurance-form">
 
             <p id="load-status" class="muted"></p>
 
@@ -110,6 +110,7 @@
     <script src="../js/progress_bar.js" defer></script>
     <script src="../js/existing_prefill.js"></script>
     <script src="../js/one_pager.js"></script>
+    <script src="../js/existing_coverage.js" defer></script>
     <script src="../js/script.js" defer></script>
     <script src="../js/data_fetch.js" defer></script>
 
@@ -353,7 +354,7 @@
             }
 
             // Build exceptions to don't lock the navigation; 
-            const exceptions = ['.tab-button', '.tab-navigation', '.btn-next', '.btn-back', '.accordion-header', '.accordion-button'];
+            const exceptions = ['.tab-button', '.tab-navigation', '.btn-next', '.btn-back', '.accordion-header', '.accordion-button', '#view-policy-doc-btn'];
 
             if (agentCanSelectPlans) {
                 const plansPanel = document.getElementById('tab-panel-plans-selection');
@@ -2356,6 +2357,32 @@
                         selectEl.value = ''; // Reset dropdown
                     }
                 }
+            }
+        });
+    </script>
+
+    <script>
+        // Validation for "Since When (Date)" field when document is uploaded
+        document.addEventListener('DOMContentLoaded', function () {
+            const previewBtn = document.getElementById('preview-btn');
+            if (previewBtn) {
+                // Add our validation before any other handlers
+                previewBtn.addEventListener('click', function (e) {
+                    const sinceDateInput = document.getElementById('policy-since-date');
+                    const uploadCheckbox = document.getElementById('upload-policy-doc-checkbox');
+
+                    // Check if document is uploaded and date is empty
+                    if (uploadCheckbox && uploadCheckbox.checked && sinceDateInput) {
+                        if (!sinceDateInput.value || !sinceDateInput.value.trim()) {
+                            e.stopImmediatePropagation();
+                            e.preventDefault();
+                            alert('Please fill in "Since When (Date)" field. This field is required when a policy document is uploaded.');
+                            sinceDateInput.focus();
+                            sinceDateInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            return false;
+                        }
+                    }
+                }, true);
             }
         });
     </script>

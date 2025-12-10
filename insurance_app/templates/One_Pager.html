@@ -4,7 +4,7 @@
         <h2 style="margin: 0; color: #334155;">Insurance Plan Summary</h2>
         <div class="print-actions">
             <button type="button" id="btn-print-one-pager" class="btn btn-primary"
-                onclick="const original=document.title; const uid=new URLSearchParams(window.location.search).get('uid') || 'Summary'; document.title='Plan_Comparison_' + uid; window.print(); document.title=original;"
+                onclick="if(window.printOnePager) window.printOnePager();"
                 style="opacity: 1 !important; visibility: visible !important; display: inline-flex !important; align-items: center; gap: 5px; cursor: pointer !important; background-color: #0d6efd !important; color: white !important; border: 1px solid #0d6efd !important;">
                 <i class="fas fa-print"></i> Download / Print
             </button>
@@ -68,26 +68,20 @@
                         <option value="1 Year">1 Year</option>
                         <option value="2 Years">2 Years</option>
                         <option value="3 Years">3 Years</option>
+                        <option value="4 Years">4 Years</option>
+                        <option value="5 Years">5 Years</option>
                     </select>
                 </div>
 
                 <div class="highlights-section"
                     style="margin-top: 15px; border-top: 1px dashed #bfdbfe; padding-top: 10px;">
-                    <h5 style="font-size: 0.9rem; color: #1e40af;">Highlights</h5>
-                    <div class="form-group" style="margin-bottom: 8px;">
-                        <label style="font-size: 0.8rem;">Renewal of policy:</label>
-                        <input type="text" id="op-plan1-renewal" class="form-control form-control-sm"
-                            placeholder="Details...">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 8px;">
-                        <label style="font-size: 0.8rem;">Room Charges:</label>
-                        <input type="text" id="op-plan1-room" class="form-control form-control-sm"
-                            placeholder="Details...">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 8px;">
-                        <label style="font-size: 0.8rem;">Star Advantages:</label>
-                        <input type="text" id="op-plan1-advantages" class="form-control form-control-sm"
-                            placeholder="Details...">
+                    <h5 style="font-size: 1.05rem; color: #1e40af; margin-bottom: 8px; font-weight: 700;">Highlights</h5>
+                    <div style="width: 100%; box-sizing: border-box;">
+                        <div style="font-size: 0.85rem; color: #1e40af; padding-bottom: 5px; font-weight: 500;">
+                            Benefits and Features</div>
+                        <textarea id="op-plan1-benefits" class="form-control form-control-sm"
+                            style="width: 100%; height: 125px; resize: none; overflow-y: scroll; overflow-x: hidden; word-wrap: break-word; white-space: pre-wrap; box-sizing: border-box;"
+                            placeholder="Shows Benefits and Features"></textarea>
                     </div>
                 </div>
             </div>
@@ -121,26 +115,20 @@
                         <option value="1 Year">1 Year</option>
                         <option value="2 Years">2 Years</option>
                         <option value="3 Years">3 Years</option>
+                        <option value="4 Years">4 Years</option>
+                        <option value="5 Years">5 Years</option>
                     </select>
                 </div>
 
                 <div class="highlights-section"
                     style="margin-top: 15px; border-top: 1px dashed #e2e8f0; padding-top: 10px;">
-                    <h5 style="font-size: 0.9rem; color: #64748b;">Highlights</h5>
-                    <div class="form-group" style="margin-bottom: 8px;">
-                        <label style="font-size: 0.8rem;">Renewal of policy:</label>
-                        <input type="text" id="op-plan2-renewal" class="form-control form-control-sm"
-                            placeholder="Details...">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 8px;">
-                        <label style="font-size: 0.8rem;">Room Charges:</label>
-                        <input type="text" id="op-plan2-room" class="form-control form-control-sm"
-                            placeholder="Details...">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 8px;">
-                        <label style="font-size: 0.8rem;">Star Advantages:</label>
-                        <input type="text" id="op-plan2-advantages" class="form-control form-control-sm"
-                            placeholder="Details...">
+                    <h5 style="font-size: 1.05rem; color: #64748b; margin-bottom: 8px; font-weight: 700;">Highlights</h5>
+                    <div style="width: 100%; box-sizing: border-box;">
+                        <div style="font-size: 0.85rem; color: #64748b; padding-bottom: 5px; font-weight: 500;">
+                            Benefits and Features</div>
+                        <textarea id="op-plan2-benefits" class="form-control form-control-sm"
+                            style="width: 100%; height: 125px; resize: none; overflow-y: scroll; overflow-x: hidden; word-wrap: break-word; white-space: pre-wrap; box-sizing: border-box;"
+                            placeholder="Shows Benefits and Features"></textarea>
                     </div>
                 </div>
             </div>
@@ -174,26 +162,20 @@
                         <option value="1 Year">1 Year</option>
                         <option value="2 Years">2 Years</option>
                         <option value="3 Years">3 Years</option>
+                        <option value="4 Years">4 Years</option>
+                        <option value="5 Years">5 Years</option>
                     </select>
                 </div>
 
                 <div class="highlights-section"
                     style="margin-top: 15px; border-top: 1px dashed #e2e8f0; padding-top: 10px;">
-                    <h5 style="font-size: 0.9rem; color: #64748b;">Highlights</h5>
-                    <div class="form-group" style="margin-bottom: 8px;">
-                        <label style="font-size: 0.8rem;">Renewal of policy:</label>
-                        <input type="text" id="op-plan3-renewal" class="form-control form-control-sm"
-                            placeholder="Details...">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 8px;">
-                        <label style="font-size: 0.8rem;">Room Charges:</label>
-                        <input type="text" id="op-plan3-room" class="form-control form-control-sm"
-                            placeholder="Details...">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 8px;">
-                        <label style="font-size: 0.8rem;">Star Advantages:</label>
-                        <input type="text" id="op-plan3-advantages" class="form-control form-control-sm"
-                            placeholder="Details...">
+                    <h5 style="font-size: 1.05rem; color: #64748b; margin-bottom: 8px; font-weight: 700;">Highlights</h5>
+                    <div style="width: 100%; box-sizing: border-box;">
+                        <div style="font-size: 0.85rem; color: #64748b; padding-bottom: 5px; font-weight: 500;">
+                            Benefits and Features</div>
+                        <textarea id="op-plan3-benefits" class="form-control form-control-sm"
+                            style="width: 100%; height: 125px; resize: none; overflow-y: scroll; overflow-x: hidden; word-wrap: break-word; white-space: pre-wrap; box-sizing: border-box;"
+                            placeholder="Shows Benefits and Features"></textarea>
                     </div>
                 </div>
             </div>
@@ -271,6 +253,13 @@
             padding: 8px;
             box-sizing: border-box;
             cursor: auto !important;
+        }
+
+        /* Override textarea min-width in plan boxes to prevent overflow */
+        .plan-box textarea {
+            min-width: 0 !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
         }
 
         /* Override global disabled styles for One Pager inputs */

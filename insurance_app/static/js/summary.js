@@ -3,7 +3,7 @@
  * It retrieves the form data from local storage and dynamically creates the HTML to display it.
  * It is used by: Summary.html and Preview.html
  */
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const summaryContainer = document.getElementById('summary-container');
     const summaryData = JSON.parse(localStorage.getItem('formSummary'));
 
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 summaryData.members = storedMembers;
             }
         }
-    } catch (e) {}
+    } catch (e) { }
 
     try {
         if (!summaryData.commentsNoted || !Array.isArray(summaryData.commentsNoted?.comments_noted) || summaryData.commentsNoted.comments_noted.length === 0) {
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 summaryData.commentsNoted = { comments_noted: storedComments };
             }
         }
-    } catch (e) {}
+    } catch (e) { }
 
     let html = '';
 
@@ -95,8 +95,71 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             // Skip internal-only keys that should not be shown
             if (key === 'occupation_value' || key === 'occupationValue' || key === 'secondary_occupation_value' || key === 'secondaryOccupationValue') continue;
+
+            // Special handling for upload-policy-doc-checkbox
+            let formattedKey = formatLabel(key);
+            if (key === 'upload-policy-doc-checkbox' || key === 'upload_policy_doc_checkbox') {
+                formattedKey = 'Uploaded Policy Document';
+
+                // Check if actual document exists in localStorage
+                let hasDocument = false;
+                try {
+                    // Get unique ID from URL or sessionStorage (not from section data)
+                    let uniqueId = '';
+                    try {
+                        const params = new URLSearchParams(window.location.search);
+                        uniqueId = params.get('unique_id') || params.get('uid') || '';
+                    } catch (e) { }
+
+                    if (!uniqueId) {
+                        try {
+                            uniqueId = sessionStorage.getItem('current_unique_id') || '';
+                        } catch (e) { }
+                    }
+
+                    // Also try to get from formSummary in localStorage
+                    if (!uniqueId) {
+                        try {
+                            const formSummary = JSON.parse(localStorage.getItem('formSummary') || '{}');
+                            uniqueId = formSummary?.primaryContact?.['unique_id'] ||
+                                formSummary?.primaryContact?.['unique-id'] || '';
+                        } catch (e) { }
+                    }
+
+                    const POLICY_DOC_STORAGE_KEY = 'existing_policy_doc_';
+
+                    // Check with unique ID
+                    if (uniqueId) {
+                        const storageKey = POLICY_DOC_STORAGE_KEY + uniqueId;
+                        const docData = localStorage.getItem(storageKey);
+                        if (docData) {
+                            const parsed = JSON.parse(docData);
+                            hasDocument = !!(parsed && parsed.fileName);
+                        }
+                    }
+
+                    // Also check temp_draft key as fallback
+                    if (!hasDocument) {
+                        const tempDocData = localStorage.getItem(POLICY_DOC_STORAGE_KEY + 'temp_draft');
+                        if (tempDocData) {
+                            const parsed = JSON.parse(tempDocData);
+                            hasDocument = !!(parsed && parsed.fileName);
+                        }
+                    }
+                } catch (e) {
+                    console.error('[Summary] Error checking document:', e);
+                    // If error, fall back to checkbox value
+                    if (Array.isArray(displayValue)) {
+                        hasDocument = displayValue.length > 0 && displayValue[0] === 'on';
+                    } else {
+                        hasDocument = (displayValue === 'on' || displayValue === true || displayValue === 'true');
+                    }
+                }
+
+                displayValue = hasDocument ? 'Yes' : 'No';
+            }
+
             // Use formatLabel for nicer labels (handles Primary/Secondary occupation mapping)
-            const formattedKey = formatLabel(key);
             sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${displayValue}</div>`;
         }
         sectionHtml += `</div></fieldset>`;
@@ -212,11 +275,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (member.healthHistory && typeof member.healthHistory === 'object') {
                 Object.entries(member.healthHistory).forEach(([disease, detail]) => {
                     if (!disease || !detail) return;
-                    
+
                     // Display disease details
                     const formattedKey = disease.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ' Details';
                     html += `<div class="summary-item"><strong>${formattedKey}:</strong> ${detail}</div>`;
-                    
+
                     // Display disease start date if it exists
                     const startDateKey = `${disease}_start_date`;
                     if (member[startDateKey]) {
@@ -323,7 +386,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             proposedBtn.onclick = () => { window.location.href = targetUrl; };
                         }
                     })
-                    .catch(() => {});
+                    .catch(() => { });
             }
         }
 
@@ -356,7 +419,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (backBtn) {
             backBtn.style.display = 'inline-block';
             backBtn.onclick = () => {
-                try { sessionStorage.setItem('returningFromSummary', '1'); } catch (e) {}
+                try { sessionStorage.setItem('returningFromSummary', '1'); } catch (e) { }
                 // Compute unique_id as used elsewhere
                 const summary = JSON.parse(localStorage.getItem('formSummary'));
                 let uniqueId = null;
@@ -405,6 +468,6 @@ function formatTimestampSummary(ts) {
                 hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
             });
         }
-    } catch {}
+    } catch { }
     return escapeHtmlSummary(ts);
 }

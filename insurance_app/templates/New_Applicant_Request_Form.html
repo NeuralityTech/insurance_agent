@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <link rel="stylesheet" href="/static/css/logo.css">
     <meta charset="UTF-8">
@@ -12,15 +13,17 @@
     <link rel="stylesheet" href="../css/members.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body data-sidebar="new-applicant">
     <!-- Sidebar will be injected here by sidebar.js -->
-    
+
     <div class="container">
         <header class="page-header">
             <link rel="stylesheet" href="/static/css/logo.css">
             <h1>New Applicant Request Form</h1>
         </header>
-        <p style="margin: 2em 0; text-align: center;">Complete the form to help your advisor match you with the right policy. All fields marked * are recommended.</p>
+        <p style="margin: 2em 0; text-align: center;">Complete the form to help your advisor match you with the right
+            policy. All fields marked * are recommended.</p>
         <form id="insurance-form" novalidate>
             <!-- Tabs will be dynamically inserted here by script.js -->
             <div class="form-actions">
@@ -29,10 +32,10 @@
             </div>
         </form>
     </div>
-    
+
     <!-- Load sidebar component first -->
     <script src="../js/sidebar.js"></script>
-    
+
     <!-- Then load other scripts -->
     <script src="../js/calculations.js"></script>
     <script src="../js/validation.js"></script>
@@ -46,8 +49,9 @@
     <script src="../js/script.js" defer></script>
     <script src="../js/data_fetch.js" defer></script>
     <script src="../js/form_persistence.js" defer></script>
+    <script src="../js/existing_coverage.js" defer></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('insurance-form');
             const submitBtn = document.getElementById('submit-btn');
             const previewBtn = document.getElementById('preview-btn');
@@ -94,7 +98,7 @@
                         if (summaryContent) summaryContent.innerHTML = '<p class="placeholder-text">Hover over a member to see their details.</p>';
                         if (window.loadMembersGlobal) window.loadMembersGlobal();
                         if (window.updatePeopleCounter) window.updatePeopleCounter();
-                    } catch(e) { /* ignore */ }
+                    } catch (e) { /* ignore */ }
 
                     // 4) Clear comments UI and local mirror
                     try {
@@ -108,7 +112,7 @@
                             const noMsg = document.getElementById('no-comments-message');
                             if (noMsg) noMsg.style.display = 'block';
                         }
-                    } catch(e) { /* ignore */ }
+                    } catch (e) { /* ignore */ }
 
                     // 5) Re-enable action buttons
                     if (submitBtn) submitBtn.disabled = false;
@@ -120,16 +124,17 @@
             }
 
             if (resetBtn) {
-                resetBtn.addEventListener('click', function(ev){
+                resetBtn.addEventListener('click', function (ev) {
                     ev.preventDefault();
                     hardResetForm();
                 });
             }
-            
+
             if (typeof initializePrimaryContactValidation === 'function') {
                 initializePrimaryContactValidation();
             }
         });
     </script>
 </body>
+
 </html>

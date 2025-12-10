@@ -313,3 +313,79 @@ def check_duplicates():
     except Exception as e:
         current_app.logger.error(f"Error in check_duplicates: {e}")
         return jsonify({'error': 'Server error occurred'}), 500
+
+
+@submission_bp.route('/api/save-policy-document', methods=['POST'])
+def save_policy_document():
+    """Save existing policy document to the database."""
+    try:
+        data = request.get_json()
+        unique_id = data.get('unique_id')
+        file_name = data.get('fileName')
+        file_data = data.get('fileData')
+        uploaded_at = data.get('uploadedAt')
+        
+        if not unique_id or not file_name or not file_data:
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Create table if it doesn't exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS policy_documents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                unique_id TEXT NOT NULL,
+                file_name TEXT NOT NULL,
+                file_data LONGBLOB NOT NULL,
+                uploaded_at TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(unique_id)
+            )
+        ''')
+        
+        # Insert or update the document
+        cursor.execute('''
+            INSERT INTO policy_documents (unique_id, file_name, file_data, uploaded_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(unique_id) DO UPDATE SET
+                file_name = excluded.file_name,
+                file_data = excluded.file_data,
+                uploaded_at = excluded.uploaded_at
+        ''', (unique_id, file_name, file_data, uploaded_at))
+        
+        conn.commit()
+        conn.close()
+        
+        current_app.logger.info(f"Policy document saved for {unique_id}: {file_name}")
+        return jsonify({'success': True, 'message': 'Document saved successfully'}), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Error saving policy document: {e}")
+        return jsonify({'error': 'Server error occurred'}), 500
+
+
+@submission_bp.route('/api/get-policy-document/<unique_id>', methods=['GET'])
+def get_policy_document(unique_id):
+    """Retrieve existing policy document from the database."""
+    try:
+        conn = get_db_connection()
+        row = conn.execute(
+            'SELECT file_name, file_data, uploaded_at FROM policy_documents WHERE unique_id = ?',
+            (unique_id,)
+        ).fetchone()
+        conn.close()
+        
+        if row:
+            return jsonify({
+                'success': True,
+                'fileName': row['file_name'],
+                'fileData': row['file_data'],
+                'uploadedAt': row['uploaded_at']
+            }), 200
+        else:
+            return jsonify({'success': False, 'message': 'No document found'}), 404
+        
+    except Exception as e:
+        current_app.logger.error(f"Error retrieving policy document: {e}")
+        return jsonify({'error': 'Server error occurred'}), 500

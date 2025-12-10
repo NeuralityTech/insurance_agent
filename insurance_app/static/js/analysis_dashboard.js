@@ -220,7 +220,7 @@ function createPlanCard(p, index) {
 
 function renderFloaterPlans(plans, container) {
     if (!container || !plans || plans.length === 0) {
-        container.innerHTML = '<p>No suitable family floater plans found.</p>';
+        container.innerHTML = '<p>No suitable Comprehensive plans found.</p>';
         return;
     }
     container.innerHTML = plans.map((p, i) => createPlanCard(p, i)).join('');

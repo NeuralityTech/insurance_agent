@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <link rel="stylesheet" href="/static/css/logo.css">
     <script defer src="/static/js/logo.js"></script>
@@ -15,24 +16,61 @@
             padding: 1rem;
             margin-top: 0.5rem;
         }
+
         .existing-policy-details .form-row {
             margin-bottom: 0.75rem;
         }
+
         .existing-policy-details .form-row:last-child {
             margin-bottom: 0;
         }
+
         .existing-policy-details label {
             font-size: 0.9rem;
             color: #495057;
         }
+
         .section-label {
             font-weight: 600;
             color: #212529;
             margin-bottom: 0.5rem;
             display: block;
         }
+
+        /* Upload section styling */
+        #policy-doc-upload-section {
+            display: none !important;
+            width: 100% !important;
+        }
+
+        #policy-doc-upload-section.visible {
+            display: block !important;
+        }
+
+        .upload-doc-checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .upload-doc-checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #0066cc;
+        }
+
+        .upload-doc-checkbox-container label {
+            margin: 0;
+            font-size: 0.95rem;
+            cursor: pointer;
+            color: #212529;
+            font-weight: 500;
+        }
     </style>
 </head>
+
 <body>
 
     <fieldset>
@@ -58,19 +96,59 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="insurer-name">Name of the Insurer</label>
-                            <input type="text" id="insurer-name" name="insurer-name" placeholder="e.g., Star Health, HDFC Ergo" pattern="^[a-zA-Z0-9\s,.-]*$" title="Please enter only letters, numbers, and basic punctuation">
+                            <input type="text" id="insurer-name" name="insurer-name"
+                                placeholder="e.g., Star Health, HDFC Ergo" pattern="^[a-zA-Z0-9\s,.-]*$"
+                                title="Please enter only letters, numbers, and basic punctuation">
                             <span class="error-message" id="insurer-name-error"></span>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" style="flex: 1;">
                             <label for="existing-policy-number">Policy Number</label>
-                            <input type="text" id="existing-policy-number" name="existing-policy-number" placeholder="e.g., POL123456789" pattern="^[a-zA-Z0-9\s/-]*$" title="Please enter only letters, numbers, and basic punctuation">
+                            <input type="text" id="existing-policy-number" name="existing-policy-number"
+                                placeholder="e.g., POL123456789" pattern="^[a-zA-Z0-9\s/-]*$"
+                                title="Please enter only letters, numbers, and basic punctuation">
                             <span class="error-message" id="existing-policy-number-error"></span>
+                        </div>
+                        <div
+                            style="flex: 0 0 auto; display: flex; align-items: flex-end; gap: 8px; padding-bottom: 8px;">
+                            <div class="upload-doc-checkbox-container">
+                                <input type="checkbox" id="upload-policy-doc-checkbox"
+                                    name="upload-policy-doc-checkbox">
+                                <label for="upload-policy-doc-checkbox">Upload Document</label>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- File Upload Section (appears when checkbox is checked) -->
+                    <div class="form-row" id="policy-doc-upload-section">
+                        <div class="form-group" style="flex: 1 1 100%;">
+                            <label for="existing-policy-document">Upload Existing Policy Document (PDF)</label>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <input type="file" id="existing-policy-document" name="existing-policy-document"
+                                    accept=".pdf,application/pdf"
+                                    style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
+                                <button type="button" id="upload-policy-btn" class="btn btn-primary"
+                                    style="padding: 0.5em 1em; font-size: 0.9em; white-space: nowrap; cursor: pointer;">Upload</button>
+                            </div>
+                            <div id="policy-doc-status"
+                                style="margin-bottom: 10px; font-size: 0.9rem; font-weight: 500;"></div>
+                            <div id="policy-doc-attached"
+                                style="padding: 10px; background: #e8f5e9; border-radius: 4px; border-left: 4px solid #4caf50;">
+                                <p style="margin: 0 0 8px 0; font-weight: 600; color: #2e7d32;">Attached Document:</p>
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <span id="attached-doc-name"
+                                        style="flex: 1; word-break: break-all; min-width: 150px;"></span>
+                                    <button type="button" id="view-policy-doc-btn" class="btn btn-sm"
+                                        style="padding: 0.4em 0.8em; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">View</button>
+                                    <button type="button" id="remove-policy-doc-btn" class="btn btn-sm"
+                                        style="padding: 0.4em 0.8em; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Remove</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="existing-sum-insured">Sum Insured (₹)</label>
-                            <input type="text" id="existing-sum-insured" name="existing-sum-insured" placeholder="e.g., 500000" pattern="^[0-9,]*$" title="Please enter numbers only">
+                            <input type="text" id="existing-sum-insured" name="existing-sum-insured"
+                                placeholder="e.g., 500000" pattern="^[0-9,]*$" title="Please enter numbers only">
                             <span class="error-message" id="existing-sum-insured-error"></span>
                         </div>
                         <div class="form-group">
@@ -118,33 +196,7 @@
         </div>
     </fieldset>
 
-    <script>
-        // Auto-populate the hidden legacy field for backward compatibility
-        document.addEventListener('DOMContentLoaded', function() {
-            const insurerName = document.getElementById('insurer-name');
-            const policyNumber = document.getElementById('existing-policy-number');
-            const sumInsured = document.getElementById('existing-sum-insured');
-            const sinceDate = document.getElementById('policy-since-date');
-            const legacyField = document.getElementById('existing-policies');
-            
-            function updateLegacyField() {
-                if (!legacyField) return;
-                const parts = [];
-                if (insurerName && insurerName.value) parts.push('Insurer: ' + insurerName.value);
-                if (policyNumber && policyNumber.value) parts.push('Policy #: ' + policyNumber.value);
-                if (sumInsured && sumInsured.value) parts.push('SI: ₹' + sumInsured.value);
-                if (sinceDate && sinceDate.value) parts.push('Since: ' + sinceDate.value);
-                legacyField.value = parts.join(', ');
-            }
-            
-            [insurerName, policyNumber, sumInsured, sinceDate].forEach(el => {
-                if (el) {
-                    el.addEventListener('change', updateLegacyField);
-                    el.addEventListener('input', updateLegacyField);
-                }
-            });
-        });
-    </script>
-    </details>
+
 </body>
+
 </html>

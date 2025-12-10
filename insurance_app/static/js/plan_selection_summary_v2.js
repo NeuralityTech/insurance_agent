@@ -4,7 +4,7 @@
 
 //   renderPlanSelectionSummary(hostEl, {
 
-//     proposed: { key: { name: 'Family', plans: ['Plan A', 'Plan B'] }, ... },
+//     proposed: { key: { name: 'comprehensive_cover', plans: ['Plan A', 'Plan B'] }, ... },
 
 //     agentSel: new Set(['Plan A']),
 
@@ -24,9 +24,9 @@
 
 
 
-(function(global){
+(function (global) {
 
-  function escapeHtml(s){
+  function escapeHtml(s) {
 
     const d = document.createElement('div');
 
@@ -38,7 +38,7 @@
 
 
 
-  function ensureOrderKeys(proposed, orderKeys){
+  function ensureOrderKeys(proposed, orderKeys) {
 
     const keys = Array.isArray(orderKeys) && orderKeys.length ? orderKeys.slice() : Object.keys(proposed || {});
 
@@ -56,7 +56,7 @@
 
 
 
-  function makeTick(isSelected){
+  function makeTick(isSelected) {
 
     return isSelected
 
@@ -68,7 +68,7 @@
 
 
 
-  function renderTableHTML(opts){
+  function renderTableHTML(opts) {
 
     const proposed = opts.proposed || {};
 
@@ -90,21 +90,21 @@
 
     // Dynamic header based on mode
 
-    html += '<thead><tr>'+
+    html += '<thead><tr>' +
 
-            '<th style="border:1px solid #ddd; padding:8px; text-align:left;">System proposed plans</th>'+
+      '<th style="border:1px solid #ddd; padding:8px; text-align:left;">System proposed plans</th>' +
 
-            '<th style="border:1px solid #ddd; padding:8px; text-align:left;">Agent selected plan(s)</th>'+
+      '<th style="border:1px solid #ddd; padding:8px; text-align:left;">Agent selected plan(s)</th>' +
 
-            ((mode === 'supervisor' || mode === 'approvals') ? '<th style="border:1px solid #ddd; padding:8px; text-align:left;">Supervisor approved plan(s)</th>' : '')+
+      ((mode === 'supervisor' || mode === 'approvals') ? '<th style="border:1px solid #ddd; padding:8px; text-align:left;">Supervisor approved plan(s)</th>' : '') +
 
-            (mode === 'approvals' ? '<th style="border:1px solid #ddd; padding:8px; text-align:left;">Client Agreed plan(s)</th>' : '')+
+      (mode === 'approvals' ? '<th style="border:1px solid #ddd; padding:8px; text-align:left;">Client Agreed plan(s)</th>' : '') +
 
-            '</tr></thead><tbody>';
+      '</tr></thead><tbody>';
 
 
 
-    function row(cells){
+    function row(cells) {
 
       // cells: [system, agent, supervisor?, client?]
 
@@ -126,7 +126,7 @@
 
       const info = proposed[key] || {};
 
-      const section = info.name || (key === 'comprehensive_cover' ? 'Family' : key);
+      const section = info.name || (key === 'comprehensive_cover' ? 'comprehensive_cover' : key);
 
       const headerCells = [`<div style=\"background:#cff9ff; font-weight:600; padding:4px 6px;\">${escapeHtml(section)}</div>`, ''];
 
@@ -138,7 +138,7 @@
 
       const plans = Array.isArray(info.plans) ? info.plans : [];
 
-      if (!plans.length){
+      if (!plans.length) {
 
         const noCells = ['<span style=\"color:#888;\">No plans</span>', '<span style=\"color:#bbb;\">—”</span>'];
 
@@ -162,21 +162,21 @@
 
         let clientCell = '';
 
-        if (mode === 'supervisor'){
+        if (mode === 'supervisor') {
 
           const checked = supervisorSel.has(name) ? 'checked' : '';
 
-          supCell = `<label style=\"display:inline-flex; gap:6px; align-items:center;\">`+
+          supCell = `<label style=\"display:inline-flex; gap:6px; align-items:center;\">` +
 
-                   `<input type=\"checkbox\" class=\"pss-sup\" data-plan-name=\"${safeName}\" ${checked}><span>Select</span></label>`;
+            `<input type=\"checkbox\" class=\"pss-sup\" data-plan-name=\"${safeName}\" ${checked}><span>Select</span></label>`;
 
-        } else if (mode === 'analysis'){
+        } else if (mode === 'analysis') {
 
           const checked = supervisorSel.has(name);
 
-          supCell = `<label style=\"display:inline-flex; gap:6px; align-items:center;\">`+
+          supCell = `<label style=\"display:inline-flex; gap:6px; align-items:center;\">` +
 
-                   `<input type=\"checkbox\" ${checked ? 'checked' : ''} disabled><span>Select</span></label>`;
+            `<input type=\"checkbox\" ${checked ? 'checked' : ''} disabled><span>Select</span></label>`;
 
         } else { // approvals (supervisor read-only; client interactive)
 
@@ -184,9 +184,9 @@
 
           const cChecked = clientSel.has(name) ? 'checked' : '';
 
-          clientCell = `<label style=\"display:inline-flex; gap:6px; align-items:center;\">`+
+          clientCell = `<label style=\"display:inline-flex; gap:6px; align-items:center;\">` +
 
-                       `<input type=\"checkbox\" class=\"pss-client\" data-plan-name=\"${safeName}\" ${cChecked}><span>Select</span></label>`;
+            `<input type=\"checkbox\" class=\"pss-client\" data-plan-name=\"${safeName}\" ${cChecked}><span>Select</span></label>`;
 
         }
 
@@ -212,7 +212,7 @@
 
 
 
-  function renderPlanSelectionSummary(hostEl, opts){
+  function renderPlanSelectionSummary(hostEl, opts) {
 
     if (!hostEl) return;
 
@@ -222,17 +222,17 @@
 
     // Bind supervisor toggles for interactive mode
 
-    if (options.mode === 'supervisor' && typeof options.onSupervisorToggle === 'function'){
+    if (options.mode === 'supervisor' && typeof options.onSupervisorToggle === 'function') {
 
       hostEl.querySelectorAll('input.pss-sup').forEach(inp => {
 
-        inp.addEventListener('change', function(){
+        inp.addEventListener('change', function () {
 
           const name = this.getAttribute('data-plan-name');
 
           const checked = this.checked;
 
-          try { options.onSupervisorToggle(name, checked); } catch(e) {}
+          try { options.onSupervisorToggle(name, checked); } catch (e) { }
 
         });
 
@@ -242,17 +242,17 @@
 
     // Bind client toggles for approvals mode
 
-    if (options.mode === 'approvals' && typeof options.onClientToggle === 'function'){
+    if (options.mode === 'approvals' && typeof options.onClientToggle === 'function') {
 
       hostEl.querySelectorAll('input.pss-client').forEach(inp => {
 
-        inp.addEventListener('change', function(){
+        inp.addEventListener('change', function () {
 
           const name = this.getAttribute('data-plan-name');
 
           const checked = this.checked;
 
-          try { options.onClientToggle(name, checked); } catch(e) {}
+          try { options.onClientToggle(name, checked); } catch (e) { }
 
         });
 
@@ -264,6 +264,6 @@
 
 
 
-  try { global.renderPlanSelectionSummary = renderPlanSelectionSummary; } catch(e) {}
+  try { global.renderPlanSelectionSummary = renderPlanSelectionSummary; } catch (e) { }
 
 })(window);

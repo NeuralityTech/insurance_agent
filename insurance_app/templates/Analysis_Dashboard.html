@@ -440,7 +440,7 @@
                 const floater = readFloaterPlansFromDOM();
                 if (Array.isArray(floater) && floater.length) {
                     sys.comprehensive_cover = {
-                        name: 'Family',
+                        name: 'comprehensive_cover',
                         plans: floater
                     };
                 }
@@ -450,7 +450,7 @@
             function deriveMemberOrder(systemPlans) {
                 const order = [];
                 // Prefer comprehensive cover first
-                if (systemPlans && systemPlans.comprehensive_cover) order.push({ key: 'comprehensive_cover', name: 'Family' });
+                if (systemPlans && systemPlans.comprehensive_cover) order.push({ key: 'comprehensive_cover', name: 'comprehensive_cover' });
                 const keys = Object.keys(systemPlans || {});
                 keys.forEach(k => {
                     if (k === 'comprehensive_cover') return;
@@ -647,7 +647,7 @@
                                 return String(p);
                             }).filter(Boolean);
                             if (names.length) {
-                                proposed['comprehensive_cover'] = { name: 'Family', plans: names };
+                                proposed['comprehensive_cover'] = { name: 'comprehensive_cover', plans: names };
                             }
                         }
                     }
@@ -706,9 +706,73 @@
                 }
             }
 
+            // Validation function: check if all selected plans have required fields filled
+            function validateSelectedPlansFields() {
+                // Get all selected plans from both tabs
+                const selectedCheckboxes = Array.from(document.querySelectorAll('.plan-options-section .plan-checkbox:checked'));
+                const selectedPlanNames = selectedCheckboxes.map(cb => cb.getAttribute('data-plan-name')).filter(Boolean);
+
+                if (!selectedPlanNames.length) {
+                    return { valid: true, missingFields: [] }; // No plans selected, will be caught by other validation
+                }
+
+                // Get plan_meta from localStorage
+                let planMeta = {};
+                try {
+                    const formSummary = JSON.parse(localStorage.getItem('formSummary') || '{}');
+                    planMeta = formSummary.plan_meta || {};
+                } catch (e) {
+                    console.error('Error reading plan_meta:', e);
+                }
+
+                const missingFields = [];
+                const role = getRole();
+
+                // Check each selected plan
+                selectedPlanNames.forEach(planName => {
+                    const planData = planMeta[planName] || {};
+                    const roleData = planData[role] || {};
+
+                    const premium = (roleData.premium || '').trim();
+                    const sumInsured = (roleData.sum_insured || '').trim();
+                    const policyTerm = (roleData.policy_term || '').trim();
+
+                    const missing = [];
+                    if (!premium) missing.push('Premium');
+                    if (!sumInsured) missing.push('Sum Insured');
+                    if (!policyTerm) missing.push('Policy Term');
+
+                    if (missing.length > 0) {
+                        missingFields.push({
+                            planName: planName,
+                            fields: missing
+                        });
+                    }
+                });
+
+                return {
+                    valid: missingFields.length === 0,
+                    missingFields: missingFields
+                };
+            }
+
             // Proceed modal: show JSON-backed summary (analysis mode)
             if (proceedBtn) {
                 proceedBtn.addEventListener('click', function () {
+                    // Validate that all selected plans have required fields filled
+                    const validation = validateSelectedPlansFields();
+
+                    if (!validation.valid) {
+                        // Build error message
+                        let errorMsg = 'Please fill in the following required fields for selected plans:\n\n';
+                        validation.missingFields.forEach(item => {
+                            errorMsg += `${item.planName}:\n`;
+                            errorMsg += `  - ${item.fields.join(', ')}\n`;
+                        });
+                        alert(errorMsg);
+                        return;
+                    }
+
                     renderSummaryFromJson('analysis');
                     showModal();
                 });
@@ -728,6 +792,21 @@
                             .map(cb => cb.getAttribute('data-plan-name'));
                         if (!selectedNames.length) {
                             alert('Please select at least one plan before confirming.');
+                            return;
+                        }
+
+                        // Validate that all selected plans have required fields filled
+                        const validation = validateSelectedPlansFields();
+
+                        if (!validation.valid) {
+                            // Build error message
+                            let errorMsg = 'Please fill in the following required fields for selected plans:\n\n';
+                            validation.missingFields.forEach(item => {
+                                errorMsg += `${item.planName}:\n`;
+                                errorMsg += `  - ${item.fields.join(', ')}\n`;
+                            });
+                            alert(errorMsg);
+                            hideModal(); // Close the modal so user can fill in the fields
                             return;
                         }
 
