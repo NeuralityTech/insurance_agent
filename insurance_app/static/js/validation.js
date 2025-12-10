@@ -37,7 +37,7 @@ function initializePrimaryContactValidation() {
     /**
      * Generates the UniqueID from first name, last name, and aadhaar.
      * Format: 3 letters of FirstName + 3 letters of LastName + 5 digits of Aadhaar
-     * Example: "JohSmi12345" for John Smith with Aadhaar ending in 12345
+     * Example: "JohSmi_12345" for John Smith with Aadhaar ending in 12345
      */
     function generateUniqueId() {
         if (!firstNameInput || !lastNameInput || !aadhaarInput || !uniqueIdInput) return;
