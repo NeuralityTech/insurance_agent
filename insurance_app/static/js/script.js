@@ -602,24 +602,61 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Update People Counter 
+    // Logic: Primary applicant is ALWAYS an adult.
+    // Members are children only if: age <= 25 AND relationship is son/daughter
+    // All other relationships (spouse, father, mother, in-laws) are inherently adult relationships
     window.updatePeopleCounter = function() {
         const ageInput = document.getElementById('self-age');
         const adultCountEl = document.getElementById('adult-count');
         const childCountEl = document.getElementById('child-count');
         let adults = 0, children = 0;
+        
+        // Primary applicant is ALWAYS counted as adult (regardless of age)
         const ageVal = ageInput ? parseInt(ageInput.value, 10) : NaN;
         if (!isNaN(ageVal)) {
-            if (ageVal < 26) children++;
-            else adults++;
+            adults++;
         }
+        
+        // Relationships where the member could be a child (if age <= 25)
+        const childEligibleRelationships = ['son', 'daughter'];
+        
+        // Helper function to calculate age from DOB string
+        function getAgeFromDob(dobString) {
+            if (!dobString) return NaN;
+            const dob = new Date(dobString);
+            if (isNaN(dob.getTime())) return NaN;
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const m = today.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+            return age >= 0 ? age : NaN;
+        }
+        
         const members = JSON.parse(localStorage.getItem('members')) || [];
         members.forEach(m => {
-            const a = parseInt(m.age, 10);
-            if (!isNaN(a)) {
-                if (a < 26) children++;
-                else adults++;
+            // Try to get age from stored value first, otherwise calculate from DOB
+            let age = parseInt(m.age, 10);
+            if (isNaN(age) && m.dob) {
+                age = getAgeFromDob(m.dob);
+            }
+            
+            const relationship = (m.relationship || '').toLowerCase().trim();
+            
+            if (isNaN(age)) {
+                return; // Skip if no valid age
+            }
+            
+            // Child = age <= 25 AND relationship is son/daughter
+            // All other relationships (spouse, father, mother, in-laws) are adults
+            if (age <= 25 && childEligibleRelationships.includes(relationship)) {
+                children++;
+            } else {
+                adults++;
             }
         });
+        
         if (adultCountEl) adultCountEl.textContent = adults;
         if (childCountEl) childCountEl.textContent = children;
     };
