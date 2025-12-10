@@ -280,10 +280,25 @@
                     <legend>Personal & Professional</legend>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Full Name *</label>
-                            <input type="text" class="member-name" name="member_name" required pattern="[A-Za-z][A-Za-z.'\s]*" title="Name must start with a letter and can only contain letters, spaces, and apostrophes.">
-                            <span class="error-message member-name-error"></span>
+                            <label>First Name *</label>
+                            <input type="text" class="member-first-name" name="member_first_name" required pattern="[A-Za-z][A-Za-z.'\s]*" title="First name must start with a letter and can only contain letters, spaces, and apostrophes.">
+                            <span class="error-message member-first-name-error"></span>
                         </div>
+                        <div class="form-group">
+                            <label>Middle Name</label>
+                            <input type="text" class="member-middle-name" name="member_middle_name" pattern="[A-Za-z][A-Za-z.'\s]*" title="Middle name can only contain letters, spaces, and apostrophes.">
+                            <span class="error-message member-middle-name-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name *</label>
+                            <input type="text" class="member-last-name" name="member_last_name" required pattern="[A-Za-z][A-Za-z.'\s]*" title="Last name must start with a letter and can only contain letters, spaces, and apostrophes.">
+                            <span class="error-message member-last-name-error"></span>
+                        </div>
+                    </div>
+                    <!-- Hidden field to store concatenated full name for compatibility -->
+                    <input type="hidden" class="member-name" name="member_name">
+                    
+                    <div class="form-row">
                         <div class="form-group">
                             <label>Relationship *</label>
                             <select class="relationship" name="relationship" required>

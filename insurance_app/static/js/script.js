@@ -291,8 +291,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Validate Primary Contact required fields
         const primaryContactData = getSectionData('primary-contact');
         
-        if (!primaryContactData['applicant_name'] || !primaryContactData['applicant_name'].trim()) {
-            errors.push('Full Name is required');
+        if (!primaryContactData['first_name'] || !primaryContactData['first_name'].trim()) {
+            errors.push('First Name is required');
+        }
+        
+        if (!primaryContactData['last_name'] || !primaryContactData['last_name'].trim()) {
+            errors.push('Last Name is required');
         }
         
         if (!primaryContactData['gender'] || primaryContactData['gender'] === 'Select' || primaryContactData['gender'] === '') {
@@ -368,7 +372,7 @@ document.addEventListener('DOMContentLoaded', function() {
             errors.push('Annual Income must be numeric');
         }
 
-        // ✅ Validate Disease duration for PRIMARY APPLICANT (Since Year or Since Years)
+        // Validate Disease duration for PRIMARY APPLICANT (Since Year or Since Years)
         const healthHistoryContent = document.getElementById('health-history-content');
         if (healthHistoryContent) {
             const diseaseEntries = healthHistoryContent.querySelectorAll('.disease-entry');
@@ -443,7 +447,8 @@ document.addEventListener('DOMContentLoaded', function() {
             let errorTab = 0; // Default to Primary Contact tab
             
             if (errors.some(err => 
-                err.includes('Full Name') || 
+                err.includes('First Name') || 
+                err.includes('Last Name') || 
                 err.includes('Gender') || 
                 err.includes('Email') || 
                 err.includes('Phone') || 
@@ -633,8 +638,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Validate Primary Contact required fields
             const primaryContactData = getSectionData('primary-contact');
             
-            if (!primaryContactData['applicant_name'] || !primaryContactData['applicant_name'].trim()) {
-                validationErrors.push('Full Name is required');
+            if (!primaryContactData['first_name'] || !primaryContactData['first_name'].trim()) {
+                validationErrors.push('First Name is required');
+            }
+            
+            if (!primaryContactData['last_name'] || !primaryContactData['last_name'].trim()) {
+                validationErrors.push('Last Name is required');
             }
             
             if (!primaryContactData['gender'] || primaryContactData['gender'] === 'Select') {
@@ -716,7 +725,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 let errorTab = 0; // Default to Primary Contact tab
                 
                 if (validationErrors.some(err => 
-                    err.includes('Full Name') || 
+                    err.includes('First Name') || 
+                    err.includes('Last Name') || 
                     err.includes('Gender') || 
                     err.includes('Email') || 
                     err.includes('Phone') || 

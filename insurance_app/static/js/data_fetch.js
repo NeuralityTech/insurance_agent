@@ -82,7 +82,7 @@ const FIELD_BLACKLIST = [
 function populateDirectFields(data) {
     const directFieldMappings = {
         'unique_id': 'unique_id',
-        'applicant_name': 'applicant_name', 
+        // Note: applicant_name is now handled specially below to parse into first/middle/last
         'gender': 'gender',
         'occupation': 'occupation',
         'email': 'email',
@@ -93,13 +93,46 @@ function populateDirectFields(data) {
         'self-age': 'self-age',
         'self-height': 'self-height',
         'self-weight': 'self-weight',
-        'self-bmi': 'self-bmi'
+        'self-bmi': 'self-bmi',
+        // New name fields (for new records that already have them)
+        'first_name': 'first_name',
+        'middle_name': 'middle_name',
+        'last_name': 'last_name'
     };
     
     for (const [dataKey, fieldName] of Object.entries(directFieldMappings)) {
         if (data[dataKey] !== undefined && data[dataKey] !== null && data[dataKey] !== '' && 
             !FIELD_BLACKLIST.includes(dataKey)) {
             populateField(fieldName, data[dataKey]);
+        }
+    }
+    
+    // Handle applicant_name specially - parse into first/middle/last name components
+    // This maintains backward compatibility with existing records
+    const fullName = data['applicant_name'];
+    if (fullName && typeof fullName === 'string' && fullName.trim()) {
+        // Check if we already have first_name populated (new format record)
+        const hasNewFields = data['first_name'] && data['first_name'].trim();
+        
+        if (!hasNewFields) {
+            // Parse full name into components using the helper function from validation.js
+            if (typeof window.populateNameFieldsFromFullName === 'function') {
+                window.populateNameFieldsFromFullName(fullName);
+            } else {
+                // Fallback: simple parsing if helper not available
+                const parts = fullName.trim().split(/\s+/).filter(p => p);
+                if (parts.length >= 1) {
+                    populateField('first_name', parts[0]);
+                }
+                if (parts.length >= 3) {
+                    populateField('middle_name', parts.slice(1, -1).join(' '));
+                    populateField('last_name', parts[parts.length - 1]);
+                } else if (parts.length === 2) {
+                    populateField('last_name', parts[1]);
+                }
+                // Also populate the hidden full name field
+                populateField('applicant_name', fullName);
+            }
         }
     }
 }

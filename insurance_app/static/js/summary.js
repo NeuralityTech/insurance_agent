@@ -3,8 +3,6 @@
  * It retrieves the form data from local storage and dynamically creates the HTML to display it.
  * It is used by: Summary.html and Preview.html
  * 
- * Uses simple field names (no verbose labels like "OPD/Dental/Preventive")
- * Added proper handling for array values (checkbox fields like id-proof)
  */
 document.addEventListener('DOMContentLoaded', function() {
     const summaryContainer = document.getElementById('summary-container');
@@ -171,12 +169,79 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
+        // --- Special handling for disease/health history fields ---
+        // First, identify which diseases are selected (checked)
+        const selectedDiseases = new Set();
+        const diseaseCheckboxPatterns = /^(medical[-_]|disease[-_])?(.+)$/;
+        
+        for (const [key, value] of Object.entries(data)) {
+            // Check if this is a disease checkbox field
+            if (key.startsWith('medical-') || key.startsWith('medical_') || 
+                key.startsWith('disease-') || key.startsWith('disease_') ||
+                key === 'disease') {
+                // Check if it's selected (truthy, "on", or array with values)
+                const isSelected = value && 
+                    (value === 'on' || value === true || value === 'true' ||
+                     (Array.isArray(value) && value.length > 0) ||
+                     (typeof value === 'string' && value.trim() !== ''));
+                
+                if (isSelected) {
+                    // Extract disease name from key like "medical-diabetes" -> "diabetes"
+                    let diseaseName = key
+                        .replace(/^medical[-_]/, '')
+                        .replace(/^disease[-_]/, '');
+                    selectedDiseases.add(diseaseName.toLowerCase());
+                    
+                    // Also handle if value contains the disease name (for checkbox arrays)
+                    if (Array.isArray(value)) {
+                        value.forEach(v => selectedDiseases.add(String(v).toLowerCase()));
+                    } else if (typeof value === 'string' && value !== 'on' && value !== 'true') {
+                        selectedDiseases.add(value.toLowerCase());
+                    }
+                }
+            }
+        }
+        
+        // Helper to check if a field is a disease-related detail field
+        function isDiseaseDetailField(key) {
+            return key.endsWith('_details') || key.endsWith('-details') ||
+                   key.endsWith('_since_year') || key.endsWith('-since-year') ||
+                   key.endsWith('_since_years') || key.endsWith('-since-years') ||
+                   key.endsWith('_start_date') || key.endsWith('-start-date');
+        }
+        
+        // Helper to extract disease name from detail field
+        function getDiseaseNameFromDetailField(key) {
+            return key
+                .replace(/_details$/, '').replace(/-details$/, '')
+                .replace(/_since_year$/, '').replace(/-since-year$/, '')
+                .replace(/_since_years$/, '').replace(/-since-years$/, '')
+                .replace(/_start_date$/, '').replace(/-start-date$/, '')
+                .toLowerCase();
+        }
+        
         for (const [key, value] of Object.entries(data)) {
             // Skip hospital fields (already handled above)
             if (hospitalFieldsToSkip.has(key)) continue;
             
             // Skip internal-only keys
             if (skipFields.has(key)) continue;
+            
+            // Skip disease checkbox fields themselves (e.g., "medical-diabetes", "disease-hypertension")
+            // We only want to show the details/duration for selected diseases
+            if (key.startsWith('medical-') || key.startsWith('medical_') || 
+                key.startsWith('disease-') || key.startsWith('disease_') ||
+                key === 'disease') {
+                continue;
+            }
+            
+            // For disease detail fields, only show if the corresponding disease is selected
+            if (isDiseaseDetailField(key)) {
+                const diseaseName = getDiseaseNameFromDetailField(key);
+                if (!selectedDiseases.has(diseaseName)) {
+                    continue; // Skip - disease not selected
+                }
+            }
             
             let displayValue = value;
             
@@ -186,26 +251,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (formattedArray) {
                     displayValue = formattedArray;
                 } else {
-                    // Empty array - check if we should show a default
-                    if (showWhenEmpty[key]) {
-                        displayValue = showWhenEmpty[key];
-                    } else {
-                        continue; // Skip empty arrays
-                    }
+                    // Empty array - show default
+                    displayValue = showWhenEmpty[key] || 'None Selected';
                 }
             } else {
                 // Handle empty fields - check for various empty/placeholder values
                 const isEmptyOrPlaceholder = !value || 
                     String(value).trim() === '' || 
                     value === '-- Select --' || 
-                    value === 'Select';
+                    value === 'Select' ||
+                    value === 'Select Year';
                 
                 if (isEmptyOrPlaceholder) {
-                    if (showWhenEmpty[key]) {
-                        displayValue = showWhenEmpty[key];
-                    } else {
-                        continue; // Skip other empty fields
-                    }
+                    // Always show with "Not Provided" or specific default
+                    displayValue = showWhenEmpty[key] || 'Not Provided';
                 }
             }
             
@@ -242,36 +301,67 @@ document.addEventListener('DOMContentLoaded', function() {
             const excludedKeys = new Set([
                 'self-height', 'self_height', 'self-height-ft', 'self-height-in',
                 'self_height_ft', 'self_height_in', 'height_ft', 'height_in',
-                'occupation_value', 'occupationValue', 'secondary_occupation_value', 'secondaryOccupationValue'
+                'occupation_value', 'occupationValue', 'secondary_occupation_value', 'secondaryOccupationValue',
+                // Exclude individual name components from display (we'll show Full Name instead)
+                'first_name', 'middle_name', 'last_name'
             ]);
 
             // Preferred order with height before weight
+            // Note: We use 'applicant_name' for display (Full Name), not individual name components
             const orderedFields = [
                 'unique_id', 'applicant_name', 'gender', 'occupation', 'secondary_occupation', 'self-dob',
                 'self-age',
                 '__HEIGHT__',
                 'self-weight', 'self-bmi', 'email', 'phone', 'aadhaar_last5', 'address', 'hubs'
             ];
+            
+            // If applicant_name is not present but individual name fields are, construct it
+            if (!primary['applicant_name'] && (primary['first_name'] || primary['last_name'])) {
+                const nameParts = [
+                    primary['first_name'] || '',
+                    primary['middle_name'] || '',
+                    primary['last_name'] || ''
+                ].filter(p => p.trim());
+                primary['applicant_name'] = nameParts.join(' ');
+            }
 
             for (const field of orderedFields) {
 
                 if (field === '__HEIGHT__') {
                     if (heightDisplay) {
                         sectionHtml += `<div class="summary-item"><strong>Height:</strong> ${heightDisplay}</div>`;
+                    } else {
+                        sectionHtml += `<div class="summary-item"><strong>Height:</strong> Not Provided</div>`;
                     }
                     continue;
                 }
 
-                let value = primary[field];
-                if (!value) continue;
                 if (excludedKeys.has(field)) continue;
 
-                // Format date fields to dd/mm/yyyy (e.g., self-dob)
-                if (isDateField(field) && value) {
-                    value = formatDateToDDMMYYYY(value);
+                let value = primary[field];
+                
+                // Check if value is empty or a placeholder
+                const isEmptyOrPlaceholder = !value || 
+                    String(value).trim() === '' || 
+                    value === '-- Select --' || 
+                    value === 'Select';
+                
+                if (isEmptyOrPlaceholder) {
+                    value = 'Not Provided';
                 }
 
-                const formattedKey = formatLabel(field);
+                // Format date fields to dd/mm/yyyy (e.g., self-dob)
+                if (isDateField(field) && value && value !== 'Not Provided') {
+                    value = formatDateToDDMMYYYY(value);
+                }
+                
+                // Use "Full Name" as the label for applicant_name
+                let formattedKey;
+                if (field === 'applicant_name') {
+                    formattedKey = 'Full Name';
+                } else {
+                    formattedKey = formatLabel(field);
+                }
 
                 sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${value}</div>`;
             }
@@ -297,6 +387,16 @@ document.addEventListener('DOMContentLoaded', function() {
         html += '<fieldset><legend>Members to be Covered</legend>';
         summaryData.members.forEach(member => {
             html += '<div class="summary-member-card">';
+            
+            // Construct member name from parts if not present
+            if (!member.name && (member.first_name || member.last_name)) {
+                member.name = [
+                    member.first_name || '',
+                    member.middle_name || '',
+                    member.last_name || ''
+                ].filter(p => p && p.trim()).join(' ');
+            }
+            
             // Compute a combined Height display from stored cm, if available
             let heightDisplay = '';
             const heightCm = parseFloat(member.height || member['member-height'] || member.self_height);
@@ -307,23 +407,43 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             // Ordered display of member fields (excluding plannedSurgeries and raw height)
+            // Note: first_name, middle_name, last_name are combined into 'name' above
             const memberFieldsOrder = [
                 'name', 'relationship', 'occupation', 'secondary_occupation', 'gender', 'dob', 'age', '__HEIGHT__', 'weight', 'bmi',
                 'smoker', 'alcohol', 'riskyHobbies', 'occupationalRisk', 'occupationalRiskDetails'
             ];
+            
+            // Fields to skip (they're handled separately or combined)
+            const skipFields = ['first_name', 'middle_name', 'last_name', 'height', 'self_height', 'member-height'];
+            
             memberFieldsOrder.forEach(field => {
+                // Skip if this field should be excluded
+                if (skipFields.includes(field)) return;
                 if (field === '__HEIGHT__') {
                     if (heightDisplay) {
                         html += `<div class="summary-item"><strong>Height:</strong> ${heightDisplay}</div>`;
+                    } else {
+                        html += `<div class="summary-item"><strong>Height:</strong> Not Provided</div>`;
                     }
                     return;
                 }
 
                 let fieldValue = member[field];
-                if (!fieldValue) return;
+                
+                // Check if value is empty or a placeholder
+                const isEmptyOrPlaceholder = !fieldValue || 
+                    String(fieldValue).trim() === '' || 
+                    fieldValue === '-- Select --' || 
+                    fieldValue === 'Select' ||
+                    fieldValue === 'Select Gender' ||
+                    fieldValue === 'Select Relationship';
+                
+                if (isEmptyOrPlaceholder) {
+                    fieldValue = 'Not Provided';
+                }
 
                 // Format date fields to dd/mm/yyyy (e.g., member dob)
-                if (isDateField(field) && fieldValue) {
+                if (isDateField(field) && fieldValue && fieldValue !== 'Not Provided') {
                     fieldValue = formatDateToDDMMYYYY(fieldValue);
                 }
 

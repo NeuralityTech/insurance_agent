@@ -1,6 +1,5 @@
 // Prefill helper for Existing User request Page
 // Exposes window.prefillExistingForm(data)
-// FIXED: Now properly scopes disease prefill to primary applicant only
 (function(){
   async function waitForSections() {
     // Wait until primary section content has inputs loaded by script.js
@@ -81,7 +80,6 @@
       if (rawVal === undefined || rawVal === null || rawVal === '') return;
       
       // Skip fields that don't belong in this section (member fields, etc.)
-      // FIXED: Also skip disease-related fields - they're handled separately
       const skipPatterns = ['member_', 'member-', 'comments_noted', 'disease'];
       const skipSuffixes = ['_details', '_start_date', '_since_year', '_since_years'];
       if (skipPatterns.some(pattern => name.startsWith(pattern) || name === pattern) ||
@@ -238,7 +236,6 @@
         window.loadExistingComments(uid);
       }
 
-      // FIXED: Explicitly handle disease list for PRIMARY APPLICANT ONLY
       // Only look in healthHistory section, not in top-level data (which may have member data mixed in)
       const diseaseData = healthHistoryData.disease;
       if (diseaseData) {
@@ -366,6 +363,11 @@
       const uniqueId = data.unique_id || primaryContactData.unique_id;
       const applicantName = data.applicant_name || primaryContactData.applicant_name;
       
+      // Check for new-format name fields
+      const firstName = data.first_name || primaryContactData.first_name;
+      const middleName = data.middle_name || primaryContactData.middle_name;
+      const lastName = data.last_name || primaryContactData.last_name;
+      
       if (uniqueId) {
         const uidEl = document.querySelector('#primary-contact-content [name="unique_id"]');
         if (uidEl) {
@@ -374,12 +376,60 @@
           console.log('Set unique_id to:', uniqueId);
         }
       }
-      if (applicantName) {
-        const nameEl = document.querySelector('#primary-contact-content [name="applicant_name"]');
-        if (nameEl) {
-          nameEl.removeAttribute('readonly');
-          nameEl.value = applicantName;
-          console.log('Set applicant_name to:', applicantName);
+      
+      // Handle name fields - prefer new format if available, otherwise parse from applicant_name
+      if (firstName || lastName) {
+        // New format - populate individual fields directly
+        const firstNameEl = document.querySelector('#primary-contact-content [name="first_name"]');
+        const middleNameEl = document.querySelector('#primary-contact-content [name="middle_name"]');
+        const lastNameEl = document.querySelector('#primary-contact-content [name="last_name"]');
+        const fullNameEl = document.querySelector('#primary-contact-content [name="applicant_name"]');
+        
+        if (firstNameEl && firstName) {
+          firstNameEl.value = firstName;
+          console.log('Set first_name to:', firstName);
+        }
+        if (middleNameEl && middleName) {
+          middleNameEl.value = middleName;
+          console.log('Set middle_name to:', middleName);
+        }
+        if (lastNameEl && lastName) {
+          lastNameEl.value = lastName;
+          console.log('Set last_name to:', lastName);
+        }
+        // Also set the hidden full name field
+        if (fullNameEl) {
+          const parts = [firstName, middleName, lastName].filter(p => p && p.trim());
+          fullNameEl.value = parts.join(' ');
+        }
+      } else if (applicantName) {
+        // Old format - parse full name into components
+        if (typeof window.populateNameFieldsFromFullName === 'function') {
+          window.populateNameFieldsFromFullName(applicantName);
+          console.log('Parsed applicant_name into name fields:', applicantName);
+        } else {
+          // Fallback: populate hidden field directly and attempt simple parsing
+          const fullNameEl = document.querySelector('#primary-contact-content [name="applicant_name"]');
+          if (fullNameEl) {
+            fullNameEl.value = applicantName;
+          }
+          
+          // Simple parsing for name fields
+          const parts = applicantName.trim().split(/\s+/).filter(p => p);
+          const firstNameEl = document.querySelector('#primary-contact-content [name="first_name"]');
+          const middleNameEl = document.querySelector('#primary-contact-content [name="middle_name"]');
+          const lastNameEl = document.querySelector('#primary-contact-content [name="last_name"]');
+          
+          if (parts.length >= 1 && firstNameEl) {
+            firstNameEl.value = parts[0];
+          }
+          if (parts.length >= 3) {
+            if (middleNameEl) middleNameEl.value = parts.slice(1, -1).join(' ');
+            if (lastNameEl) lastNameEl.value = parts[parts.length - 1];
+          } else if (parts.length === 2 && lastNameEl) {
+            lastNameEl.value = parts[1];
+          }
+          console.log('Set applicant_name (fallback) to:', applicantName);
         }
       }
       
