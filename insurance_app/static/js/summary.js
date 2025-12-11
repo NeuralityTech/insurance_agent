@@ -389,11 +389,12 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<div class="summary-member-card">';
             
             // Construct member name from parts if not present
-            if (!member.name && (member.first_name || member.last_name)) {
+            // PATCH: Check for both old format (first_name) and new format (mem_fname)
+            if (!member.name && (member.mem_fname || member.mem_lname || member.first_name || member.last_name)) {
                 member.name = [
-                    member.first_name || '',
-                    member.middle_name || '',
-                    member.last_name || ''
+                    member.mem_fname || member.first_name || '',
+                    member.mem_mname || member.middle_name || '',
+                    member.mem_lname || member.last_name || ''
                 ].filter(p => p && p.trim()).join(' ');
             }
             
@@ -414,7 +415,8 @@ document.addEventListener('DOMContentLoaded', function() {
             ];
             
             // Fields to skip (they're handled separately or combined)
-            const skipFields = ['first_name', 'middle_name', 'last_name', 'height', 'self_height', 'member-height'];
+            // PATCH: Added new field names (mem_fname, mem_mname, mem_lname)
+            const skipFields = ['first_name', 'middle_name', 'last_name', 'mem_fname', 'mem_mname', 'mem_lname', 'height', 'self_height', 'member-height'];
             
             memberFieldsOrder.forEach(field => {
                 // Skip if this field should be excluded

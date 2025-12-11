@@ -291,11 +291,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Validate Primary Contact required fields
         const primaryContactData = getSectionData('primary-contact');
         
-        if (!primaryContactData['first_name'] || !primaryContactData['first_name'].trim()) {
+        // PATCH: Updated field names from first_name/last_name to pc_fname/pc_lname
+        if (!primaryContactData['pc_fname'] || !primaryContactData['pc_fname'].trim()) {
             errors.push('First Name is required');
         }
         
-        if (!primaryContactData['last_name'] || !primaryContactData['last_name'].trim()) {
+        if (!primaryContactData['pc_lname'] || !primaryContactData['pc_lname'].trim()) {
             errors.push('Last Name is required');
         }
         
@@ -675,11 +676,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Validate Primary Contact required fields
             const primaryContactData = getSectionData('primary-contact');
             
-            if (!primaryContactData['first_name'] || !primaryContactData['first_name'].trim()) {
+            // PATCH: Updated field names from first_name/last_name to pc_fname/pc_lname
+            if (!primaryContactData['pc_fname'] || !primaryContactData['pc_fname'].trim()) {
                 validationErrors.push('First Name is required');
             }
             
-            if (!primaryContactData['last_name'] || !primaryContactData['last_name'].trim()) {
+            if (!primaryContactData['pc_lname'] || !primaryContactData['pc_lname'].trim()) {
                 validationErrors.push('Last Name is required');
             }
             

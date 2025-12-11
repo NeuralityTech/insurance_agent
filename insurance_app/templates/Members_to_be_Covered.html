@@ -281,18 +281,21 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>First Name *</label>
-                            <input type="text" class="member-first-name" name="member_first_name" required pattern="[A-Za-z][A-Za-z.'\s]*" title="First name must start with a letter and can only contain letters, spaces, and apostrophes.">
-                            <span class="error-message member-first-name-error"></span>
+                            <!-- PATCH: Renamed member-first-name to mem-fname to avoid "name" substring matching -->
+                            <input type="text" class="mem-fname" name="mem_fname" required pattern="[A-Za-z][A-Za-z.'\s]*" title="First name must start with a letter and can only contain letters, spaces, and apostrophes.">
+                            <span class="error-message mem-fname-error"></span>
                         </div>
                         <div class="form-group">
                             <label>Middle Name</label>
-                            <input type="text" class="member-middle-name" name="member_middle_name" pattern="[A-Za-z][A-Za-z.'\s]*" title="Middle name can only contain letters, spaces, and apostrophes.">
-                            <span class="error-message member-middle-name-error"></span>
+                            <!-- PATCH: Renamed member-middle-name to mem-mname -->
+                            <input type="text" class="mem-mname" name="mem_mname" pattern="[A-Za-z][A-Za-z.'\s]*" title="Middle name can only contain letters, spaces, and apostrophes.">
+                            <span class="error-message mem-mname-error"></span>
                         </div>
                         <div class="form-group">
                             <label>Last Name *</label>
-                            <input type="text" class="member-last-name" name="member_last_name" required pattern="[A-Za-z][A-Za-z.'\s]*" title="Last name must start with a letter and can only contain letters, spaces, and apostrophes.">
-                            <span class="error-message member-last-name-error"></span>
+                            <!-- PATCH: Renamed member-last-name to mem-lname -->
+                            <input type="text" class="mem-lname" name="mem_lname" required pattern="[A-Za-z][A-Za-z.'\s]*" title="Last name must start with a letter and can only contain letters, spaces, and apostrophes.">
+                            <span class="error-message mem-lname-error"></span>
                         </div>
                     </div>
                     <!-- Hidden field to store concatenated full name for compatibility -->
@@ -427,7 +430,8 @@
 
                         <div class="form-group fixed-width-group">
                             <label>Weight (kg) *</label>
-                            <input type="number" class="member-weight" name="member-weight" placeholder="e.g., 70" min="1" step="0.1" title="Please enter weight in kg (minimum 1 kg)." required>
+                            <!-- PATCH: Added max="500" for weight validation -->
+                            <input type="number" class="member-weight" name="member-weight" placeholder="e.g., 70" min="1" max="500" step="0.1" title="Please enter weight in kg (1-500 kg)." required>
                             <span class="error-message member-weight-error"></span>
                         </div>
                         <div class="form-group fixed-width-group">

@@ -3,6 +3,10 @@
  * It is used by: New_Applicant_Request_Form.html, Existing_Applicant_Request_Form.html
  * The functions are called dynamically from script.js when their respective sections are loaded.
  * 
+ * PATCHED: 
+ * - Renamed first-name/middle-name/last-name to pc-fname/pc-mname/pc-lname
+ *   to prevent Policy_Creation.html from catching these fields when searching for "name"
+ * - Added rangeUnderflow/rangeOverflow validation for weight and DOB fields
  */
 
 /**
@@ -15,10 +19,10 @@ function initializePrimaryContactValidation() {
     if (!form) return;
 
     // --- UniqueID Generation Logic ---
-    // New name fields
-    const firstNameInput = form.querySelector('#first-name');
-    const middleNameInput = form.querySelector('#middle-name');
-    const lastNameInput = form.querySelector('#last-name');
+    // PATCH: Renamed from first-name/middle-name/last-name to pc-fname/pc-mname/pc-lname
+    const firstNameInput = form.querySelector('#pc-fname');
+    const middleNameInput = form.querySelector('#pc-mname');
+    const lastNameInput = form.querySelector('#pc-lname');
     // Hidden field for concatenated full name (for database compatibility)
     const fullNameInput = form.querySelector('#full-name');
     
@@ -156,6 +160,13 @@ function initializePrimaryContactValidation() {
         
         dobInput.setAttribute('max', maxDate);
         dobInput.setAttribute('min', minDate);
+    }
+    
+    // PATCH: Set weight constraints (min already in HTML, adding max for safety)
+    if (weightInput) {
+        if (!weightInput.hasAttribute('max')) {
+            weightInput.setAttribute('max', '500'); // Reasonable max weight in kg
+        }
     }
 
     if (dobInput && ageInput) {
@@ -311,17 +322,19 @@ function initializePrimaryContactValidation() {
         // Check for validity
         if (input.validity.valueMissing) {
             isValid = false;
+            message = `${fieldName} is required.`;
         } else if (input.validity.patternMismatch) {
             isValid = false;
             if (input.id === 'unique-id') {
                 message = 'UniqueID format: 3 letters from first name + 3 letters from last name + underscore + 5 digits (e.g., JohSmi_12345).';
             } else if (input.id === 'aadhaar-last5') {
                 message = 'Aadhaar must be exactly 5 digits.';
-            } else if (input.id === 'first-name') {
+            // PATCH: Updated field IDs for renamed name fields
+            } else if (input.id === 'pc-fname') {
                 message = 'First name must start with a letter and contain only letters.';
-            } else if (input.id === 'last-name') {
+            } else if (input.id === 'pc-lname') {
                 message = 'Last name must start with a letter and contain only letters.';
-            } else if (input.id === 'middle-name') {
+            } else if (input.id === 'pc-mname') {
                 message = 'Middle name can only contain letters.';
             } else {
                 message = `Invalid format for ${fieldName}.`;
@@ -333,7 +346,55 @@ function initializePrimaryContactValidation() {
             } else {
                 message = `Invalid length for ${fieldName}.`;
             }
-        } else {
+        } 
+        // PATCH: Added range validation for min/max constraints
+        else if (input.validity.rangeUnderflow) {
+            isValid = false;
+            if (input.id === 'self-weight') {
+                message = 'Weight must be at least 1 kg.';
+            } else if (input.id === 'self-dob') {
+                message = 'Date of birth must be within the last 100 years.';
+            } else {
+                const minVal = input.getAttribute('min');
+                message = `${fieldName} must be at least ${minVal}.`;
+            }
+        } else if (input.validity.rangeOverflow) {
+            isValid = false;
+            if (input.id === 'self-weight') {
+                message = 'Weight cannot exceed 500 kg.';
+            } else if (input.id === 'self-dob') {
+                message = 'Date of birth cannot be in the future.';
+            } else {
+                const maxVal = input.getAttribute('max');
+                message = `${fieldName} cannot exceed ${maxVal}.`;
+            }
+        } 
+        // PATCH: Added type mismatch validation (e.g., for email, number)
+        else if (input.validity.typeMismatch) {
+            isValid = false;
+            if (input.type === 'email') {
+                message = 'Please enter a valid email address.';
+            } else if (input.type === 'number') {
+                message = `Please enter a valid number for ${fieldName}.`;
+            } else {
+                message = `Invalid value for ${fieldName}.`;
+            }
+        }
+        // PATCH: Added step mismatch validation (for decimal numbers)
+        else if (input.validity.stepMismatch) {
+            isValid = false;
+            message = `Please enter a valid value for ${fieldName}.`;
+        }
+        // PATCH: Added bad input validation (e.g., letters in number field)
+        else if (input.validity.badInput) {
+            isValid = false;
+            if (input.type === 'number') {
+                message = `Please enter a valid number for ${fieldName}.`;
+            } else {
+                message = `Invalid input for ${fieldName}.`;
+            }
+        }
+        else {
             isValid = true;
             message = '';
         }
@@ -445,15 +506,18 @@ window.parseFullNameToComponents = function(fullName) {
  * Populate the name fields from a full name string.
  * Used when loading existing records.
  * 
+ * PATCH: Updated to use new field IDs (pc-fname, pc-mname, pc-lname)
+ * 
  * @param {string} fullName - The complete name string to parse and populate
  */
 window.populateNameFieldsFromFullName = function(fullName) {
     const form = document.getElementById('primary-contact-content');
     if (!form) return;
     
-    const firstNameInput = form.querySelector('#first-name');
-    const middleNameInput = form.querySelector('#middle-name');
-    const lastNameInput = form.querySelector('#last-name');
+    // PATCH: Updated selectors to use new field IDs
+    const firstNameInput = form.querySelector('#pc-fname');
+    const middleNameInput = form.querySelector('#pc-mname');
+    const lastNameInput = form.querySelector('#pc-lname');
     const hiddenFullNameInput = form.querySelector('#full-name');
     
     const { firstName, middleName, lastName } = window.parseFullNameToComponents(fullName);

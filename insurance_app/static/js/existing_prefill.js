@@ -1,5 +1,9 @@
 // Prefill helper for Existing User request Page
 // Exposes window.prefillExistingForm(data)
+// 
+// PATCHED: 
+// - Renamed first_name/middle_name/last_name to pc_fname/pc_mname/pc_lname
+//   to prevent Policy_Creation.html from catching these fields when searching for "name"
 (function(){
   async function waitForSections() {
     // Wait until primary section content has inputs loaded by script.js
@@ -363,10 +367,15 @@
       const uniqueId = data.unique_id || primaryContactData.unique_id;
       const applicantName = data.applicant_name || primaryContactData.applicant_name;
       
-      // Check for new-format name fields
-      const firstName = data.first_name || primaryContactData.first_name;
-      const middleName = data.middle_name || primaryContactData.middle_name;
-      const lastName = data.last_name || primaryContactData.last_name;
+      // PATCH: Check for both old and new field name formats
+      // Old format: first_name, middle_name, last_name
+      // New format: pc_fname, pc_mname, pc_lname
+      const firstName = data.pc_fname || primaryContactData.pc_fname || 
+                       data.first_name || primaryContactData.first_name;
+      const middleName = data.pc_mname || primaryContactData.pc_mname || 
+                        data.middle_name || primaryContactData.middle_name;
+      const lastName = data.pc_lname || primaryContactData.pc_lname || 
+                      data.last_name || primaryContactData.last_name;
       
       if (uniqueId) {
         const uidEl = document.querySelector('#primary-contact-content [name="unique_id"]');
@@ -379,23 +388,23 @@
       
       // Handle name fields - prefer new format if available, otherwise parse from applicant_name
       if (firstName || lastName) {
-        // New format - populate individual fields directly
-        const firstNameEl = document.querySelector('#primary-contact-content [name="first_name"]');
-        const middleNameEl = document.querySelector('#primary-contact-content [name="middle_name"]');
-        const lastNameEl = document.querySelector('#primary-contact-content [name="last_name"]');
+        // PATCH: Updated selectors to use new field names (pc_fname, pc_mname, pc_lname)
+        const firstNameEl = document.querySelector('#primary-contact-content [name="pc_fname"]');
+        const middleNameEl = document.querySelector('#primary-contact-content [name="pc_mname"]');
+        const lastNameEl = document.querySelector('#primary-contact-content [name="pc_lname"]');
         const fullNameEl = document.querySelector('#primary-contact-content [name="applicant_name"]');
         
         if (firstNameEl && firstName) {
           firstNameEl.value = firstName;
-          console.log('Set first_name to:', firstName);
+          console.log('Set pc_fname to:', firstName);
         }
         if (middleNameEl && middleName) {
           middleNameEl.value = middleName;
-          console.log('Set middle_name to:', middleName);
+          console.log('Set pc_mname to:', middleName);
         }
         if (lastNameEl && lastName) {
           lastNameEl.value = lastName;
-          console.log('Set last_name to:', lastName);
+          console.log('Set pc_lname to:', lastName);
         }
         // Also set the hidden full name field
         if (fullNameEl) {
@@ -414,11 +423,11 @@
             fullNameEl.value = applicantName;
           }
           
-          // Simple parsing for name fields
+          // PATCH: Updated selectors to use new field names
           const parts = applicantName.trim().split(/\s+/).filter(p => p);
-          const firstNameEl = document.querySelector('#primary-contact-content [name="first_name"]');
-          const middleNameEl = document.querySelector('#primary-contact-content [name="middle_name"]');
-          const lastNameEl = document.querySelector('#primary-contact-content [name="last_name"]');
+          const firstNameEl = document.querySelector('#primary-contact-content [name="pc_fname"]');
+          const middleNameEl = document.querySelector('#primary-contact-content [name="pc_mname"]');
+          const lastNameEl = document.querySelector('#primary-contact-content [name="pc_lname"]');
           
           if (parts.length >= 1 && firstNameEl) {
             firstNameEl.value = parts[0];
