@@ -85,81 +85,78 @@ document.addEventListener('DOMContentLoaded', function () {
             return ''; // nothing to render
         }
 
+        // Define which fields are required and should show "Not Provided" when empty
+        const requiredFields = new Set([
+            'policy-type', 'sum-insured', 'annual-budget', 'annual-income', 'room-preference',
+            'payment-mode', 'policy-term', 'past-claims', 'service-expectations',
+            'co-pay', 'ncb-importance', 'maternity-cover', 'opd-cover', 'top-up',
+            'policy-type-category', 'port-policy', 'critical-illness', 'worldwide-cover',
+            'tax-benefit', 'gst-number',
+            'id-proof', 'address_proof_details'
+        ]);
+
+        // Define which fields are conditional and should only show when they have values
+        const conditionalFields = new Set([
+            'secondary_occupation', 'secondary-occupation',
+            'occupationalRiskDetails', 'occupational-risk-details',
+            'disease', // Disease checkbox field - only show if diseases are selected
+            // Disease-related fields - only show when they have values
+            'diabetes_since_year', 'diabetes_since_years', 'diabetes_details',
+            'cardiac_since_year', 'cardiac_since_years', 'cardiac_details',
+            'hypertension_since_year', 'hypertension_since_years', 'hypertension_details',
+            'cancer_since_year', 'cancer_since_years', 'cancer_details',
+            'critical_illness_since_year', 'critical_illness_since_years', 'critical_illness_details',
+            'other_since_year', 'other_since_years', 'other_details',
+            // Also handle kebab-case versions
+            'diabetes-since-year', 'diabetes-since-years', 'diabetes-details',
+            'cardiac-since-year', 'cardiac-since-years', 'cardiac-details',
+            'hypertension-since-year', 'hypertension-since-years', 'hypertension-details',
+            'cancer-since-year', 'cancer-since-years', 'cancer-details',
+            'critical-illness-since-year', 'critical-illness-since-years', 'critical-illness-details',
+            'other-since-year', 'other-since-years', 'other-details'
+        ]);
+
         let sectionHtml = `<fieldset><legend>${title}</legend><div class="summary-grid">`;
         for (const [key, value] of Object.entries(data)) {
-            let displayValue = value;
-            if ((key === 'planned-surgeries' || key === 'plannedSurgeries') && (!value || String(value).trim() === '')) {
-                displayValue = 'None';
-            } else if (!value) {
-                continue; // Skip other empty fields
-            }
             // Skip internal-only keys that should not be shown
-            if (key === 'occupation_value' || key === 'occupationValue' || key === 'secondary_occupation_value' || key === 'secondaryOccupationValue') continue;
+            if (key === 'occupation_value' || key === 'occupationValue' ||
+                key === 'secondary_occupation_value' || key === 'secondaryOccupationValue') continue;
 
-            // Special handling for upload-policy-doc-checkbox
-            let formattedKey = formatLabel(key);
-            if (key === 'upload-policy-doc-checkbox' || key === 'upload_policy_doc_checkbox') {
-                formattedKey = 'Uploaded Policy Document';
-
-                // Check if actual document exists in localStorage
-                let hasDocument = false;
-                try {
-                    // Get unique ID from URL or sessionStorage (not from section data)
-                    let uniqueId = '';
-                    try {
-                        const params = new URLSearchParams(window.location.search);
-                        uniqueId = params.get('unique_id') || params.get('uid') || '';
-                    } catch (e) { }
-
-                    if (!uniqueId) {
-                        try {
-                            uniqueId = sessionStorage.getItem('current_unique_id') || '';
-                        } catch (e) { }
-                    }
-
-                    // Also try to get from formSummary in localStorage
-                    if (!uniqueId) {
-                        try {
-                            const formSummary = JSON.parse(localStorage.getItem('formSummary') || '{}');
-                            uniqueId = formSummary?.primaryContact?.['unique_id'] ||
-                                formSummary?.primaryContact?.['unique-id'] || '';
-                        } catch (e) { }
-                    }
-
-                    const POLICY_DOC_STORAGE_KEY = 'existing_policy_doc_';
-
-                    // Check with unique ID
-                    if (uniqueId) {
-                        const storageKey = POLICY_DOC_STORAGE_KEY + uniqueId;
-                        const docData = localStorage.getItem(storageKey);
-                        if (docData) {
-                            const parsed = JSON.parse(docData);
-                            hasDocument = !!(parsed && parsed.fileName);
-                        }
-                    }
-
-                    // Also check temp_draft key as fallback
-                    if (!hasDocument) {
-                        const tempDocData = localStorage.getItem(POLICY_DOC_STORAGE_KEY + 'temp_draft');
-                        if (tempDocData) {
-                            const parsed = JSON.parse(tempDocData);
-                            hasDocument = !!(parsed && parsed.fileName);
-                        }
-                    }
-                } catch (e) {
-                    console.error('[Summary] Error checking document:', e);
-                    // If error, fall back to checkbox value
-                    if (Array.isArray(displayValue)) {
-                        hasDocument = displayValue.length > 0 && displayValue[0] === 'on';
-                    } else {
-                        hasDocument = (displayValue === 'on' || displayValue === true || displayValue === 'true');
-                    }
+            // Special handling for disease field - skip if it's an empty array or has no meaningful values
+            if (key === 'disease') {
+                if (Array.isArray(value) && value.length === 0) {
+                    continue; // Skip empty disease array
                 }
+                if (!value || String(value).trim() === '') {
+                    continue; // Skip empty disease field
+                }
+            }
 
-                displayValue = hasDocument ? 'Yes' : 'No';
+            // Skip conditional fields if they're empty
+            if (conditionalFields.has(key) && (!value || String(value).trim() === '')) {
+                continue;
+            }
+
+            let displayValue = value;
+
+            // Handle empty values
+            if (!value || String(value).trim() === '') {
+                if (key === 'planned-surgeries' || key === 'plannedSurgeries') {
+                    displayValue = 'None';
+                } else if (requiredFields.has(key)) {
+                    displayValue = 'Not Provided';
+                } else {
+                    displayValue = 'None';
+                }
+            }
+
+            // Skip the upload-policy-doc-checkbox field - we don't want to show it in preview
+            if (key === 'upload-policy-doc-checkbox' || key === 'upload_policy_doc_checkbox') {
+                continue;
             }
 
             // Use formatLabel for nicer labels (handles Primary/Secondary occupation mapping)
+            let formattedKey = formatLabel(key);
             sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${displayValue}</div>`;
         }
         sectionHtml += `</div></fieldset>`;
@@ -205,17 +202,36 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (field === '__HEIGHT__') {
                     if (heightDisplay) {
                         sectionHtml += `<div class="summary-item"><strong>Height:</strong> ${heightDisplay}</div>`;
+                    } else {
+                        sectionHtml += `<div class="summary-item"><strong>Height:</strong> Not Provided</div>`;
                     }
                     continue;
                 }
 
                 const value = primary[field];
-                if (!value) continue;
+
+                // Skip secondary occupation if it's empty (conditional field)
+                if ((field === 'secondary_occupation' || field === 'secondary-occupation') && (!value || String(value).trim() === '')) {
+                    continue;
+                }
+
                 if (excludedKeys.has(field)) continue;
 
                 const formattedKey = formatLabel(field);
 
-                sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${value}</div>`;
+                // Show "Not Provided" for required empty fields, "None" for optional
+                const requiredPrimaryFields = new Set(['unique_id', 'applicant_name', 'gender', 'occupation', 'email', 'phone']);
+                let displayValue = value;
+
+                if (!value || String(value).trim() === '') {
+                    if (requiredPrimaryFields.has(field)) {
+                        displayValue = 'Not Provided';
+                    } else {
+                        displayValue = 'None';
+                    }
+                }
+
+                sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${displayValue}</div>`;
             }
         }
 
@@ -229,9 +245,70 @@ document.addEventListener('DOMContentLoaded', function () {
         html += renderPrimaryContactSection(summaryData.primaryContact);
     }
 
-    // Self Health Details (Proposer)
+    // Self Health Details (Proposer) - Custom rendering for disease fields
     if (summaryData.healthHistory && Object.keys(summaryData.healthHistory || {}).length > 0) {
-        html += createSection('Proposer\'s Health Details', summaryData.healthHistory);
+        html += renderProposerHealthHistory(summaryData.healthHistory);
+    }
+
+    // Helper function to render proposer's health history with proper disease display
+    function renderProposerHealthHistory(healthData) {
+        let sectionHtml = `<fieldset><legend>Proposer's Health Details</legend><div class="summary-grid">`;
+
+        const diseases = ['cardiac', 'diabetes', 'hypertension', 'cancer', 'critical_illness', 'other'];
+        const diseaseFields = new Set();
+
+        // Collect all disease-related field names
+        diseases.forEach(disease => {
+            diseaseFields.add(`${disease}_since_year`);
+            diseaseFields.add(`${disease}_since_years`);
+            diseaseFields.add(`${disease}_details`);
+            diseaseFields.add(`${disease}-since-year`);
+            diseaseFields.add(`${disease}-since-years`);
+            diseaseFields.add(`${disease}-details`);
+        });
+
+        // First, render non-disease fields
+        for (const [key, value] of Object.entries(healthData)) {
+            // Skip disease-specific fields - we'll handle them separately
+            if (diseaseFields.has(key) || key === 'disease') {
+                continue;
+            }
+
+            if (!value || String(value).trim() === '') {
+                continue;
+            }
+
+            const formattedKey = formatLabel(key);
+            sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${value}</div>`;
+        }
+
+        // Now render disease information grouped by disease
+        diseases.forEach(disease => {
+            const sinceYear = healthData[`${disease}_since_year`] || healthData[`${disease}-since-year`];
+            const sinceYears = healthData[`${disease}_since_years`] || healthData[`${disease}-since-years`];
+            const details = healthData[`${disease}_details`] || healthData[`${disease}-details`];
+
+            // Only show disease if it has at least one field filled
+            if (sinceYear || sinceYears || details) {
+                const diseaseName = disease.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                sectionHtml += `<div class="summary-item"><strong>Disease:</strong> ${diseaseName}</div>`;
+
+                if (sinceYear && String(sinceYear).trim() !== '') {
+                    sectionHtml += `<div class="summary-item"><strong>${diseaseName} Since Year:</strong> ${sinceYear}</div>`;
+                }
+
+                if (sinceYears && String(sinceYears).trim() !== '') {
+                    sectionHtml += `<div class="summary-item"><strong>${diseaseName} Since Years:</strong> ${sinceYears}</div>`;
+                }
+
+                if (details && String(details).trim() !== '') {
+                    sectionHtml += `<div class="summary-item"><strong>${diseaseName} Details:</strong> ${details}</div>`;
+                }
+            }
+        });
+
+        sectionHtml += `</div></fieldset>`;
+        return sectionHtml;
     }
 
     // Members
@@ -257,37 +334,78 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (field === '__HEIGHT__') {
                     if (heightDisplay) {
                         html += `<div class="summary-item"><strong>Height:</strong> ${heightDisplay}</div>`;
+                    } else {
+                        html += `<div class="summary-item"><strong>Height:</strong> Not Provided</div>`;
                     }
                     return;
                 }
 
                 const fieldValue = member[field];
-                if (!fieldValue) return;
+
+                // Skip conditional fields if they're empty
+                const conditionalMemberFields = new Set(['secondary_occupation', 'secondary-occupation', 'occupationalRiskDetails', 'occupational-risk-details']);
+                if (conditionalMemberFields.has(field) && (!fieldValue || String(fieldValue).trim() === '')) {
+                    return;
+                }
+
+                // Required member fields
+                const requiredMemberFields = new Set(['name', 'relationship', 'gender', 'dob', 'age']);
 
                 const formattedKey = field
                     .replace(/_/g, ' ')
                     .replace(/([a-z])([A-Z])/g, '$1 $2')
                     .replace(/\b\w/g, l => l.toUpperCase());
 
-                html += `<div class="summary-item"><strong>${formattedKey}:</strong> ${fieldValue}</div>`;
-            });
-            // Disease details for member
-            if (member.healthHistory && typeof member.healthHistory === 'object') {
-                Object.entries(member.healthHistory).forEach(([disease, detail]) => {
-                    if (!disease || !detail) return;
-
-                    // Display disease details
-                    const formattedKey = disease.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ' Details';
-                    html += `<div class="summary-item"><strong>${formattedKey}:</strong> ${detail}</div>`;
-
-                    // Display disease start date if it exists
-                    const startDateKey = `${disease}_start_date`;
-                    if (member[startDateKey]) {
-                        const startDateFormatted = disease.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ' Start Date';
-                        html += `<div class="summary-item"><strong>${startDateFormatted}:</strong> ${member[startDateKey]}</div>`;
+                let displayValue = fieldValue;
+                if (!fieldValue || String(fieldValue).trim() === '') {
+                    if (requiredMemberFields.has(field)) {
+                        displayValue = 'Not Provided';
+                    } else {
+                        displayValue = 'None';
                     }
-                });
-            }
+                }
+
+                html += `<div class="summary-item"><strong>${formattedKey}:</strong> ${displayValue}</div>`;
+            });
+
+            // Disease details for member - check both healthHistory and direct fields
+            const diseases = ['cardiac', 'diabetes', 'hypertension', 'cancer', 'critical_illness', 'other'];
+            const displayedDiseases = [];
+
+            diseases.forEach(disease => {
+                // Check if this disease has any data
+                const sinceYear = member[`${disease}_since_year`];
+                const sinceYears = member[`${disease}_since_years`];
+                const details = member[`${disease}_details`];
+
+                // Also check healthHistory object
+                const healthHistoryDetails = member.healthHistory && member.healthHistory[disease];
+
+                // Only show disease if it has at least one field filled
+                if (sinceYear || sinceYears || details || healthHistoryDetails) {
+                    // Display disease name
+                    const diseaseName = disease.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    html += `<div class="summary-item"><strong>Disease:</strong> ${diseaseName}</div>`;
+
+                    // Display Since Year if available
+                    if (sinceYear && String(sinceYear).trim() !== '') {
+                        html += `<div class="summary-item"><strong>${diseaseName} Since Year:</strong> ${sinceYear}</div>`;
+                    }
+
+                    // Display Since Years if available
+                    if (sinceYears && String(sinceYears).trim() !== '') {
+                        html += `<div class="summary-item"><strong>${diseaseName} Since Years:</strong> ${sinceYears}</div>`;
+                    }
+
+                    // Display Details if available
+                    const detailsValue = details || healthHistoryDetails;
+                    if (detailsValue && String(detailsValue).trim() !== '') {
+                        html += `<div class="summary-item"><strong>${diseaseName} Details:</strong> ${detailsValue}</div>`;
+                    }
+
+                    displayedDiseases.push(disease);
+                }
+            });
             // Planned Surgeries for member (always after disease details)
             let planned = member.plannedSurgeries;
             if (!planned || planned.toString().trim() === '') {
