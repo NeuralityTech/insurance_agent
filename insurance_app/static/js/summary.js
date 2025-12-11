@@ -137,6 +137,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 continue;
             }
 
+            // Skip existing-policy-document field (file upload) - we don't want it in preview
+            if (key === 'existing-policy-document') {
+                continue;
+            }
+
             let displayValue = value;
 
             // Handle empty values
@@ -150,13 +155,70 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
-            // Skip the upload-policy-doc-checkbox field - we don't want to show it in preview
+            // Special handling for upload-policy-doc-checkbox
+            let formattedKey = formatLabel(key);
             if (key === 'upload-policy-doc-checkbox' || key === 'upload_policy_doc_checkbox') {
-                continue;
+                formattedKey = 'Uploaded Policy Document';
+
+                // Check if actual document exists in localStorage
+                let hasDocument = false;
+                try {
+                    // Get unique ID from URL or sessionStorage (not from section data)
+                    let uniqueId = '';
+                    try {
+                        const params = new URLSearchParams(window.location.search);
+                        uniqueId = params.get('unique_id') || params.get('uid') || '';
+                    } catch (e) { }
+
+                    if (!uniqueId) {
+                        try {
+                            uniqueId = sessionStorage.getItem('current_unique_id') || '';
+                        } catch (e) { }
+                    }
+
+                    // Also try to get from formSummary in localStorage
+                    if (!uniqueId) {
+                        try {
+                            const formSummary = JSON.parse(localStorage.getItem('formSummary') || '{}');
+                            uniqueId = formSummary?.primaryContact?.['unique_id'] ||
+                                formSummary?.primaryContact?.['unique-id'] || '';
+                        } catch (e) { }
+                    }
+
+                    const POLICY_DOC_STORAGE_KEY = 'existing_policy_doc_';
+
+                    // Check with unique ID
+                    if (uniqueId) {
+                        const storageKey = POLICY_DOC_STORAGE_KEY + uniqueId;
+                        const docData = localStorage.getItem(storageKey);
+                        if (docData) {
+                            const parsed = JSON.parse(docData);
+                            hasDocument = !!(parsed && parsed.fileName);
+                        }
+                    }
+
+                    // Also check temp_draft key as fallback
+                    if (!hasDocument) {
+                        const tempDocData = localStorage.getItem(POLICY_DOC_STORAGE_KEY + 'temp_draft');
+                        if (tempDocData) {
+                            const parsed = JSON.parse(tempDocData);
+                            hasDocument = !!(parsed && parsed.fileName);
+                        }
+                    }
+                } catch (e) {
+                    console.error('[Summary] Error checking document:', e);
+                    // If error, fall back to checkbox value
+                    if (Array.isArray(displayValue)) {
+                        hasDocument = displayValue.length > 0 && displayValue[0] === 'on';
+                    } else {
+                        hasDocument = (displayValue === 'on' || displayValue === true || displayValue === 'true');
+                    }
+                }
+
+                displayValue = hasDocument ? 'Yes' : 'No';
             }
 
             // Use formatLabel for nicer labels (handles Primary/Secondary occupation mapping)
-            let formattedKey = formatLabel(key);
             sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${displayValue}</div>`;
         }
         sectionHtml += `</div></fieldset>`;
