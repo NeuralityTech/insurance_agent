@@ -2,6 +2,7 @@
  * This script generates the content for the form summary page (Summary.html).
  * It retrieves the form data from local storage and dynamically creates the HTML to display it.
  * It is used by: Summary.html and Preview.html
+ * 
  */
 document.addEventListener('DOMContentLoaded', function () {
     const summaryContainer = document.getElementById('summary-container');
@@ -12,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    // --- NEW: Fallback to derive healthHistory from submissionData if missing/empty ---
+    // --- Fallback to derive healthHistory from submissionData if missing/empty ---
     try {
         const hasHealthHistory =
             summaryData.healthHistory &&
@@ -42,7 +43,6 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (e) {
         console.warn('Health history fallback failed:', e);
     }
-    // --- END NEW BLOCK ---
 
     // Fallbacks to ensure Preview shows data even before final submission
     try {
@@ -65,15 +65,47 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let html = '';
 
-    // Helper to format keys into user-facing labels (handles special mappings)
+    /**
+     * Simple label formatter - converts field keys to readable labels
+     * Uses basic formatting: replaces underscores/hyphens with spaces, capitalizes words
+     */
     function formatLabel(k) {
         if (!k) return '';
-        if (k === 'occupation') return 'Primary Occupation';
-        if (k === 'secondary_occupation' || k === 'secondary-occupation') return 'Secondary Occupation';
         return k.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
 
-    // Function to create summary section
+    /**
+     * Format checkbox array values into human-readable strings
+     * e.g., ['aadhaar', 'pan'] -> "Aadhaar Card, PAN Card"
+     */
+    function formatArrayValue(key, arr) {
+        if (!Array.isArray(arr) || arr.length === 0) return null;
+
+        // Filter out empty values
+        const filtered = arr.filter(v => v && String(v).trim() !== '');
+        if (filtered.length === 0) return null;
+
+        // Special formatting for known checkbox fields
+        const checkboxValueMappings = {
+            'id-proof': {
+                'aadhaar': 'Aadhaar Card',
+                'pan': 'PAN Card'
+            },
+            'id_proof': {
+                'aadhaar': 'Aadhaar Card',
+                'pan': 'PAN Card'
+            }
+        };
+
+        const mappings = checkboxValueMappings[key];
+        if (mappings) {
+            return filtered.map(v => mappings[v] || v).join(', ');
+        }
+
+        // Default: capitalize each value
+        return filtered.map(v => String(v).replace(/\b\w/g, l => l.toUpperCase())).join(', ');
+    }
+
     /**
      * Creates an HTML fieldset section for a given part of the summary data.
      * @param {string} title - The title of the section.
@@ -117,6 +149,87 @@ document.addEventListener('DOMContentLoaded', function () {
         ]);
 
         let sectionHtml = `<fieldset><legend>${title}</legend><div class="summary-grid">`;
+
+        // Special handling for hospital network preferences - combine into one display
+        const hospitalPrefs = [];
+        const hospitalFieldsToSkip = new Set([
+            'network-hospital-1st', 'network_hospital_1st',
+            'network-hospital-2nd', 'network_hospital_2nd',
+            'network-hospital-3rd', 'network_hospital_3rd',
+            'network-hospitals', 'network_hospitals'
+        ]);
+
+        // Check if any hospital preference fields exist in the data
+        const hasHospitalFields = Object.keys(data).some(k => hospitalFieldsToSkip.has(k));
+
+        if (hasHospitalFields) {
+            const val1 = data['network-hospital-1st'] || data['network_hospital_1st'] || '';
+            const val2 = data['network-hospital-2nd'] || data['network_hospital_2nd'] || '';
+            const val3 = data['network-hospital-3rd'] || data['network_hospital_3rd'] || '';
+
+            if (val1 && val1 !== '-- Select --' && val1.trim() !== '') hospitalPrefs.push(`1st: ${val1}`);
+            if (val2 && val2 !== '-- Select --' && val2.trim() !== '') hospitalPrefs.push(`2nd: ${val2}`);
+            if (val3 && val3 !== '-- Select --' && val3.trim() !== '') hospitalPrefs.push(`3rd: ${val3}`);
+
+            // Always show the field - either with selections or "Not Selected"
+            if (hospitalPrefs.length > 0) {
+                sectionHtml += `<div class="summary-item"><strong>Preferred Hospital Network:</strong> ${hospitalPrefs.join(', ')}</div>`;
+            } else {
+                sectionHtml += `<div class="summary-item"><strong>Preferred Hospital Network:</strong> Not Selected</div>`;
+            }
+        }
+
+        // --- Special handling for disease/health history fields ---
+        // First, identify which diseases are selected (checked)
+        const selectedDiseases = new Set();
+        const diseaseCheckboxPatterns = /^(medical[-_]|disease[-_])?(.+)$/;
+
+        for (const [key, value] of Object.entries(data)) {
+            // Check if this is a disease checkbox field
+            if (key.startsWith('medical-') || key.startsWith('medical_') ||
+                key.startsWith('disease-') || key.startsWith('disease_') ||
+                key === 'disease') {
+                // Check if it's selected (truthy, "on", or array with values)
+                const isSelected = value &&
+                    (value === 'on' || value === true || value === 'true' ||
+                        (Array.isArray(value) && value.length > 0) ||
+                        (typeof value === 'string' && value.trim() !== ''));
+
+                if (isSelected) {
+                    // Extract disease name from key like "medical-diabetes" -> "diabetes"
+                    let diseaseName = key
+                        .replace(/^medical[-_]/, '')
+                        .replace(/^disease[-_]/, '');
+                    selectedDiseases.add(diseaseName.toLowerCase());
+
+                    // Also handle if value contains the disease name (for checkbox arrays)
+                    if (Array.isArray(value)) {
+                        value.forEach(v => selectedDiseases.add(String(v).toLowerCase()));
+                    } else if (typeof value === 'string' && value !== 'on' && value !== 'true') {
+                        selectedDiseases.add(value.toLowerCase());
+                    }
+                }
+            }
+        }
+
+        // Helper to check if a field is a disease-related detail field
+        function isDiseaseDetailField(key) {
+            return key.endsWith('_details') || key.endsWith('-details') ||
+                key.endsWith('_since_year') || key.endsWith('-since-year') ||
+                key.endsWith('_since_years') || key.endsWith('-since-years') ||
+                key.endsWith('_start_date') || key.endsWith('-start-date');
+        }
+
+        // Helper to extract disease name from detail field
+        function getDiseaseNameFromDetailField(key) {
+            return key
+                .replace(/_details$/, '').replace(/-details$/, '')
+                .replace(/_since_year$/, '').replace(/-since-year$/, '')
+                .replace(/_since_years$/, '').replace(/-since-years$/, '')
+                .replace(/_start_date$/, '').replace(/-start-date$/, '')
+                .toLowerCase();
+        }
+
         for (const [key, value] of Object.entries(data)) {
             // Skip internal-only keys that should not be shown
             if (key === 'occupation_value' || key === 'occupationValue' ||
@@ -140,6 +253,28 @@ document.addEventListener('DOMContentLoaded', function () {
             // Skip existing-policy-document field (file upload) - we don't want it in preview
             if (key === 'existing-policy-document') {
                 continue;
+            }
+
+            // Skip hospital fields (already handled above)
+            if (hospitalFieldsToSkip.has(key)) continue;
+
+            // Skip internal-only keys
+            if (skipFields.has(key)) continue;
+
+            // Skip disease checkbox fields themselves (e.g., "medical-diabetes", "disease-hypertension")
+            // We only want to show the details/duration for selected diseases
+            if (key.startsWith('medical-') || key.startsWith('medical_') ||
+                key.startsWith('disease-') || key.startsWith('disease_') ||
+                key === 'disease') {
+                continue;
+            }
+
+            // For disease detail fields, only show if the corresponding disease is selected
+            if (isDiseaseDetailField(key)) {
+                const diseaseName = getDiseaseNameFromDetailField(key);
+                if (!selectedDiseases.has(diseaseName)) {
+                    continue; // Skip - disease not selected
+                }
             }
 
             let displayValue = value;
@@ -245,19 +380,29 @@ document.addEventListener('DOMContentLoaded', function () {
             const excludedKeys = new Set([
                 'self-height', 'self_height', 'self-height-ft', 'self-height-in',
                 'self_height_ft', 'self_height_in', 'height_ft', 'height_in',
-                'occupation_value', 'occupationValue', 'secondary_occupation_value', 'secondaryOccupationValue'
+                'occupation_value', 'occupationValue', 'secondary_occupation_value', 'secondaryOccupationValue',
+                // Exclude individual name components from display (we'll show Full Name instead)
+                'first_name', 'middle_name', 'last_name'
             ]);
 
             // Preferred order with height before weight
+            // Note: We use 'applicant_name' for display (Full Name), not individual name components
             const orderedFields = [
                 'unique_id', 'applicant_name', 'gender', 'occupation', 'secondary_occupation', 'self-dob',
                 'self-age',
-
-                // we inject height here
                 '__HEIGHT__',
-
                 'self-weight', 'self-bmi', 'email', 'phone', 'aadhaar_last5', 'address', 'hubs'
             ];
+
+            // If applicant_name is not present but individual name fields are, construct it
+            if (!primary['applicant_name'] && (primary['first_name'] || primary['last_name'])) {
+                const nameParts = [
+                    primary['first_name'] || '',
+                    primary['middle_name'] || '',
+                    primary['last_name'] || ''
+                ].filter(p => p.trim());
+                primary['applicant_name'] = nameParts.join(' ');
+            }
 
             for (const field of orderedFields) {
 
@@ -279,7 +424,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (excludedKeys.has(field)) continue;
 
-                const formattedKey = formatLabel(field);
+                let value = primary[field];
+
+                // Check if value is empty or a placeholder
+                const isEmptyOrPlaceholder = !value ||
+                    String(value).trim() === '' ||
+                    value === '-- Select --' ||
+                    value === 'Select';
+
+                if (isEmptyOrPlaceholder) {
+                    value = 'Not Provided';
+                }
+
+                // Format date fields to dd/mm/yyyy (e.g., self-dob)
+                if (isDateField(field) && value && value !== 'Not Provided') {
+                    value = formatDateToDDMMYYYY(value);
+                }
+
+                // Use "Full Name" as the label for applicant_name
+                let formattedKey;
+                if (field === 'applicant_name') {
+                    formattedKey = 'Full Name';
+                } else {
+                    formattedKey = formatLabel(field);
+                }
 
                 // Show "Not Provided" for required empty fields, "None" for optional
                 const requiredPrimaryFields = new Set(['unique_id', 'applicant_name', 'gender', 'occupation', 'email', 'phone']);
@@ -378,6 +546,17 @@ document.addEventListener('DOMContentLoaded', function () {
         html += '<fieldset><legend>Members to be Covered</legend>';
         summaryData.members.forEach(member => {
             html += '<div class="summary-member-card">';
+
+            // Construct member name from parts if not present
+            // PATCH: Check for both old format (first_name) and new format (mem_fname)
+            if (!member.name && (member.mem_fname || member.mem_lname || member.first_name || member.last_name)) {
+                member.name = [
+                    member.mem_fname || member.first_name || '',
+                    member.mem_mname || member.middle_name || '',
+                    member.mem_lname || member.last_name || ''
+                ].filter(p => p && p.trim()).join(' ');
+            }
+
             // Compute a combined Height display from stored cm, if available
             let heightDisplay = '';
             const heightCm = parseFloat(member.height || member['member-height'] || member.self_height);
@@ -388,11 +567,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
             // Ordered display of member fields (excluding plannedSurgeries and raw height)
+            // Note: first_name, middle_name, last_name are combined into 'name' above
             const memberFieldsOrder = [
                 'name', 'relationship', 'occupation', 'secondary_occupation', 'gender', 'dob', 'age', '__HEIGHT__', 'weight', 'bmi',
                 'smoker', 'alcohol', 'riskyHobbies', 'occupationalRisk', 'occupationalRiskDetails'
             ];
+
+            // Fields to skip (they're handled separately or combined)
+            // PATCH: Added new field names (mem_fname, mem_mname, mem_lname)
+            const skipFields = ['first_name', 'middle_name', 'last_name', 'mem_fname', 'mem_mname', 'mem_lname', 'height', 'self_height', 'member-height'];
+
             memberFieldsOrder.forEach(field => {
+                // Skip if this field should be excluded
+                if (skipFields.includes(field)) return;
                 if (field === '__HEIGHT__') {
                     if (heightDisplay) {
                         html += `<div class="summary-item"><strong>Height:</strong> ${heightDisplay}</div>`;
@@ -402,32 +589,39 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                const fieldValue = member[field];
+                let fieldValue = member[field];
 
-                // Skip conditional fields if they're empty
-                const conditionalMemberFields = new Set(['secondary_occupation', 'secondary-occupation', 'occupationalRiskDetails', 'occupational-risk-details']);
-                if (conditionalMemberFields.has(field) && (!fieldValue || String(fieldValue).trim() === '')) {
-                    return;
+                // Check if value is empty or a placeholder
+                const isEmptyOrPlaceholder = !fieldValue ||
+                    String(fieldValue).trim() === '' ||
+                    fieldValue === '-- Select --' ||
+                    fieldValue === 'Select' ||
+                    fieldValue === 'Select Gender' ||
+                    fieldValue === 'Select Relationship';
+
+                if (isEmptyOrPlaceholder) {
+                    fieldValue = 'Not Provided';
                 }
 
-                // Required member fields
-                const requiredMemberFields = new Set(['name', 'relationship', 'gender', 'dob', 'age']);
+                // Format date fields to dd/mm/yyyy (e.g., member dob)
+                if (isDateField(field) && fieldValue && fieldValue !== 'Not Provided') {
+                    fieldValue = formatDateToDDMMYYYY(fieldValue);
+                }
 
                 const formattedKey = field
                     .replace(/_/g, ' ')
                     .replace(/([a-z])([A-Z])/g, '$1 $2')
                     .replace(/\b\w/g, l => l.toUpperCase());
 
+<<<<<<< HEAD
                 let displayValue = fieldValue;
                 if (!fieldValue || String(fieldValue).trim() === '') {
                     if (requiredMemberFields.has(field)) {
                         displayValue = 'Not Provided';
                     } else {
                         displayValue = 'None';
-                    }
-                }
-
-                html += `<div class="summary-item"><strong>${formattedKey}:</strong> ${displayValue}</div>`;
+=======
+                html += `<div class="summary-item"><strong>${formattedKey}:</strong> ${fieldValue}</div>`;
             });
 
             // Disease details for member - check both healthHistory and direct fields
@@ -481,146 +675,203 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Cover & Cost Preferences
     if (summaryData.coverAndCost) {
-        html += createSection('Cover & Cost Preferences', summaryData.coverAndCost);
-    }
-
-    // Existing Coverage
-    if (summaryData.existingCoverage) {
-        html += createSection('Existing Coverage & Portability', summaryData.existingCoverage);
-    }
-
-    // Claims & Service
-    if (summaryData.claimsAndService) {
-        html += createSection('Claims & Service History', summaryData.claimsAndService);
-    }
-
-    // Finance & Documentation
-    if (summaryData.financeAndDocumentation) {
-        html += createSection('Finance & Documentation', summaryData.financeAndDocumentation);
-    }
-
-    summaryContainer.innerHTML = html;
-    // Ensure notes are rendered even if not present in local cache
-    renderNotesSectionIfAvailable();
-
-    // Notes table (with fallback fetch by unique_id if missing)
-    async function renderNotesSectionIfAvailable() {
-        let commentsArray = null;
-        if (summaryData.commentsNoted && Array.isArray(summaryData.commentsNoted?.comments_noted) && summaryData.commentsNoted.comments_noted.length > 0) {
-            commentsArray = summaryData.commentsNoted.comments_noted;
+            html += createSection('Cover & Cost Preferences', summaryData.coverAndCost);
         }
-        // If not available, try localStorage mirror (already attempted above), then fetch from server using unique_id
-        if (!commentsArray || commentsArray.length === 0) {
-            try {
-                // Derive unique_id from URL or summary
-                const urlParams = new URLSearchParams(window.location.search);
-                let uid = urlParams.get('unique_id');
-                if (!uid && summaryData && summaryData.primaryContact) {
-                    uid = summaryData.primaryContact['unique_id'] || summaryData.primaryContact['Unique Id'];
-                }
-                if (uid) {
-                    const resp = await fetch(`/submission/${encodeURIComponent(uid)}/comments`);
-                    if (resp.ok) {
-                        const data = await resp.json();
-                        if (data && Array.isArray(data.comments)) {
-                            commentsArray = data.comments;
+
+        // Existing Coverage
+        if (summaryData.existingCoverage) {
+            html += createSection('Existing Coverage & Portability', summaryData.existingCoverage);
+        }
+
+        // Claims & Service
+        if (summaryData.claimsAndService) {
+            html += createSection('Claims & Service History', summaryData.claimsAndService);
+        }
+
+        // Finance & Documentation
+        if (summaryData.financeAndDocumentation) {
+            html += createSection('Finance & Documentation', summaryData.financeAndDocumentation);
+        }
+
+        summaryContainer.innerHTML = html;
+        // Ensure notes are rendered even if not present in local cache
+        renderNotesSectionIfAvailable();
+
+        // Notes table (with fallback fetch by unique_id if missing)
+        async function renderNotesSectionIfAvailable() {
+            let commentsArray = null;
+            if (summaryData.commentsNoted && Array.isArray(summaryData.commentsNoted?.comments_noted) && summaryData.commentsNoted.comments_noted.length > 0) {
+                commentsArray = summaryData.commentsNoted.comments_noted;
+            }
+            // If not available, try localStorage mirror (already attempted above), then fetch from server using unique_id
+            if (!commentsArray || commentsArray.length === 0) {
+                try {
+                    // Derive unique_id from URL or summary
+                    const urlParams = new URLSearchParams(window.location.search);
+                    let uid = urlParams.get('unique_id');
+                    if (!uid && summaryData && summaryData.primaryContact) {
+                        uid = summaryData.primaryContact['unique_id'] || summaryData.primaryContact['Unique Id'];
+                    }
+                    if (uid) {
+                        const resp = await fetch(`/submission/${encodeURIComponent(uid)}/comments`);
+                        if (resp.ok) {
+                            const data = await resp.json();
+                            if (data && Array.isArray(data.comments)) {
+                                commentsArray = data.comments;
+                            }
                         }
                     }
+                } catch (e) {
+                    // Non-fatal if fetch fails; simply skip rendering
                 }
-            } catch (e) {
-                // Non-fatal if fetch fails; simply skip rendering
-            }
-        }
-
-        if (commentsArray && commentsArray.length > 0) {
-            let cHtml = '<fieldset><legend>Notes</legend>';
-            cHtml += '<table class="comments-table"><thead><tr><th>Date/Time</th><th>Author</th><th>Note</th></tr></thead><tbody>';
-            commentsArray.forEach(c => {
-                const ts = formatTimestampSummary(c.created_at || c.timestamp);
-                const author = escapeHtmlSummary(c.author || c.user || 'User');
-                const text = escapeHtmlSummary(c.text || c.comment || '');
-                cHtml += `<tr><td>${ts}</td><td>${author}</td><td>${text}</td></tr>`;
-            });
-            cHtml += '</tbody></table></fieldset>';
-            summaryContainer.insertAdjacentHTML('beforeend', cHtml);
-        }
-
-        // Wire up Back and Next buttons for Preview/Summary navigation
-        const proposedBtn = document.getElementById('proposed-plans-btn');
-
-        if (proposedBtn) {
-            let uniqueId = null;
-
-            if (summaryData.primaryContact) {
-                uniqueId = summaryData.primaryContact['unique_id'] || summaryData.primaryContact['Unique Id'];
             }
 
-            if (uniqueId) {
-                const targetUrl = `Proposed_Plans.html?unique_id=${encodeURIComponent(uniqueId)}`;
+            if (commentsArray && commentsArray.length > 0) {
+                let cHtml = '<fieldset><legend>Notes</legend>';
+                cHtml += '<table class="comments-table"><thead><tr><th>Date/Time</th><th>Author</th><th>Note</th></tr></thead><tbody>';
+                commentsArray.forEach(c => {
+                    const ts = formatTimestampSummary(c.created_at || c.timestamp);
+                    const author = escapeHtmlSummary(c.author || c.user || 'User');
+                    const text = escapeHtmlSummary(c.text || c.comment || '');
+                    cHtml += `<tr><td>${ts}</td><td>${author}</td><td>${text}</td></tr>`;
+                });
+                cHtml += '</tbody></table></fieldset>';
+                summaryContainer.insertAdjacentHTML('beforeend', cHtml);
+            }
 
-                fetch(targetUrl, { method: 'GET' })
-                    .then(resp => {
-                        if (resp && resp.ok) {
-                            proposedBtn.style.display = 'inline-block';
-                            proposedBtn.disabled = false;
-                            proposedBtn.onclick = () => { window.location.href = targetUrl; };
-                        }
-                    })
-                    .catch(() => { });
-            }
-        }
+            // Wire up Back and Next buttons for Preview/Summary navigation
+            const proposedBtn = document.getElementById('proposed-plans-btn');
 
-        const backBtn = document.getElementById('back-btn');
-        const nextBtn = document.getElementById('next-btn');
-        if (nextBtn) {
-            nextBtn.disabled = true;
-            // For Preview.html, Next goes to Proposed_Plans.html with same unique_id (if available)
-            let uniqueId = null;
-            if (summaryData.primaryContact) {
-                uniqueId = summaryData.primaryContact['unique_id'] || summaryData.primaryContact['Unique Id'];
-            }
-            // Only enable Next if target page responds OK
-            if (uniqueId) {
-                const targetUrl = `Proposed_Plans.html?unique_id=${encodeURIComponent(uniqueId)}`;
-                fetch(targetUrl, { method: 'GET' })
-                    .then(resp => {
-                        if (resp && resp.ok) {
-                            nextBtn.disabled = false;
-                            nextBtn.onclick = () => { window.location.href = targetUrl; };
-                        } else {
-                            nextBtn.disabled = true;
-                        }
-                    })
-                    .catch(() => { nextBtn.disabled = true; });
-            } else {
-                nextBtn.disabled = true;
-            }
-        }
-        if (backBtn) {
-            backBtn.style.display = 'inline-block';
-            backBtn.onclick = () => {
-                try { sessionStorage.setItem('returningFromSummary', '1'); } catch (e) { }
-                // Compute unique_id as used elsewhere
-                const summary = JSON.parse(localStorage.getItem('formSummary'));
+            if (proposedBtn) {
                 let uniqueId = null;
-                if (summary && summary.primaryContact) {
-                    uniqueId = summary.primaryContact['unique_id'] || summary.primaryContact['Unique Id'];
+
+                if (summaryData.primaryContact) {
+                    uniqueId = summaryData.primaryContact['unique_id'] || summaryData.primaryContact['Unique Id'];
                 }
+
                 if (uniqueId) {
-                    window.location.href = `Existing_User_Request_Page.html?unique_id=${encodeURIComponent(uniqueId)}`;
-                } else {
-                    window.location.href = 'Existing_User_Request_Page.html';
+                    const targetUrl = `Proposed_Plans.html?unique_id=${encodeURIComponent(uniqueId)}`;
+
+                    fetch(targetUrl, { method: 'GET' })
+                        .then(resp => {
+                            if (resp && resp.ok) {
+                                proposedBtn.style.display = 'inline-block';
+                                proposedBtn.disabled = false;
+                                proposedBtn.onclick = () => { window.location.href = targetUrl; };
+                            }
+                        })
+                        .catch(() => { });
                 }
-            };
+            }
+
+            const backBtn = document.getElementById('back-btn');
+            const nextBtn = document.getElementById('next-btn');
+            if (nextBtn) {
+                nextBtn.disabled = true;
+                // For Preview.html, Next goes to Proposed_Plans.html with same unique_id (if available)
+                let uniqueId = null;
+                if (summaryData.primaryContact) {
+                    uniqueId = summaryData.primaryContact['unique_id'] || summaryData.primaryContact['Unique Id'];
+                }
+                // Only enable Next if target page responds OK
+                if (uniqueId) {
+                    const targetUrl = `Proposed_Plans.html?unique_id=${encodeURIComponent(uniqueId)}`;
+                    fetch(targetUrl, { method: 'GET' })
+                        .then(resp => {
+                            if (resp && resp.ok) {
+                                nextBtn.disabled = false;
+                                nextBtn.onclick = () => { window.location.href = targetUrl; };
+                            } else {
+                                nextBtn.disabled = true;
+                            }
+                        })
+                        .catch(() => { nextBtn.disabled = true; });
+                } else {
+                    nextBtn.disabled = true;
+                }
+            }
+            if (backBtn) {
+                backBtn.style.display = 'inline-block';
+                backBtn.onclick = () => {
+                    try { sessionStorage.setItem('returningFromSummary', '1'); } catch (e) { }
+                    // Compute unique_id as used elsewhere
+                    const summary = JSON.parse(localStorage.getItem('formSummary'));
+                    let uniqueId = null;
+                    if (summary && summary.primaryContact) {
+                        uniqueId = summary.primaryContact['unique_id'] || summary.primaryContact['Unique Id'];
+                    }
+                    if (uniqueId) {
+                        window.location.href = `Existing_User_Request_Page.html?unique_id=${encodeURIComponent(uniqueId)}`;
+                    } else {
+                        window.location.href = 'Existing_User_Request_Page.html';
+                    }
+                };
+            }
         }
-    }
-});
+    });
 
 // Helper functions for Notes in summary
 function escapeHtmlSummary(text) {
     const div = document.createElement('div');
     div.textContent = String(text || '');
     return div.innerHTML;
+}
+
+/**
+ * Formats a date string to dd/mm/yyyy format (India standard)
+ * Handles various input formats: yyyy-mm-dd, ISO strings, etc.
+ * @param {string} dateStr - The date string to format
+ * @returns {string} - Formatted date string in dd/mm/yyyy format, or original if invalid
+ */
+function formatDateToDDMMYYYY(dateStr) {
+    if (!dateStr || typeof dateStr !== 'string') return dateStr || '';
+
+    // If already in dd/mm/yyyy format, return as-is
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr.trim())) {
+        return dateStr.trim();
+    }
+
+    try {
+        let date;
+
+        // Handle yyyy-mm-dd format (common from HTML date inputs)
+        if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+            const parts = dateStr.split('T')[0].split('-');
+            date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        } else {
+            // Try parsing as a general date
+            date = new Date(dateStr);
+        }
+
+        if (!isNaN(date.getTime())) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+    } catch (e) {
+        console.warn('Date parsing failed for:', dateStr);
+    }
+
+    // Return original if parsing fails
+    return dateStr;
+}
+
+/**
+ * Checks if a field key represents a date field that should be formatted
+ * @param {string} key - The field key/name
+ * @returns {boolean} - True if the field is a date field
+ */
+function isDateField(key) {
+    const dateFieldPatterns = [
+        'dob', 'self-dob', 'self_dob',
+        'policy-since-date', 'policy_since_date',
+        'start_date', 'start-date',
+        'date_of_birth', 'date-of-birth',
+        'birth_date', 'birth-date'
+    ];
+    const keyLower = key.toLowerCase();
+    return dateFieldPatterns.some(pattern => keyLower.includes(pattern) || keyLower === pattern);
 }
 
 function cmToFeetInches(cm) {

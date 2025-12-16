@@ -15,7 +15,7 @@
             <div class="form-row" style="display:flex; gap:8px; align-items:center; font-size:0.9rem;">
                 <div class="form-group" style="display:flex; align-items:center; gap:8px; flex:2;">
                     <label for="unique-id" style="white-space:nowrap; min-width:80px;">UniqueID</label>
-                    <input type="text" id="unique-id" name="unique_id" pattern="^[a-zA-Z0-9']+_[0-9]{5}$" title="UniqueID must be in the format FullName_AadhaarLast5Digits (e.g., JohnDoe_12345)" readonly class="readonly-field" style="padding:4px 8px; height:32px; flex:1; min-width:0;" autocomplete="username">
+                    <input type="text" id="unique-id" name="unique_id" pattern="^[a-zA-Z]{2,6}_[0-9]{5}$" title="UniqueID format: 3 letters from first name + 3 letters from last name + underscore + 5 digits of Aadhaar (e.g., JohSmi_12345)" readonly class="readonly-field" style="padding:4px 8px; height:32px; flex:1; min-width:0;" autocomplete="username">
                     <span class="error-message" id="unique-id-error"></span>
                     <span class="status-message" id="unique-id-status"></span>
                 </div>
@@ -27,12 +27,32 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Name Fields: First Name, Middle Name, Last Name -->
+            <!-- PATCH: Renamed from first_name/middle_name/last_name to pc_fname/pc_mname/pc_lname -->
+            <!-- This prevents these fields from being caught by Policy_Creation.html's "name" search -->
             <div class="form-row">
                 <div class="form-group">
-                    <label for="full-name">Full Name *</label>
-                    <input type="text" id="full-name" name="applicant_name" required pattern="[A-Za-z][A-Za-z.'\s]*" title="Name must start with a letter and can only contain letters, spaces, and apostrophes." autocomplete="name">
-                    <span class="error-message" id="full-name-error"></span>
+                    <label for="pc-fname">First Name *</label>
+                    <input type="text" id="pc-fname" name="pc_fname" required pattern="[A-Za-z][A-Za-z.'\s]*" title="First name must start with a letter and can only contain letters, spaces, and apostrophes." autocomplete="given-name">
+                    <span class="error-message" id="pc-fname-error"></span>
                 </div>
+                <div class="form-group">
+                    <label for="pc-mname">Middle Name</label>
+                    <input type="text" id="pc-mname" name="pc_mname" pattern="[A-Za-z][A-Za-z.'\s]*" title="Middle name can only contain letters, spaces, and apostrophes." autocomplete="additional-name">
+                    <span class="error-message" id="pc-mname-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="pc-lname">Last Name *</label>
+                    <input type="text" id="pc-lname" name="pc_lname" required pattern="[A-Za-z][A-Za-z.'\s]*" title="Last name must start with a letter and can only contain letters, spaces, and apostrophes." autocomplete="family-name">
+                    <span class="error-message" id="pc-lname-error"></span>
+                </div>
+            </div>
+            
+            <!-- Hidden field to store concatenated full name for database compatibility -->
+            <input type="hidden" id="full-name" name="applicant_name">
+            
+            <div class="form-row">
                 <div class="form-group">
                     <label for="gender">Gender *</label>
                     <select id="gender" name="gender" required>
@@ -146,7 +166,8 @@
 
                 <div class="form-group fixed-width-group">
                     <label for="self-weight">Weight (kg) *</label>
-                    <input type="number" id="self-weight" name="self-weight" placeholder="e.g., 70" min="1" step="0.1" title="Please enter weight in kg (minimum 1 kg)." required>
+                    <!-- PATCH: Added max="500" for range validation -->
+                    <input type="number" id="self-weight" name="self-weight" placeholder="e.g., 70" min="1" max="500" step="0.1" title="Please enter weight in kg (1-500 kg)." required>
                     <span class="error-message" id="self-weight-error"></span>
                 </div>
 
@@ -198,4 +219,3 @@
     <script src="../js/validation.js"></script>
 </body>
 </html>
-

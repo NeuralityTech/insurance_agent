@@ -1,6 +1,10 @@
 /**
  * This script handles fetching existing user data from the database and populating the form.
  * It is triggered when an existing user enters their UniqueID.
+ * 
+ * PATCHED: 
+ * - Renamed first_name/middle_name/last_name to pc_fname/pc_mname/pc_lname
+ *   to prevent Policy_Creation.html from catching these fields when searching for "name"
  */
 
 // Debounce function to limit how often the fetch request is made
@@ -82,7 +86,7 @@ const FIELD_BLACKLIST = [
 function populateDirectFields(data) {
     const directFieldMappings = {
         'unique_id': 'unique_id',
-        'applicant_name': 'applicant_name', 
+        // Note: applicant_name is now handled specially below to parse into first/middle/last
         'gender': 'gender',
         'occupation': 'occupation',
         'email': 'email',
@@ -93,13 +97,53 @@ function populateDirectFields(data) {
         'self-age': 'self-age',
         'self-height': 'self-height',
         'self-weight': 'self-weight',
-        'self-bmi': 'self-bmi'
+        'self-bmi': 'self-bmi',
+        // PATCH: Renamed name fields to avoid "name" substring matching in Policy_Creation.html
+        // Database key -> Form field name
+        'pc_fname': 'pc_fname',
+        'pc_mname': 'pc_mname',
+        'pc_lname': 'pc_lname',
+        // Backward compatibility: also map old field names to new form fields
+        'first_name': 'pc_fname',
+        'middle_name': 'pc_mname',
+        'last_name': 'pc_lname'
     };
     
     for (const [dataKey, fieldName] of Object.entries(directFieldMappings)) {
         if (data[dataKey] !== undefined && data[dataKey] !== null && data[dataKey] !== '' && 
             !FIELD_BLACKLIST.includes(dataKey)) {
             populateField(fieldName, data[dataKey]);
+        }
+    }
+    
+    // Handle applicant_name specially - parse into first/middle/last name components
+    // This maintains backward compatibility with existing records
+    const fullName = data['applicant_name'];
+    if (fullName && typeof fullName === 'string' && fullName.trim()) {
+        // PATCH: Check for both old and new field names
+        const hasNewFields = (data['pc_fname'] && data['pc_fname'].trim()) || 
+                            (data['first_name'] && data['first_name'].trim());
+        
+        if (!hasNewFields) {
+            // Parse full name into components using the helper function from validation.js
+            if (typeof window.populateNameFieldsFromFullName === 'function') {
+                window.populateNameFieldsFromFullName(fullName);
+            } else {
+                // Fallback: simple parsing if helper not available
+                // PATCH: Use new field names (pc_fname, pc_mname, pc_lname)
+                const parts = fullName.trim().split(/\s+/).filter(p => p);
+                if (parts.length >= 1) {
+                    populateField('pc_fname', parts[0]);
+                }
+                if (parts.length >= 3) {
+                    populateField('pc_mname', parts.slice(1, -1).join(' '));
+                    populateField('pc_lname', parts[parts.length - 1]);
+                } else if (parts.length === 2) {
+                    populateField('pc_lname', parts[1]);
+                }
+                // Also populate the hidden full name field
+                populateField('applicant_name', fullName);
+            }
         }
     }
 }
@@ -137,173 +181,145 @@ function populateField(fieldName, value) {
                 if (byId) elements = [byId];
             }
         } catch (e) {
-            // Fallback to getElementById if querySelector fails
-            const byId = document.getElementById(fieldName);
-            if (byId) elements = [byId];
+            console.warn(`Could not query by ID for field: ${fieldName}`, e);
         }
     }
     
-    if (!elements || elements.length === 0) {
-        // Only warn for actual field names, not numeric keys or blacklisted fields
-        const skipWarning = /^\d+$/.test(fieldName) || 
-                           FIELD_BLACKLIST.includes(fieldName) ||
-                           fieldName.includes('_details') && !document.querySelector(`textarea[name="${fieldName}"]`);
-        
-        if (!skipWarning) {
-            console.warn(`Field not found: ${fieldName}`);
-        }
+    if (elements.length === 0) {
+        // Don't log warnings for expected missing fields
         return;
     }
     
-    const firstEl = elements[0];
-    const type = firstEl.type;
-    
-    try {
-        if (type === 'radio') {
-            elements.forEach(el => {
-                if (String(el.value) === String(value)) {
-                    el.checked = true;
-                    el.dispatchEvent(new Event('change', { bubbles: true }));
+    elements.forEach(element => {
+        try {
+            if (element.type === 'checkbox') {
+                // Handle checkbox specially
+                if (Array.isArray(value)) {
+                    element.checked = value.includes(element.value);
+                } else {
+                    element.checked = Boolean(value) || value === element.value;
                 }
-            });
-        } else if (type === 'checkbox') {
-            if (Array.isArray(value)) {
-                elements.forEach(el => {
-                    const shouldCheck = value.includes(el.value);
-                    el.checked = shouldCheck;
-                    // Ensure any UI that depends on checkbox state updates
-                    el.dispatchEvent(new Event('change', { bubbles: true }));
-                });
+                element.dispatchEvent(new Event('change', { bubbles: true }));
+            } else if (element.type === 'radio') {
+                // Handle radio buttons
+                if (element.value === String(value)) {
+                    element.checked = true;
+                    element.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            } else if (element.tagName === 'SELECT') {
+                // Handle select dropdowns
+                element.value = value;
+                element.dispatchEvent(new Event('change', { bubbles: true }));
             } else {
-                elements.forEach(el => {
-                    const shouldCheck = (String(el.value) === String(value)) || value === true;
-                    el.checked = shouldCheck;
-                    // Ensure any UI that depends on checkbox state updates
-                    el.dispatchEvent(new Event('change', { bubbles: true }));
-                });
+                // Handle text inputs, textareas, etc.
+                element.value = value;
+                element.dispatchEvent(new Event('input', { bubbles: true }));
+                element.dispatchEvent(new Event('change', { bubbles: true }));
             }
-        } else if (type === 'date') {
-            elements.forEach(el => {
-                el.value = value;
-                el.dispatchEvent(new Event('change', { bubbles: true }));
-            });
-        } else {
-            elements.forEach(el => {
-                el.value = value;
-                // Trigger change event for calculated fields
-                el.dispatchEvent(new Event('input', { bubbles: true }));
-                el.dispatchEvent(new Event('change', { bubbles: true }));
-            });
+        } catch (e) {
+            console.warn(`Error setting field ${fieldName}:`, e);
         }
-    } catch (e) {
-        console.warn(`Failed to populate field ${fieldName}:`, e);
-    }
+    });
 }
 
 // Function to handle special fields that need custom processing
 function handleSpecialFields(data) {
-    // Handle comments (don't populate as form fields)
-    if (data.commentsNoted && data.commentsNoted.comments_noted) {
-        console.log('Comments data found, handled by comments_noted.js');
+    // Handle secondary occupation checkbox
+    const secondaryOccupation = data['secondary_occupation'] || 
+                                (data.primaryContact && data.primaryContact['secondary_occupation']);
+    if (secondaryOccupation) {
+        const checkbox = document.getElementById('secondary-occupation-checkbox');
+        const section = document.getElementById('secondary-occupation-section');
+        if (checkbox && section) {
+            checkbox.checked = true;
+            section.style.display = 'block';
+        }
     }
-    
-    // Handle disease data
-    handleDiseaseData(data);
 }
 
-// Function to handle disease checkbox data for PRIMARY APPLICANT ONLY
+// Function to handle disease data from nested structure
 function handleDiseaseData(data) {
-    // Only look for disease data in healthHistory to avoid accidentally
-    // using member data as primary applicant data
+    // Try to find disease data in various locations
     let diseaseData = null;
-    let diseaseArray = null;
     
-    // Check for disease data ONLY in healthHistory section
-    if (data.healthHistory && data.healthHistory.disease) {
-        diseaseArray = Array.isArray(data.healthHistory.disease) ? data.healthHistory.disease : [data.healthHistory.disease];
+    if (data.healthHistory) {
         diseaseData = data.healthHistory;
-    } else if (data.health_history && data.health_history.disease) {
-        diseaseArray = Array.isArray(data.health_history.disease) ? data.health_history.disease : [data.health_history.disease];
+    } else if (data.health_history) {
         diseaseData = data.health_history;
     }
     
-    if (diseaseArray && diseaseArray.length > 0) {
-        // Filter out empty values that might have accumulated from data corruption
-        diseaseArray = diseaseArray.filter(v => v !== undefined && v !== null && String(v).trim() !== '');
-        
-        console.log('Processing PRIMARY APPLICANT disease data:', diseaseArray);
-        
-        diseaseArray.forEach(val => {
-            if (!val || val === '') return;
-            
-            // This prevents accidentally checking member disease checkboxes
-            const healthHistoryContent = document.getElementById('health-history-content');
-            if (!healthHistoryContent) {
-                console.warn('health-history-content not found for disease prefill');
-                return;
-            }
-            
-            const cb = healthHistoryContent.querySelector(`input[name="disease"][value="${val}"]`);
-            if (!cb) {
-                console.warn(`Disease checkbox not found in health-history-content for: ${val}`);
-                return;
-            }
-            
-            cb.checked = true;
-            // Fire change so initializeDiseaseDetails toggles visibility and enables fields
-            cb.dispatchEvent(new Event('change', { bubbles: true }));
-            
-            // Set textarea value if present - only look in diseaseData, not entire data object
-            const detailsKey = `${val}_details`;
-            const txt = healthHistoryContent.querySelector(`textarea[name="${detailsKey}"]`);
-            if (txt && diseaseData && diseaseData[detailsKey] !== undefined) {
-                txt.disabled = false;
-                txt.value = diseaseData[detailsKey];
-                console.log(`Set ${detailsKey} to:`, diseaseData[detailsKey]);
-            }
-            
-            // Set since year if present - only look in diseaseData
-            const sinceYearKey = `${val}_since_year`;
-            const sinceYearSelect = healthHistoryContent.querySelector(`select[name="${sinceYearKey}"]`);
-            if (sinceYearSelect && diseaseData && diseaseData[sinceYearKey] !== undefined) {
-                sinceYearSelect.disabled = false;
-                sinceYearSelect.value = diseaseData[sinceYearKey];
-                console.log(`Set ${sinceYearKey} to:`, diseaseData[sinceYearKey]);
-            }
-            
-            // Set since years if present - only look in diseaseData
-            const sinceYearsKey = `${val}_since_years`;
-            const sinceYearsInput = healthHistoryContent.querySelector(`input[name="${sinceYearsKey}"]`);
-            if (sinceYearsInput && diseaseData && diseaseData[sinceYearsKey] !== undefined) {
-                sinceYearsInput.disabled = false;
-                sinceYearsInput.value = diseaseData[sinceYearsKey];
-                console.log(`Set ${sinceYearsKey} to:`, diseaseData[sinceYearsKey]);
-            }
-            
-            // Backward compatibility: convert old start_date to since_year
-            const dateKey = `${val}_start_date`;
-            if (diseaseData && diseaseData[dateKey] !== undefined && !diseaseData[sinceYearKey]) {
-                const dateValue = diseaseData[dateKey];
-                if (dateValue) {
-                    const dateObj = new Date(dateValue);
-                    if (!isNaN(dateObj.getTime())) {
-                        const year = dateObj.getFullYear();
-                        if (sinceYearSelect) {
-                            sinceYearSelect.disabled = false;
-                            sinceYearSelect.value = year;
-                            console.log(`Converted ${dateKey} (${dateValue}) to since_year ${year}`);
-                        }
-                        // Calculate years
-                        const currentYear = new Date().getFullYear();
-                        if (sinceYearsInput) {
-                            sinceYearsInput.disabled = false;
-                            sinceYearsInput.value = Math.max(0, currentYear - year);
-                        }
-                    }
-                }
+    if (!diseaseData) return;
+    
+    const healthHistoryContent = document.getElementById('health-history-content');
+    if (!healthHistoryContent) return;
+    
+    // Handle disease checkboxes
+    const diseaseCheckboxes = healthHistoryContent.querySelectorAll('input[type="checkbox"][name="disease"]');
+    const selectedDiseases = diseaseData.disease || [];
+    
+    if (Array.isArray(selectedDiseases)) {
+        diseaseCheckboxes.forEach(cb => {
+            if (selectedDiseases.includes(cb.value)) {
+                cb.checked = true;
+                cb.dispatchEvent(new Event('change', { bubbles: true }));
             }
         });
     }
+    
+    // Handle disease details and since year fields
+    const diseaseValues = ['cardiac', 'diabetes', 'hypertension', 'cancer', 'critical_illness', 'other'];
+    
+    diseaseValues.forEach(val => {
+        // Set details textarea if present - only look in diseaseData
+        const detailsKey = `${val}_details`;
+        const detailsTextarea = healthHistoryContent.querySelector(`textarea[name="${detailsKey}"]`);
+        if (detailsTextarea && diseaseData && diseaseData[detailsKey] !== undefined) {
+            detailsTextarea.disabled = false;
+            detailsTextarea.value = diseaseData[detailsKey];
+            console.log(`Set ${detailsKey} to:`, diseaseData[detailsKey]);
+        }
+        
+        // Set since year if present - only look in diseaseData
+        const sinceYearKey = `${val}_since_year`;
+        const sinceYearSelect = healthHistoryContent.querySelector(`select[name="${sinceYearKey}"]`);
+        if (sinceYearSelect && diseaseData && diseaseData[sinceYearKey] !== undefined) {
+            sinceYearSelect.disabled = false;
+            sinceYearSelect.value = diseaseData[sinceYearKey];
+            console.log(`Set ${sinceYearKey} to:`, diseaseData[sinceYearKey]);
+        }
+        
+        // Set since years if present - only look in diseaseData
+        const sinceYearsKey = `${val}_since_years`;
+        const sinceYearsInput = healthHistoryContent.querySelector(`input[name="${sinceYearsKey}"]`);
+        if (sinceYearsInput && diseaseData && diseaseData[sinceYearsKey] !== undefined) {
+            sinceYearsInput.disabled = false;
+            sinceYearsInput.value = diseaseData[sinceYearsKey];
+            console.log(`Set ${sinceYearsKey} to:`, diseaseData[sinceYearsKey]);
+        }
+        
+        // Backward compatibility: convert old start_date to since_year
+        const dateKey = `${val}_start_date`;
+        if (diseaseData && diseaseData[dateKey] !== undefined && !diseaseData[sinceYearKey]) {
+            const dateValue = diseaseData[dateKey];
+            if (dateValue) {
+                const dateObj = new Date(dateValue);
+                if (!isNaN(dateObj.getTime())) {
+                    const year = dateObj.getFullYear();
+                    if (sinceYearSelect) {
+                        sinceYearSelect.disabled = false;
+                        sinceYearSelect.value = year;
+                        console.log(`Converted ${dateKey} (${dateValue}) to since_year ${year}`);
+                    }
+                    // Calculate years
+                    const currentYear = new Date().getFullYear();
+                    if (sinceYearsInput) {
+                        sinceYearsInput.disabled = false;
+                        sinceYearsInput.value = Math.max(0, currentYear - year);
+                    }
+                }
+            }
+        }
+    });
 }
 
 // Main function to initialize the data fetching logic

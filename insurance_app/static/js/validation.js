@@ -2,6 +2,11 @@
  * This script provides validation logic for various sections of the insurance form.
  * It is used by: New_Applicant_Request_Form.html, Existing_Applicant_Request_Form.html
  * The functions are called dynamically from script.js when their respective sections are loaded.
+ * 
+ * PATCHED: 
+ * - Renamed first-name/middle-name/last-name to pc-fname/pc-mname/pc-lname
+ *   to prevent Policy_Creation.html from catching these fields when searching for "name"
+ * - Added rangeUnderflow/rangeOverflow validation for weight and DOB fields
  */
 
 /**
@@ -14,7 +19,13 @@ function initializePrimaryContactValidation() {
     if (!form) return;
 
     // --- UniqueID Generation Logic ---
+    // PATCH: Renamed from first-name/middle-name/last-name to pc-fname/pc-mname/pc-lname
+    const firstNameInput = form.querySelector('#pc-fname');
+    const middleNameInput = form.querySelector('#pc-mname');
+    const lastNameInput = form.querySelector('#pc-lname');
+    // Hidden field for concatenated full name (for database compatibility)
     const fullNameInput = form.querySelector('#full-name');
+    
     const aadhaarInput = form.querySelector('#aadhaar-last5');
     const uniqueIdInput = form.querySelector('#unique-id');
     const userTypeRadios = form.querySelectorAll('input[name="user_type"]');
@@ -27,15 +38,63 @@ function initializePrimaryContactValidation() {
         };
     }
 
+    /**
+     * Generates the UniqueID from first name, last name, and aadhaar.
+     * Format: 3 letters of FirstName + 3 letters of LastName + 5 digits of Aadhaar
+     * Example: "JohSmi_12345" for John Smith with Aadhaar ending in 12345
+     */
     function generateUniqueId() {
-        if (!fullNameInput || !aadhaarInput || !uniqueIdInput) return;
-        const fullName = fullNameInput.value.trim().replace(/[^a-zA-Z0-9']/g, '');
+        if (!firstNameInput || !lastNameInput || !aadhaarInput || !uniqueIdInput) return;
+        
+        // Get first name: remove non-letters, take first 3 characters
+        const firstName = firstNameInput.value.trim().replace(/[^a-zA-Z]/g, '');
+        const firstPart = firstName.substring(0, 3);
+        
+        // Get last name: remove non-letters, take first 3 characters
+        const lastName = lastNameInput.value.trim().replace(/[^a-zA-Z]/g, '');
+        const lastPart = lastName.substring(0, 3);
+        
         const aadhaar = aadhaarInput.value.trim();
-        if (fullName && aadhaar && aadhaar.length === 5) {
-            uniqueIdInput.value = `${fullName}_${aadhaar}`;
+        
+        // Generate UniqueID only if we have valid inputs
+        // First name needs at least 1 letter, last name needs at least 1 letter, aadhaar needs exactly 5 digits
+        if (firstName.length >= 1 && lastName.length >= 1 && aadhaar.length === 5 && /^[0-9]{5}$/.test(aadhaar)) {
+            // Capitalize first letter of each part for consistency
+            const firstPartFormatted = firstPart.charAt(0).toUpperCase() + firstPart.slice(1).toLowerCase();
+            const lastPartFormatted = lastPart.charAt(0).toUpperCase() + lastPart.slice(1).toLowerCase();
+            uniqueIdInput.value = `${firstPartFormatted}${lastPartFormatted}_${aadhaar}`;
         } else {
             uniqueIdInput.value = '';
         }
+    }
+
+    /**
+     * Updates the hidden full name field by concatenating first, middle, and last names.
+     * This maintains compatibility with the existing database schema.
+     */
+    function updateFullName() {
+        if (!fullNameInput) return;
+        
+        const firstName = (firstNameInput ? firstNameInput.value.trim() : '');
+        const middleName = (middleNameInput ? middleNameInput.value.trim() : '');
+        const lastName = (lastNameInput ? lastNameInput.value.trim() : '');
+        
+        // Concatenate: First + Middle (if exists) + Last
+        const parts = [firstName];
+        if (middleName) {
+            parts.push(middleName);
+        }
+        parts.push(lastName);
+        
+        fullNameInput.value = parts.filter(p => p).join(' ');
+    }
+
+    /**
+     * Combined handler that updates both UniqueID and full name.
+     */
+    function handleNameChange() {
+        generateUniqueId();
+        updateFullName();
     }
 
     function handleUserTypeChange() {
@@ -53,14 +112,29 @@ function initializePrimaryContactValidation() {
         }
     }
 
+    const debouncedHandleNameChange = debounce(handleNameChange, 300);
     const debouncedGenerateId = debounce(generateUniqueId, 300);
 
     userTypeRadios.forEach(radio => radio.addEventListener('change', handleUserTypeChange));
-    if (fullNameInput) fullNameInput.addEventListener('input', debouncedGenerateId);
-    if (aadhaarInput) aadhaarInput.addEventListener('input', debouncedGenerateId);
+    
+    // Listen to all name fields for changes
+    if (firstNameInput) {
+        firstNameInput.addEventListener('input', debouncedHandleNameChange);
+    }
+    if (middleNameInput) {
+        middleNameInput.addEventListener('input', debouncedHandleNameChange);
+    }
+    if (lastNameInput) {
+        lastNameInput.addEventListener('input', debouncedHandleNameChange);
+    }
+    if (aadhaarInput) {
+        aadhaarInput.addEventListener('input', debouncedGenerateId);
+    }
 
     // Set initial state for UniqueID field
     handleUserTypeChange();
+    // Update full name on init if fields already have values
+    updateFullName();
     // --- End of UniqueID Logic ---
 
     // --- Health Vitals Calculations ---
@@ -86,6 +160,13 @@ function initializePrimaryContactValidation() {
         
         dobInput.setAttribute('max', maxDate);
         dobInput.setAttribute('min', minDate);
+    }
+    
+    // PATCH: Set weight constraints (min already in HTML, adding max for safety)
+    if (weightInput) {
+        if (!weightInput.hasAttribute('max')) {
+            weightInput.setAttribute('max', '500'); // Reasonable max weight in kg
+        }
     }
 
     if (dobInput && ageInput) {
@@ -241,12 +322,20 @@ function initializePrimaryContactValidation() {
         // Check for validity
         if (input.validity.valueMissing) {
             isValid = false;
+            message = `${fieldName} is required.`;
         } else if (input.validity.patternMismatch) {
             isValid = false;
             if (input.id === 'unique-id') {
-                message = 'UniqueID must be in the format: FullName_AadhaarLast5Digits.';
+                message = 'UniqueID format: 3 letters from first name + 3 letters from last name + underscore + 5 digits (e.g., JohSmi_12345).';
             } else if (input.id === 'aadhaar-last5') {
                 message = 'Aadhaar must be exactly 5 digits.';
+            // PATCH: Updated field IDs for renamed name fields
+            } else if (input.id === 'pc-fname') {
+                message = 'First name must start with a letter and contain only letters.';
+            } else if (input.id === 'pc-lname') {
+                message = 'Last name must start with a letter and contain only letters.';
+            } else if (input.id === 'pc-mname') {
+                message = 'Middle name can only contain letters.';
             } else {
                 message = `Invalid format for ${fieldName}.`;
             }
@@ -257,7 +346,55 @@ function initializePrimaryContactValidation() {
             } else {
                 message = `Invalid length for ${fieldName}.`;
             }
-        } else {
+        } 
+        // PATCH: Added range validation for min/max constraints
+        else if (input.validity.rangeUnderflow) {
+            isValid = false;
+            if (input.id === 'self-weight') {
+                message = 'Weight must be at least 1 kg.';
+            } else if (input.id === 'self-dob') {
+                message = 'Date of birth must be within the last 100 years.';
+            } else {
+                const minVal = input.getAttribute('min');
+                message = `${fieldName} must be at least ${minVal}.`;
+            }
+        } else if (input.validity.rangeOverflow) {
+            isValid = false;
+            if (input.id === 'self-weight') {
+                message = 'Weight cannot exceed 500 kg.';
+            } else if (input.id === 'self-dob') {
+                message = 'Date of birth cannot be in the future.';
+            } else {
+                const maxVal = input.getAttribute('max');
+                message = `${fieldName} cannot exceed ${maxVal}.`;
+            }
+        } 
+        // PATCH: Added type mismatch validation (e.g., for email, number)
+        else if (input.validity.typeMismatch) {
+            isValid = false;
+            if (input.type === 'email') {
+                message = 'Please enter a valid email address.';
+            } else if (input.type === 'number') {
+                message = `Please enter a valid number for ${fieldName}.`;
+            } else {
+                message = `Invalid value for ${fieldName}.`;
+            }
+        }
+        // PATCH: Added step mismatch validation (for decimal numbers)
+        else if (input.validity.stepMismatch) {
+            isValid = false;
+            message = `Please enter a valid value for ${fieldName}.`;
+        }
+        // PATCH: Added bad input validation (e.g., letters in number field)
+        else if (input.validity.badInput) {
+            isValid = false;
+            if (input.type === 'number') {
+                message = `Please enter a valid number for ${fieldName}.`;
+            } else {
+                message = `Invalid input for ${fieldName}.`;
+            }
+        }
+        else {
             isValid = true;
             message = '';
         }
@@ -326,4 +463,79 @@ window.updateHeightFeetInchesFromCm = function () {
 
     heightFeetInput.value = String(feet);
     heightInchesInput.value = String(inches);
+};
+
+/**
+ * Parse a full name string into first, middle, and last name components.
+ * Used when loading existing records that have applicant_name as a single field.
+ * 
+ * Strategy:
+ * - Single word: First Name only
+ * - Two words: First Name + Last Name
+ * - Three+ words: First Name + Middle Name(s) + Last Name
+ * 
+ * @param {string} fullName - The complete name string
+ * @returns {object} - { firstName, middleName, lastName }
+ */
+window.parseFullNameToComponents = function(fullName) {
+    if (!fullName || typeof fullName !== 'string') {
+        return { firstName: '', middleName: '', lastName: '' };
+    }
+    
+    const parts = fullName.trim().split(/\s+/).filter(p => p);
+    
+    if (parts.length === 0) {
+        return { firstName: '', middleName: '', lastName: '' };
+    } else if (parts.length === 1) {
+        // Single name - put in first name
+        return { firstName: parts[0], middleName: '', lastName: '' };
+    } else if (parts.length === 2) {
+        // Two parts - first and last
+        return { firstName: parts[0], middleName: '', lastName: parts[1] };
+    } else {
+        // Three or more - first, middle (everything in between), last
+        return {
+            firstName: parts[0],
+            middleName: parts.slice(1, -1).join(' '),
+            lastName: parts[parts.length - 1]
+        };
+    }
+};
+
+/**
+ * Populate the name fields from a full name string.
+ * Used when loading existing records.
+ * 
+ * PATCH: Updated to use new field IDs (pc-fname, pc-mname, pc-lname)
+ * 
+ * @param {string} fullName - The complete name string to parse and populate
+ */
+window.populateNameFieldsFromFullName = function(fullName) {
+    const form = document.getElementById('primary-contact-content');
+    if (!form) return;
+    
+    // PATCH: Updated selectors to use new field IDs
+    const firstNameInput = form.querySelector('#pc-fname');
+    const middleNameInput = form.querySelector('#pc-mname');
+    const lastNameInput = form.querySelector('#pc-lname');
+    const hiddenFullNameInput = form.querySelector('#full-name');
+    
+    const { firstName, middleName, lastName } = window.parseFullNameToComponents(fullName);
+    
+    if (firstNameInput) {
+        firstNameInput.value = firstName;
+        firstNameInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    if (middleNameInput) {
+        middleNameInput.value = middleName;
+        middleNameInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    if (lastNameInput) {
+        lastNameInput.value = lastName;
+        lastNameInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    // Also set the hidden full name field
+    if (hiddenFullNameInput) {
+        hiddenFullNameInput.value = fullName;
+    }
 };

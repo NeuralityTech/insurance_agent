@@ -542,8 +542,29 @@
     function getFormData(formContainer) {
         if (!formContainer) return null;
 
+        // --- NAME FIELDS (support new mem-* classes AND old member-* classes) ---
+        const firstNameEl  = formContainer.querySelector('.mem-fname, .member-first-name');
+        const middleNameEl = formContainer.querySelector('.mem-mname, .member-middle-name');
+        const lastNameEl   = formContainer.querySelector('.mem-lname, .member-last-name');
+
+        const firstName  = firstNameEl  ? firstNameEl.value.trim()  : '';
+        const middleName = middleNameEl ? middleNameEl.value.trim() : '';
+        const lastName   = lastNameEl   ? lastNameEl.value.trim()   : '';
+        
+        // Construct full name from parts
+        const fullName = [firstName, middleName, lastName].filter(p => p).join(' ');
+        
+        // Update hidden full name field if it exists
+        const hiddenNameField = formContainer.querySelector('.member-name');
+        if (hiddenNameField) {
+            hiddenNameField.value = fullName;
+        }
+
         const data = {
-            name: formContainer.querySelector('.member-name').value.trim(),
+            name: fullName,
+            first_name: firstName,
+            middle_name: middleName,
+            last_name: lastName,
             relationship: formContainer.querySelector('.relationship').value,
             occupation: formContainer.querySelector('.member-occupation').value.trim(),
             secondary_occupation: formContainer.querySelector('.member-secondary-occupation')?.value.trim() || '',
@@ -620,7 +641,42 @@
     function populateForm(formContainer, memberData) {
         if (!formContainer || !memberData) return;
 
-        formContainer.querySelector('.member-name').value = memberData.name || '';
+        // Handle name fields - support both new format (first/middle/last) and old format (single name)
+        if (memberData.first_name || memberData.last_name) {
+            // New format - populate individual fields
+            const firstNameField  = formContainer.querySelector('.mem-fname, .member-first-name');
+            const middleNameField = formContainer.querySelector('.mem-mname, .member-middle-name');
+            const lastNameField   = formContainer.querySelector('.mem-lname, .member-last-name');
+            const hiddenNameField = formContainer.querySelector('.member-name');
+            
+            if (firstNameField)  firstNameField.value  = memberData.first_name  || '';
+            if (middleNameField) middleNameField.value = memberData.middle_name || '';
+            if (lastNameField)   lastNameField.value   = memberData.last_name   || '';
+            
+            // Also set hidden full name field
+            const fullName = [memberData.first_name, memberData.middle_name, memberData.last_name]
+                .filter(p => p && p.trim()).join(' ');
+            if (hiddenNameField) hiddenNameField.value = fullName;
+        } else if (memberData.name) {
+            // Old format - parse full name into components
+            const parts = memberData.name.trim().split(/\s+/).filter(p => p);
+            const firstNameField  = formContainer.querySelector('.mem-fname, .member-first-name');
+            const middleNameField = formContainer.querySelector('.mem-mname, .member-middle-name');
+            const lastNameField   = formContainer.querySelector('.mem-lname, .member-last-name');
+            const hiddenNameField = formContainer.querySelector('.member-name');
+            
+            if (parts.length >= 1 && firstNameField) {
+                firstNameField.value = parts[0];
+            }
+            if (parts.length >= 3) {
+                if (middleNameField) middleNameField.value = parts.slice(1, -1).join(' ');
+                if (lastNameField)   lastNameField.value   = parts[parts.length - 1];
+            } else if (parts.length === 2) {
+                if (lastNameField) lastNameField.value = parts[1];
+            }
+            if (hiddenNameField) hiddenNameField.value = memberData.name;
+        }
+        
         formContainer.querySelector('.relationship').value = memberData.relationship || '';
         formContainer.querySelector('.member-occupation').value = memberData.occupation || '';
         if (formContainer.querySelector('.member-secondary-occupation')) {
@@ -944,15 +1000,22 @@
             return;
         }
 
-
         // Validate required fields
-        if (!data.name || !data.relationship || !data.gender || !data.dob || !data.height || !data.weight) {
+        if (!data.first_name || !data.last_name || !data.relationship || !data.gender || !data.dob || !data.height || !data.weight) {
             if (errorDiv) {
-                errorDiv.textContent = 'Please fill in all required fields marked with *';
+                // More specific error message
+                if (!data.first_name) {
+                    errorDiv.textContent = 'First Name is required';
+                } else if (!data.last_name) {
+                    errorDiv.textContent = 'Last Name is required';
+                } else {
+                    errorDiv.textContent = 'Please fill in all required fields marked with *';
+                }
                 errorDiv.style.display = 'block';
             }
             return;
         }
+
         // Validate disease duration (since_year or since_years)
         let hasDurationErrors = false;
         formContainer.querySelectorAll('.member-disease-list .disease-entry').forEach(entry => {
@@ -1021,7 +1084,7 @@
 
             // Generate member ID for new member
             const birthYear = data.dob ? new Date(data.dob).getFullYear() : 'YYYY';
-            const namePart = data.name.replace(/[^a-zA-Z]/g, '').substring(0, 5).toUpperCase();
+            const namePart = data.first_name.replace(/[^a-zA-Z]/g, '').substring(0, 5).toUpperCase();
             const newMemberId = `${namePart}${birthYear}_${Date.now()}`;
             data.id = newMemberId;
 
@@ -1169,10 +1232,9 @@
             inches = 0;
         }
 
-        ftSelect.value = feet ? String(feet) : '';
-        inSelect.value = inches ? String(inches) : '';
+        ftSelect.value = (feet !== null && feet !== undefined) ? String(feet) : '';
+        inSelect.value = (inches !== null && inches !== undefined) ? String(inches) : '';
     }
-
 
     // Initialize age calculation
     function initializeAgeCalculation(contentDiv) {
@@ -1235,7 +1297,6 @@
         }
     }
 
-    // Initialize BMI calculation
     // Initialize BMI calculation (members use ft/in on UI, cm internally)
     function initializeBmiCalculation(contentDiv) {
         const heightInput    = contentDiv.querySelector('.member-height');      // hidden cm
@@ -1302,7 +1363,6 @@
         heightInput.addEventListener('input', recalcFromCurrentHeight);
         weightInput.addEventListener('input', recalcFromCurrentHeight);
     }
-
 
     // Load all existing members into tabs
     function loadExistingMembers() {

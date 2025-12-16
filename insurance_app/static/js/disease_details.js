@@ -3,8 +3,7 @@
  * It is used by: New_Applicant_Request_Form.html, Existing_Applicant_Request_Form.html, member_details.html
  * The main function is called from script.js when the Health History section is loaded.
  * 
- * UPDATED: Changed from date input to Since Year dropdown and Since X Years input
- * with auto-calculation between the two fields
+ * 
  */ 
 
 /**
@@ -16,6 +15,7 @@ function getCurrentYear() {
 
 /**
  * Populate a year dropdown with years from startYear to current year
+ * PRESERVES existing value if valid
  * @param {HTMLSelectElement} selectEl - The select element to populate
  * @param {number} startYear - The starting year (default 1950)
  */
@@ -23,6 +23,9 @@ function populateYearDropdown(selectEl, startYear = 1950) {
     if (!selectEl) return;
     
     const currentYear = getCurrentYear();
+    
+    // Save current value BEFORE clearing options
+    const savedValue = selectEl.value;
     
     // Clear existing options except the first placeholder
     while (selectEl.options.length > 1) {
@@ -35,6 +38,10 @@ function populateYearDropdown(selectEl, startYear = 1950) {
         option.value = year;
         option.textContent = year;
         selectEl.appendChild(option);
+    }
+    
+    if (savedValue && savedValue !== '' && savedValue !== 'Select Year') {
+        selectEl.value = savedValue;
     }
 }
 
@@ -84,15 +91,24 @@ function initializeDiseaseDetails(root) {
 
         if (!details) return;
 
-        // Populate year dropdown if present
+        // Save current values before any operations that might clear them
+        const savedYearValue = sinceYearSelect ? sinceYearSelect.value : '';
+        const savedYearsValue = sinceYearsInput ? sinceYearsInput.value : '';
+        const savedTextValue = textarea ? textarea.value : '';
+
+        // Populate year dropdown if present (this now preserves the value internally)
         if (sinceYearSelect) {
             populateYearDropdown(sinceYearSelect);
+            // restore value if populateYearDropdown didn't preserve it
+            if (savedYearValue && savedYearValue !== '' && savedYearValue !== 'Select Year' && !sinceYearSelect.value) {
+                sinceYearSelect.value = savedYearValue;
+            }
         }
 
         // Check if there's existing data - if so, force checkbox to be checked
-        const hasYearValue = sinceYearSelect && sinceYearSelect.value && sinceYearSelect.value !== '';
-        const hasYearsValue = sinceYearsInput && sinceYearsInput.value && sinceYearsInput.value !== '' && sinceYearsInput.value !== '0';
-        const hasTextValue = textarea && textarea.value && textarea.value.trim() !== '';
+        const hasYearValue = savedYearValue && savedYearValue !== '' && savedYearValue !== 'Select Year';
+        const hasYearsValue = savedYearsValue && savedYearsValue !== '' && savedYearsValue !== '0';
+        const hasTextValue = savedTextValue && savedTextValue.trim() !== '';
 
         if (!checked && (hasYearValue || hasYearsValue || hasTextValue)) {
             const cb = entry.querySelector('input[type="checkbox"][name="disease"]') ||
@@ -109,16 +125,28 @@ function initializeDiseaseDetails(root) {
             
             if (sinceYearSelect) {
                 sinceYearSelect.disabled = false;
+                // Ensure value is still set
+                if (savedYearValue && savedYearValue !== '' && savedYearValue !== 'Select Year') {
+                    sinceYearSelect.value = savedYearValue;
+                }
             }
             if (sinceYearsInput) {
                 sinceYearsInput.disabled = false;
+                // Ensure value is still set
+                if (savedYearsValue && savedYearsValue !== '') {
+                    sinceYearsInput.value = savedYearsValue;
+                }
             }
             if (textarea) {
                 textarea.disabled = false;
+                // Ensure value is still set
+                if (savedTextValue && savedTextValue.trim() !== '') {
+                    textarea.value = savedTextValue;
+                }
             }
             
             // Setup auto-calculation between year and years
-            setupAutoCalculation(entry, sinceYearSelect, sinceYearsInput, errorSpan);
+            setupAutoCalculation(entry, sinceYearSelect, sinceYearsInput, errorSpan, savedYearValue, savedYearsValue);
             
         } else {
             // Hide and disable fields
@@ -147,10 +175,13 @@ function initializeDiseaseDetails(root) {
         }
     }
 
-    function setupAutoCalculation(entry, sinceYearSelect, sinceYearsInput, errorSpan) {
+    function setupAutoCalculation(entry, sinceYearSelect, sinceYearsInput, errorSpan, savedYearValue, savedYearsValue) {
         if (!sinceYearSelect || !sinceYearsInput) return;
         
-        // Remove existing listeners to prevent duplicates
+        const yearToRestore = savedYearValue || sinceYearSelect.value || '';
+        const yearsToRestore = savedYearsValue || sinceYearsInput.value || '';
+        
+        // Remove existing listeners to prevent duplicates by cloning
         const newYearSelect = sinceYearSelect.cloneNode(true);
         const newYearsInput = sinceYearsInput.cloneNode(true);
         
@@ -159,6 +190,13 @@ function initializeDiseaseDetails(root) {
         
         // Repopulate year dropdown after cloning
         populateYearDropdown(newYearSelect);
+        
+        if (yearToRestore && yearToRestore !== '' && yearToRestore !== 'Select Year') {
+            newYearSelect.value = yearToRestore;
+        }
+        if (yearsToRestore && yearsToRestore !== '') {
+            newYearsInput.value = yearsToRestore;
+        }
         
         // When year is selected, calculate number of years
         newYearSelect.addEventListener('change', function() {

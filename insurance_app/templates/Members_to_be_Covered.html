@@ -280,10 +280,28 @@
                     <legend>Personal & Professional</legend>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Full Name *</label>
-                            <input type="text" class="member-name" name="member_name" required pattern="[A-Za-z][A-Za-z.'\s]*" title="Name must start with a letter and can only contain letters, spaces, and apostrophes.">
-                            <span class="error-message member-name-error"></span>
+                            <label>First Name *</label>
+                            <!-- PATCH: Renamed member-first-name to mem-fname to avoid "name" substring matching -->
+                            <input type="text" class="mem-fname" name="mem_fname" required pattern="[A-Za-z][A-Za-z.'\s]*" title="First name must start with a letter and can only contain letters, spaces, and apostrophes.">
+                            <span class="error-message mem-fname-error"></span>
                         </div>
+                        <div class="form-group">
+                            <label>Middle Name</label>
+                            <!-- PATCH: Renamed member-middle-name to mem-mname -->
+                            <input type="text" class="mem-mname" name="mem_mname" pattern="[A-Za-z][A-Za-z.'\s]*" title="Middle name can only contain letters, spaces, and apostrophes.">
+                            <span class="error-message mem-mname-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name *</label>
+                            <!-- PATCH: Renamed member-last-name to mem-lname -->
+                            <input type="text" class="mem-lname" name="mem_lname" required pattern="[A-Za-z][A-Za-z.'\s]*" title="Last name must start with a letter and can only contain letters, spaces, and apostrophes.">
+                            <span class="error-message mem-lname-error"></span>
+                        </div>
+                    </div>
+                    <!-- Hidden field to store concatenated full name for compatibility -->
+                    <input type="hidden" class="member-name" name="member_name">
+                    
+                    <div class="form-row">
                         <div class="form-group">
                             <label>Relationship *</label>
                             <select class="relationship" name="relationship" required>
@@ -412,7 +430,8 @@
 
                         <div class="form-group fixed-width-group">
                             <label>Weight (kg) *</label>
-                            <input type="number" class="member-weight" name="member-weight" placeholder="e.g., 70" min="1" step="0.1" title="Please enter weight in kg (minimum 1 kg)." required>
+                            <!-- PATCH: Added max="500" for weight validation -->
+                            <input type="number" class="member-weight" name="member-weight" placeholder="e.g., 70" min="1" max="500" step="0.1" title="Please enter weight in kg (1-500 kg)." required>
                             <span class="error-message member-weight-error"></span>
                         </div>
                         <div class="form-group fixed-width-group">

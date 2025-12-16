@@ -410,7 +410,7 @@
               // direct keys
               for (const k of Object.keys(o)) {
                 const lower = k.toLowerCase();
-                if (keys.some(kk => lower.includes(kk))) {
+                if (keys.some(kk => lower === kk)) {
                   const v = o[k];
                   // Only accept primitives or arrays of primitives
                   if (v !== undefined && v !== null) {
@@ -456,7 +456,7 @@
             if (!str) return false;
             const s = String(str).trim();
             if (!s) return false;
-            const lower = s.toLowerCase();
+            
             // Exclude common non-name tokens and IDs
             const banned = [
               'aadhaar','aadhar','pan','passport','voter','dl','driving','license','licence',
@@ -464,7 +464,11 @@
               'cardiac','cancer','diabetes','others',
               'insurer','insurance'
             ];
-            if (banned.some(b => lower.includes(b))) return false;
+
+            // Use Regex with \b (word boundaries) to avoid matching parts of names
+            const bannedPattern = new RegExp(`\\b(${banned.join('|')})\\b`, 'i');
+            if (bannedPattern.test(s)) return false;
+
             const letters = s.replace(/[^A-Za-z'\-\.\s]/g, '');
             if (letters.length < Math.ceil(s.length * 0.6)) return false;
             return /^[A-Za-z][A-Za-z'\-\.\s]*$/.test(s);
@@ -484,7 +488,7 @@
                 if (isLikelyName(nm)) memberNames.push(nm);
               });
             } else {
-              // Fallback: conservative deep search for name-like fields
+              // Fallback: collect only full-name style fields (avoid pc_fname, first_name, etc.)
               (function collectMemberNames(obj){
                 if (obj == null) return;
                 if (Array.isArray(obj)) {
@@ -492,20 +496,44 @@
                   return;
                 }
                 if (typeof obj === 'object') {
-                  for (const [k,v] of Object.entries(obj)) {
+                  for (const [k, v] of Object.entries(obj)) {
                     const key = String(k).toLowerCase();
-                    // Skip insurer-related fields, existing coverage fields, and other non-member fields
-                    const skipFields = ['insurer-name','insurer', 'existing', 'policy-type', 'sum-insured', 'since', 'gst'];
-                    if (skipFields.some(skip => key.includes(skip))) continue;
-                    
-                    if (typeof v === 'string' && v.trim() && (key.includes('name') || key.includes('member'))) {
+
+                    // Skip clearly non-name / non-member fields
+                    const skipFields = [
+                      'insurer-name','insurer','existing','policy-type','sum-insured','since','gst',
+                      'pc_fname','pc_mname','pc_lname',
+                      'first_name','last_name','middle_name',
+                      'fname','mname','lname'
+                    ];
+                    if (skipFields.some(skip => key.includes(skip))) {
+                      if (v && typeof v === 'object') collectMemberNames(v);
+                      continue;
+                    }
+
+                    // Only treat these as "full name" fields
+                    const fullNameKeys = [
+                      'member_name',
+                      'full_name',
+                      'applicant_name',
+                      'policy_holder',
+                      'holder_name',
+                      'name'
+                    ];
+                    const isFullNameField = fullNameKeys.some(nk => key === nk);
+
+                    if (typeof v === 'string' && v.trim() && isFullNameField) {
                       if (isLikelyName(v)) memberNames.push(v.trim());
                     }
-                    if (v && typeof v === 'object') collectMemberNames(v);
+
+                    if (v && typeof v === 'object') {
+                      collectMemberNames(v);
+                    }
                   }
                 }
               })(form);
             }
+
           }
 
           // If there are saved policy_details (from a prior save), include member_name values
@@ -556,7 +584,9 @@
           } catch {}
 
           // Fallbacks and de-duplication
+          console.log('DEBUG holderName before push:', JSON.stringify(holderName));
           if (holderName && isLikelyName(holderName)) memberNames.push(holderName);
+          console.log('DEBUG holderName before push:', JSON.stringify(memberNames));
           // Consider comma-separated names, filtered
           memberNames = memberNames
             .filter(Boolean)
@@ -566,6 +596,17 @@
           // Deduplicate preserving order
           const seen = new Set();
           memberNames = memberNames.filter(n => (n && !seen.has(n) && seen.add(n)));
+          console.log('DEBUG holderName before push:', JSON.stringify(memberNames));
+
+          // Prefer full names (at least two words). If we have multi-word names,
+          // drop single-word tokens like "First", "Last", "Next", "Continue", "Forward".
+          const hasMultiWord = memberNames.some(n => n.split(/\s+/).filter(Boolean).length >= 2);
+          if (hasMultiWord) {
+            memberNames = memberNames.filter(
+              n => n.split(/\s+/).filter(Boolean).length >= 2
+            );
+          }
+          console.log('DEBUG holderName before push:', JSON.stringify(memberNames));
 
           // Initialize first row using defaults (do NOT prefill Member Number)
           addRow({ memberName: memberNames[0] || '' }, memberNames);
