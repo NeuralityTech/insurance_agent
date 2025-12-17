@@ -13,3 +13,7 @@ __pycache__/
 
 # VSCode settings
 .vscode/
+
+# Generated reports and summaries
+justification_reports/
+insurance_app/plan_summaries/
