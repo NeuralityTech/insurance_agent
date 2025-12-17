@@ -478,22 +478,42 @@
                                 agentSel,
                                 supervisorSel: supSel,
                                 mode: 'supervisor',
+                                
+                                // The duplicate document.addEventListener('change', ...) has been removed to prevent race conditions
                                 onSupervisorToggle: async (planName, checked) => {
                                     try {
+                                        // Update local Set
                                         if (checked) supSel.add(planName); else supSel.delete(planName);
+                                        
+                                        // Persist to backend
                                         await fetch(`/plan_summary/${encodeURIComponent(uid)}/supervisor`, {
                                             method: 'PATCH',
                                             headers: { 'Content-Type': 'application/json' },
                                             body: JSON.stringify({ supervisor_selected: Array.from(supSel) })
                                         });
-                                    } catch { }
+                                    } catch (e) {
+                                        console.error('Error updating supervisor selection:', e);
+                                    }
+                                    
+                                    // Update the modal summary if it's open
                                     try {
                                         const modal = document.getElementById('decision-modal');
                                         if (modal && modal.style.display === 'flex' && typeof buildSupervisorSelectionSummary === 'function') {
                                             const box = document.getElementById('sup-selected-summary');
                                             if (box) box.innerHTML = buildSupervisorSelectionSummary();
                                         }
-                                    } catch { }
+                                    } catch (e) { }
+                                    
+                                    // Re-render supervisor inputs section to reflect checkbox changes
+                                    // This was previously done by the duplicate event listener, now consolidat here
+                                    try {
+                                        const supHost = document.getElementById('supervisor-selected-inputs-host');
+                                        if (supHost && typeof renderSupervisorSelectedInputs === 'function') {
+                                            renderSupervisorSelectedInputs(supHost, uid);
+                                        }
+                                    } catch (e) {
+                                        console.warn('Could not re-render supervisor inputs:', e);
+                                    }
                                 }
                             });
                             try { window._proposedPlans = proposed; } catch (e) { }
@@ -1008,7 +1028,7 @@
                         const checkbox = matrixHost.querySelector(`input[data-plan-name="${planName}"]`);
                         if (checkbox) {
                             checkbox.checked = false;
-                            // Trigger change event to sync
+                            // Trigger change event to sync with backend via onSupervisorToggle
                             checkbox.dispatchEvent(new Event('change', { bubbles: true }));
                         }
                     }
@@ -1246,81 +1266,10 @@
                 }
             })();
 
-            // Add listener for plan checkbox changes to update supervisor section (append/remove plans)
-            document.addEventListener('change', async function (e) {
-                // Check if checkbox is in the matrix
-                const matrixHost = document.getElementById('selection-summary-matrix');
-                if (!matrixHost) return;
-
-                if (matrixHost.contains(e.target) && (e.target.tagName === 'INPUT' && e.target.type === 'checkbox')) {
-                    const params = new URLSearchParams(window.location.search);
-                    const uid = params.get('uid');
-                    if (!uid) return;
-
-                    const supHost = document.getElementById('supervisor-selected-inputs-host');
-                    if (!supHost) return;
-
-                    // Get the plan name from the checkbox - prioritize data-plan-name
-                    const checkbox = e.target;
-                    const planName = checkbox.getAttribute('data-plan-name') || checkbox.value;
-                    if (!planName || planName === 'on') return;
-
-                    try {
-                        if (checkbox.checked) {
-                            // Plan was checked - need to save it to supervisor_selected in plan_summary
-                            try {
-                                // Get current supervisor_selected list from backend
-                                const planSummaryResp = await fetch(`/plan_summary/${encodeURIComponent(uid)}`);
-                                if (!planSummaryResp.ok) return;
-                                const planSummaryData = await planSummaryResp.json();
-                                let supSelected = planSummaryData.supervisor_selected || [];
-
-                                // Add this plan if not already present
-                                if (!supSelected.includes(planName)) {
-                                    supSelected.push(planName);
-
-                                    // Save updated supervisor_selected list
-                                    await fetch(`/plan_summary/${encodeURIComponent(uid)}/supervisor`, {
-                                        method: 'PATCH',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ supervisor_selected: supSelected })
-                                    });
-                                }
-                            } catch (err) {
-                                console.error('Error updating supervisor_selected on check:', err);
-                            }
-                        } else {
-                            // Plan was unchecked - need to remove it from supervisor_selected
-                            try {
-                                // Get current supervisor_selected list from backend
-                                const planSummaryResp = await fetch(`/plan_summary/${encodeURIComponent(uid)}`);
-                                if (!planSummaryResp.ok) return;
-                                const planSummaryData = await planSummaryResp.json();
-                                let supSelected = planSummaryData.supervisor_selected || [];
-
-                                // Remove this plan
-                                supSelected = supSelected.filter(p => p !== planName);
-
-                                // Save updated supervisor_selected list
-                                await fetch(`/plan_summary/${encodeURIComponent(uid)}/supervisor`, {
-                                    method: 'PATCH',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ supervisor_selected: supSelected })
-                                });
-                            } catch (err) {
-                                console.error('Error updating supervisor_selected on uncheck:', err);
-                            }
-                        }
-
-                        // Re-render the supervisor inputs section with fresh data from backend
-                        if (typeof renderSupervisorSelectedInputs === 'function') {
-                            renderSupervisorSelectedInputs(supHost, uid);
-                        }
-                    } catch (err) {
-                        console.error('Error updating plan selection:', err);
-                    }
-                }
-            }, true);
+            // FIX: REMOVED the duplicate document.addEventListener('change', ...) that was causing race conditions.
+            // All checkbox change handling is now consolidated in the onSupervisorToggle callback
+            // within renderPlanSelectionSummary(). This prevents race conditions where multiple handlers
+            // were competing to update the backend and DOM state simultaneously.
 
             const modal = document.getElementById('decision-modal');
             const modalTitle = document.getElementById('decision-modal-title');
