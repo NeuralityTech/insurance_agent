@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <link rel="stylesheet" href="/static/css/logo.css">
     <meta charset="UTF-8">
@@ -126,6 +127,7 @@
         }
     </style>
 </head>
+
 <body data-sidebar="existing-applicant">
     <div class="container">
         <header class="page-header">
@@ -154,7 +156,7 @@
     <script src="/static/js/summary.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const backBtn = document.getElementById('btn-back');
             const submitBtn = document.getElementById('submit-btn');
 
@@ -254,7 +256,7 @@
 
             // --- Submit button functionality (unchanged) ---
             if (submitBtn) {
-                submitBtn.addEventListener('click', async function() {
+                submitBtn.addEventListener('click', async function () {
                     // Prevent double submission
                     if (submitBtn.disabled) return;
 
@@ -361,4 +363,5 @@
         });
     </script>
 </body>
+
 </html>

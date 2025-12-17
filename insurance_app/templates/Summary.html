@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <link rel="stylesheet" href="/static/css/logo.css">
     <meta charset="UTF-8">
@@ -118,6 +119,7 @@
         }
     </style>
 </head>
+
 <body data-sidebar="existing-applicant">
     <div class="container">
         <header class="page-header">
@@ -142,7 +144,7 @@
     <script src="/static/js/summary.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const backBtn = document.getElementById('btn-back');
             if (!backBtn) return;
 
@@ -162,7 +164,7 @@
                 try {
                     const params = new URLSearchParams(window.location.search);
                     uniqueId = params.get('unique_id');
-                } catch (e) {}
+                } catch (e) { }
 
                 // 2) Try localStorage summary
                 if (!uniqueId) {
@@ -173,7 +175,7 @@
                                 || summaryData.primaryContact['Unique Id']
                                 || null;
                         }
-                    } catch (e) {}
+                    } catch (e) { }
                 }
 
                 // 3) Navigate back to Preview, preserving unique_id when we can
@@ -190,4 +192,5 @@
         });
     </script>
 </body>
+
 </html>

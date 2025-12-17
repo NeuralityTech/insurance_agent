@@ -919,3 +919,13 @@ document.addEventListener('DOMContentLoaded', function () {
             window.location.href = 'Preview.html';
         });
     }
+
+    // Update Continue button state based on validation
+    function updateContinueButtonState() {
+        const continueBtn = document.getElementById('continue-btn');
+        if (!continueBtn) return;
+
+        const errors = validateRequiredFields();
+        continueBtn.disabled = errors.length > 0;
+    }
+});

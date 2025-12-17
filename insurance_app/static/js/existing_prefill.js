@@ -4,7 +4,7 @@
 // PATCHED: 
 // - Renamed first_name/middle_name/last_name to pc_fname/pc_mname/pc_lname
 //   to prevent Policy_Creation.html from catching these fields when searching for "name"
-(function(){
+(function () {
   async function waitForSections() {
     // Wait until primary section content has inputs loaded by script.js
     const maxWaitMs = 8000;
@@ -42,9 +42,9 @@
   }
 
   // Helper to extract a single meaningful value from potentially corrupted array data
-  function extractSingleValue(val) {
+  function extractSingleValue(val, fieldName = '') {
     if (val === undefined || val === null) return null;
-    
+
     // If it's an array, find the first non-empty value
     if (Array.isArray(val)) {
       for (const item of val) {
@@ -54,9 +54,17 @@
       }
       return null; // All values were empty
     }
-    
+
+    // FIXED: Don't split address field on commas - addresses legitimately contain commas
+    // Only split on commas for fields that are actually corrupted arrays
+    const fieldsAllowedCommas = ['address', 'hubs', 'occupational-risk-details', 'occupationalRiskDetails'];
+    const shouldNotSplit = fieldsAllowedCommas.some(field =>
+      fieldName === field || fieldName.includes(field)
+    );
+
     // If it's a string that looks like a comma-separated array (e.g., "male,,male" or ",2024-01-01")
-    if (typeof val === 'string' && val.includes(',')) {
+    // BUT not an address or other field that legitimately contains commas
+    if (typeof val === 'string' && val.includes(',') && !shouldNotSplit) {
       const parts = val.split(',');
       for (const part of parts) {
         if (part.trim() !== '') {
@@ -65,7 +73,7 @@
       }
       return null;
     }
-    
+
     // Return as-is if it's a simple value
     return val;
   }
@@ -77,23 +85,23 @@
       console.warn(`Container not found: ${containerId}`);
       return;
     }
-    
+
     console.log(`Setting fields in ${containerId}:`, values);
-    
+
     Object.entries(values).forEach(([name, rawVal]) => {
       if (rawVal === undefined || rawVal === null || rawVal === '') return;
-      
+
       // Skip fields that don't belong in this section (member fields, etc.)
       const skipPatterns = ['member_', 'member-', 'comments_noted', 'disease'];
       const skipSuffixes = ['_details', '_start_date', '_since_year', '_since_years'];
       if (skipPatterns.some(pattern => name.startsWith(pattern) || name === pattern) ||
-          skipSuffixes.some(suffix => name.endsWith(suffix))) {
+        skipSuffixes.some(suffix => name.endsWith(suffix))) {
         return;
       }
-      
+
       // Try multiple selectors to find the field
       let els = container.querySelectorAll(`[name="${CSS.escape(name)}"]`);
-      
+
       // If not found, try common field name variations
       if (els.length === 0) {
         const variations = [
@@ -102,7 +110,7 @@
           name.replace(/([A-Z])/g, '-$1').toLowerCase(),
           name.toLowerCase()
         ];
-        
+
         for (const variation of variations) {
           els = container.querySelectorAll(`[name="${CSS.escape(variation)}"]`);
           if (els.length > 0) {
@@ -110,7 +118,7 @@
           }
         }
       }
-      
+
       // Also try by ID if name selector didn't work
       if (els.length === 0) {
         const byId = container.querySelector(`#${CSS.escape(name)}`);
@@ -118,22 +126,22 @@
           els = [byId];
         }
       }
-      
+
       if (els.length === 0) {
         // Don't log warnings for fields that clearly don't belong in this section
         return;
       }
-      
+
       els.forEach(el => {
         try {
           // Remove any readonly/disabled attributes before setting
           el.removeAttribute('readonly');
           const wasDisabled = el.disabled;
           el.disabled = false;
-          
+
           if (el.type === 'radio') {
             // For radio buttons, extract single value and compare
-            const cleanVal = extractSingleValue(rawVal);
+            const cleanVal = extractSingleValue(rawVal, name);
             if (cleanVal && String(el.value) === String(cleanVal)) {
               el.checked = true;
               el.dispatchEvent(new Event('change', { bubbles: true }));
@@ -156,9 +164,9 @@
             console.log(`Set checkbox ${name} to ${el.checked}`);
           } else if (el.type === 'date') {
             // Extract single date value
-            let dateValue = extractSingleValue(rawVal);
+            let dateValue = extractSingleValue(rawVal, name);
             if (!dateValue) return;
-            
+
             // Convert dd/mm/yyyy to yyyy-mm-dd if needed
             if (typeof dateValue === 'string' && dateValue.includes('/')) {
               const parts = dateValue.split('/');
@@ -171,7 +179,7 @@
             console.log(`Set date ${name} to ${dateValue}`);
           } else if (el.tagName === 'SELECT') {
             // For select dropdowns, extract single value
-            const cleanVal = extractSingleValue(rawVal);
+            const cleanVal = extractSingleValue(rawVal, name);
             if (cleanVal) {
               el.value = cleanVal;
               el.dispatchEvent(new Event('change', { bubbles: true }));
@@ -179,7 +187,7 @@
             }
           } else {
             // For text inputs/textareas, extract single value
-            const cleanVal = extractSingleValue(rawVal);
+            const cleanVal = extractSingleValue(rawVal, name);
             if (cleanVal !== null) {
               el.value = cleanVal;
               el.dispatchEvent(new Event('input', { bubbles: true }));
@@ -187,7 +195,7 @@
               console.log(`Set field ${name} to ${cleanVal}`);
             }
           }
-          
+
           // Restore disabled state if it was disabled
           if (wasDisabled) {
             el.disabled = true;
@@ -202,11 +210,11 @@
   async function prefillExistingForm(data) {
     console.log('Starting prefill with data:', data);
     await waitForSections();
-    
+
     try {
       // Helper function to check if an object has meaningful content
       const hasContent = (obj) => obj && typeof obj === 'object' && Object.keys(obj).length > 0;
-      
+
       // Handle both nested and flat data structures
       // Only use nested structure if it actually has content, otherwise fall back to flat data
       const primaryContactData = hasContent(data.primaryContact) ? data.primaryContact : data;
@@ -215,25 +223,25 @@
       const existingCoverageData = hasContent(data.existingCoverage) ? data.existingCoverage : data;
       const claimsServiceData = hasContent(data.claimsAndService) ? data.claimsAndService : data;
       const financeDocData = hasContent(data.financeAndDocumentation) ? data.financeAndDocumentation : data;
-      
+
       console.log('Section data extracted:', {
         primaryContact: Object.keys(primaryContactData).length,
         healthHistory: Object.keys(healthHistoryData).length,
         coverCost: Object.keys(coverCostData).length
       });
-      
+
       // Use section-specific data
       setFields('primary-contact-content', primaryContactData);
       // After primary contact height is restored (in cm), sync visible feet/inches if helper exists
       if (typeof window.updateHeightFeetInchesFromCm === "function") {
-          window.updateHeightFeetInchesFromCm();
+        window.updateHeightFeetInchesFromCm();
       }
       setFields('health-history-content', healthHistoryData);
       setFields('cover-cost-content', coverCostData);
       setFields('existing-coverage-content', existingCoverageData);
       setFields('claims-service-content', claimsServiceData);
       setFields('finance-documentation-content', financeDocData);
-      
+
       // Load comments for existing user
       if (window.loadExistingComments && (data.unique_id || data.primaryContact?.unique_id)) {
         const uid = data.unique_id || data.primaryContact.unique_id;
@@ -251,12 +259,12 @@
           // Handle comma-separated string
           diseaseArr = diseaseData.split(',').map(v => v.trim()).filter(v => v !== '');
         }
-        
+
         console.log('Processing PRIMARY APPLICANT diseases:', diseaseArr);
-        
+
         diseaseArr.forEach(val => {
           if (!val) return;
-          
+
           // FIXED: Only target disease checkboxes in the health-history-content section
           // This prevents accidentally checking member disease checkboxes
           const cb = document.querySelector(`#health-history-content input[name="disease"][value="${CSS.escape(val)}"]`);
@@ -266,44 +274,44 @@
           }
           cb.checked = true;
           cb.dispatchEvent(new Event('change', { bubbles: true }));
-          
+
           // Handle disease details textarea - ONLY in healthHistoryData
           const detailsKey = `${val}_details`;
           const rawDetailsValue = healthHistoryData[detailsKey];
-          const detailsValue = extractSingleValue(rawDetailsValue);
+          const detailsValue = extractSingleValue(rawDetailsValue, detailsKey);
           const txt = document.querySelector(`#health-history-content textarea[name="${CSS.escape(detailsKey)}"]`);
           if (txt && detailsValue) {
             txt.disabled = false;
             txt.value = detailsValue;
             console.log(`Set disease details ${detailsKey} to ${detailsValue}`);
           }
-          
+
           // Handle disease since year - ONLY in healthHistoryData
           const sinceYearKey = `${val}_since_year`;
           const rawYearValue = healthHistoryData[sinceYearKey];
-          const yearValue = extractSingleValue(rawYearValue);
+          const yearValue = extractSingleValue(rawYearValue, sinceYearKey);
           const sinceYearSelect = document.querySelector(`#health-history-content select[name="${CSS.escape(sinceYearKey)}"]`);
           if (sinceYearSelect && yearValue) {
             sinceYearSelect.disabled = false;
             sinceYearSelect.value = yearValue;
             console.log(`Set disease since year ${sinceYearKey} to ${yearValue}`);
           }
-          
+
           // Handle disease since years - ONLY in healthHistoryData
           const sinceYearsKey = `${val}_since_years`;
           const rawYearsValue = healthHistoryData[sinceYearsKey];
-          const yearsValue = extractSingleValue(rawYearsValue);
+          const yearsValue = extractSingleValue(rawYearsValue, sinceYearsKey);
           const sinceYearsInput = document.querySelector(`#health-history-content input[name="${CSS.escape(sinceYearsKey)}"]`);
           if (sinceYearsInput && yearsValue) {
             sinceYearsInput.disabled = false;
             sinceYearsInput.value = yearsValue;
             console.log(`Set disease since years ${sinceYearsKey} to ${yearsValue}`);
           }
-          
+
           // Backward compatibility: convert old start_date to since_year
           const dateKey = `${val}_start_date`;
           const rawDateValue = healthHistoryData[dateKey];
-          const dateValue = extractSingleValue(rawDateValue);
+          const dateValue = extractSingleValue(rawDateValue, dateKey);
           if (dateValue && !yearValue) {
             // Extract year from date and populate since_year
             const dateObj = new Date(dateValue);
@@ -323,10 +331,10 @@
             }
           }
         });
-        
+
         // Final sync to open details for any prefilled textarea content
         if (window.initializeDiseaseDetails) window.initializeDiseaseDetails();
-        
+
         // FIXED: Only sync disease entries in the health-history-content section
         document.querySelectorAll('#health-history-content .disease-entry').forEach(entry => {
           const cb = entry.querySelector('input[type="checkbox"][name="disease"]');
@@ -347,12 +355,12 @@
       // Members 
       const loadStatus = document.getElementById('load-status');
       if (loadStatus) { loadStatus.textContent = 'Loading members...'; }
-      
+
       const membersData = data.members || [];
       if (Array.isArray(membersData)) {
         localStorage.setItem('members', JSON.stringify(membersData));
       }
-      
+
       // Wait until the members section script exposes its refresher
       await waitFor(() => typeof window.loadMembersGlobal === 'function' || document.getElementById('members-list'), 5000, 100);
       if (typeof window.loadMembersGlobal === 'function') {
@@ -366,17 +374,17 @@
       // Reflect top-level unique_id/applicant_name if present
       const uniqueId = data.unique_id || primaryContactData.unique_id;
       const applicantName = data.applicant_name || primaryContactData.applicant_name;
-      
+
       // PATCH: Check for both old and new field name formats
       // Old format: first_name, middle_name, last_name
       // New format: pc_fname, pc_mname, pc_lname
-      const firstName = data.pc_fname || primaryContactData.pc_fname || 
-                       data.first_name || primaryContactData.first_name;
-      const middleName = data.pc_mname || primaryContactData.pc_mname || 
-                        data.middle_name || primaryContactData.middle_name;
-      const lastName = data.pc_lname || primaryContactData.pc_lname || 
-                      data.last_name || primaryContactData.last_name;
-      
+      const firstName = data.pc_fname || primaryContactData.pc_fname ||
+        data.first_name || primaryContactData.first_name;
+      const middleName = data.pc_mname || primaryContactData.pc_mname ||
+        data.middle_name || primaryContactData.middle_name;
+      const lastName = data.pc_lname || primaryContactData.pc_lname ||
+        data.last_name || primaryContactData.last_name;
+
       if (uniqueId) {
         const uidEl = document.querySelector('#primary-contact-content [name="unique_id"]');
         if (uidEl) {
@@ -385,7 +393,7 @@
           console.log('Set unique_id to:', uniqueId);
         }
       }
-      
+
       // Handle name fields - prefer new format if available, otherwise parse from applicant_name
       if (firstName || lastName) {
         // PATCH: Updated selectors to use new field names (pc_fname, pc_mname, pc_lname)
@@ -393,7 +401,7 @@
         const middleNameEl = document.querySelector('#primary-contact-content [name="pc_mname"]');
         const lastNameEl = document.querySelector('#primary-contact-content [name="pc_lname"]');
         const fullNameEl = document.querySelector('#primary-contact-content [name="applicant_name"]');
-        
+
         if (firstNameEl && firstName) {
           firstNameEl.value = firstName;
           console.log('Set pc_fname to:', firstName);
@@ -422,13 +430,13 @@
           if (fullNameEl) {
             fullNameEl.value = applicantName;
           }
-          
+
           // PATCH: Updated selectors to use new field names
           const parts = applicantName.trim().split(/\s+/).filter(p => p);
           const firstNameEl = document.querySelector('#primary-contact-content [name="pc_fname"]');
           const middleNameEl = document.querySelector('#primary-contact-content [name="pc_mname"]');
           const lastNameEl = document.querySelector('#primary-contact-content [name="pc_lname"]');
-          
+
           if (parts.length >= 1 && firstNameEl) {
             firstNameEl.value = parts[0];
           }
@@ -441,7 +449,7 @@
           console.log('Set applicant_name (fallback) to:', applicantName);
         }
       }
-      
+
       console.log('Prefill completed successfully');
     } catch (e) {
       console.error('Prefill error', e);

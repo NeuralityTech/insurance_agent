@@ -71,6 +71,8 @@ document.addEventListener('DOMContentLoaded', function () {
      */
     function formatLabel(k) {
         if (!k) return '';
+        if (k === 'occupation') return 'Primary Occupation';
+        if (k === 'secondary_occupation' || k === 'secondary-occupation') return 'Secondary Occupation';
         return k.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
 
@@ -146,6 +148,12 @@ document.addEventListener('DOMContentLoaded', function () {
             'cancer-since-year', 'cancer-since-years', 'cancer-details',
             'critical-illness-since-year', 'critical-illness-since-years', 'critical-illness-details',
             'other-since-year', 'other-since-years', 'other-details'
+        ]);
+
+        // Define internal-only fields that should never be shown
+        const skipFields = new Set([
+            'occupation_value', 'occupationValue',
+            'secondary_occupation_value', 'secondaryOccupationValue'
         ]);
 
         let sectionHtml = `<fieldset><legend>${title}</legend><div class="summary-grid">`;
@@ -279,8 +287,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
             let displayValue = value;
 
-            // Handle empty values
-            if (!value || String(value).trim() === '') {
+            // Handle empty values and placeholders
+            const isEmptyOrPlaceholder = !value ||
+                String(value).trim() === '' ||
+                value === '-- Select --' ||
+                value === 'Select' ||
+                value === 'Select Year';
+
+            if (isEmptyOrPlaceholder) {
                 if (key === 'planned-surgeries' || key === 'plannedSurgeries') {
                     displayValue = 'None';
                 } else if (requiredFields.has(key)) {
@@ -353,6 +367,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 displayValue = hasDocument ? 'Yes' : 'No';
             }
 
+            // Format date fields to dd/mm/yyyy
+            if (isDateField(key) && displayValue && displayValue !== 'None' && displayValue !== 'Not Provided') {
+                displayValue = formatDateToDDMMYYYY(displayValue);
+            }
+
             // Use formatLabel for nicer labels (handles Primary/Secondary occupation mapping)
             sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${displayValue}</div>`;
         }
@@ -382,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 'self_height_ft', 'self_height_in', 'height_ft', 'height_in',
                 'occupation_value', 'occupationValue', 'secondary_occupation_value', 'secondaryOccupationValue',
                 // Exclude individual name components from display (we'll show Full Name instead)
-                'first_name', 'middle_name', 'last_name'
+                'first_name', 'middle_name', 'last_name', 'pc_fname', 'pc_mname', 'pc_lname'
             ]);
 
             // Preferred order with height before weight
@@ -395,11 +414,12 @@ document.addEventListener('DOMContentLoaded', function () {
             ];
 
             // If applicant_name is not present but individual name fields are, construct it
-            if (!primary['applicant_name'] && (primary['first_name'] || primary['last_name'])) {
+            // PATCH: Check for both old format (first_name) and new format (pc_fname)
+            if (!primary['applicant_name'] && (primary['pc_fname'] || primary['pc_lname'] || primary['first_name'] || primary['last_name'])) {
                 const nameParts = [
-                    primary['first_name'] || '',
-                    primary['middle_name'] || '',
-                    primary['last_name'] || ''
+                    primary['pc_fname'] || primary['first_name'] || '',
+                    primary['pc_mname'] || primary['middle_name'] || '',
+                    primary['pc_lname'] || primary['last_name'] || ''
                 ].filter(p => p.trim());
                 primary['applicant_name'] = nameParts.join(' ');
             }
@@ -415,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     continue;
                 }
 
-                const value = primary[field];
+                let value = primary[field];
 
                 // Skip secondary occupation if it's empty (conditional field)
                 if ((field === 'secondary_occupation' || field === 'secondary-occupation') && (!value || String(value).trim() === '')) {
@@ -423,8 +443,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 if (excludedKeys.has(field)) continue;
-
-                let value = primary[field];
 
                 // Check if value is empty or a placeholder
                 const isEmptyOrPlaceholder = !value ||
@@ -513,6 +531,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Now render disease information grouped by disease
+        let hasAnyDisease = false;
         diseases.forEach(disease => {
             const sinceYear = healthData[`${disease}_since_year`] || healthData[`${disease}-since-year`];
             const sinceYears = healthData[`${disease}_since_years`] || healthData[`${disease}-since-years`];
@@ -520,6 +539,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Only show disease if it has at least one field filled
             if (sinceYear || sinceYears || details) {
+                hasAnyDisease = true;
                 const diseaseName = disease.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 sectionHtml += `<div class="summary-item"><strong>Disease:</strong> ${diseaseName}</div>`;
 
@@ -536,6 +556,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         });
+
+        // If no diseases were found, show "No Disease"
+        if (!hasAnyDisease) {
+            sectionHtml += `<div class="summary-item"><strong>Disease:</strong> No Disease</div>`;
+        }
 
         sectionHtml += `</div></fieldset>`;
         return sectionHtml;
@@ -577,6 +602,9 @@ document.addEventListener('DOMContentLoaded', function () {
             // PATCH: Added new field names (mem_fname, mem_mname, mem_lname)
             const skipFields = ['first_name', 'middle_name', 'last_name', 'mem_fname', 'mem_mname', 'mem_lname', 'height', 'self_height', 'member-height'];
 
+            // Required member fields that should show "Not Provided" when empty
+            const requiredMemberFields = new Set(['name', 'relationship', 'gender', 'dob', 'age']);
+
             memberFieldsOrder.forEach(field => {
                 // Skip if this field should be excluded
                 if (skipFields.includes(field)) return;
@@ -590,7 +618,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 let fieldValue = member[field];
-
+                // Skip conditional fields if they're empty
+                const conditionalMemberFields = new Set(['secondary_occupation', 'secondary-occupation', 'occupationalRiskDetails', 'occupational-risk-details']);
+                if (conditionalMemberFields.has(field) && (!fieldValue || String(fieldValue).trim() === '')) {
+                    return;
+                }
                 // Check if value is empty or a placeholder
                 const isEmptyOrPlaceholder = !fieldValue ||
                     String(fieldValue).trim() === '' ||
@@ -613,15 +645,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     .replace(/([a-z])([A-Z])/g, '$1 $2')
                     .replace(/\b\w/g, l => l.toUpperCase());
 
-<<<<<<< HEAD
                 let displayValue = fieldValue;
                 if (!fieldValue || String(fieldValue).trim() === '') {
                     if (requiredMemberFields.has(field)) {
                         displayValue = 'Not Provided';
                     } else {
                         displayValue = 'None';
-=======
-                html += `<div class="summary-item"><strong>${formattedKey}:</strong> ${fieldValue}</div>`;
+                    }
+                }
+
+                html += `<div class="summary-item"><strong>${formattedKey}:</strong> ${displayValue}</div>`;
             });
 
             // Disease details for member - check both healthHistory and direct fields
@@ -662,6 +695,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     displayedDiseases.push(disease);
                 }
             });
+
+            // If member has no diseases, show "No Disease"
+            if (displayedDiseases.length === 0) {
+                html += `<div class="summary-item"><strong>Disease:</strong> No Disease</div>`;
+            }
+
             // Planned Surgeries for member (always after disease details)
             let planned = member.plannedSurgeries;
             if (!planned || planned.toString().trim() === '') {
@@ -675,140 +714,140 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Cover & Cost Preferences
     if (summaryData.coverAndCost) {
-            html += createSection('Cover & Cost Preferences', summaryData.coverAndCost);
+        html += createSection('Cover & Cost Preferences', summaryData.coverAndCost);
+    }
+
+    // Existing Coverage
+    if (summaryData.existingCoverage) {
+        html += createSection('Existing Coverage & Portability', summaryData.existingCoverage);
+    }
+
+    // Claims & Service
+    if (summaryData.claimsAndService) {
+        html += createSection('Claims & Service History', summaryData.claimsAndService);
+    }
+
+    // Finance & Documentation
+    if (summaryData.financeAndDocumentation) {
+        html += createSection('Finance & Documentation', summaryData.financeAndDocumentation);
+    }
+
+    summaryContainer.innerHTML = html;
+    // Ensure notes are rendered even if not present in local cache
+    renderNotesSectionIfAvailable();
+
+    // Notes table (with fallback fetch by unique_id if missing)
+    async function renderNotesSectionIfAvailable() {
+        let commentsArray = null;
+        if (summaryData.commentsNoted && Array.isArray(summaryData.commentsNoted?.comments_noted) && summaryData.commentsNoted.comments_noted.length > 0) {
+            commentsArray = summaryData.commentsNoted.comments_noted;
         }
-
-        // Existing Coverage
-        if (summaryData.existingCoverage) {
-            html += createSection('Existing Coverage & Portability', summaryData.existingCoverage);
-        }
-
-        // Claims & Service
-        if (summaryData.claimsAndService) {
-            html += createSection('Claims & Service History', summaryData.claimsAndService);
-        }
-
-        // Finance & Documentation
-        if (summaryData.financeAndDocumentation) {
-            html += createSection('Finance & Documentation', summaryData.financeAndDocumentation);
-        }
-
-        summaryContainer.innerHTML = html;
-        // Ensure notes are rendered even if not present in local cache
-        renderNotesSectionIfAvailable();
-
-        // Notes table (with fallback fetch by unique_id if missing)
-        async function renderNotesSectionIfAvailable() {
-            let commentsArray = null;
-            if (summaryData.commentsNoted && Array.isArray(summaryData.commentsNoted?.comments_noted) && summaryData.commentsNoted.comments_noted.length > 0) {
-                commentsArray = summaryData.commentsNoted.comments_noted;
-            }
-            // If not available, try localStorage mirror (already attempted above), then fetch from server using unique_id
-            if (!commentsArray || commentsArray.length === 0) {
-                try {
-                    // Derive unique_id from URL or summary
-                    const urlParams = new URLSearchParams(window.location.search);
-                    let uid = urlParams.get('unique_id');
-                    if (!uid && summaryData && summaryData.primaryContact) {
-                        uid = summaryData.primaryContact['unique_id'] || summaryData.primaryContact['Unique Id'];
-                    }
-                    if (uid) {
-                        const resp = await fetch(`/submission/${encodeURIComponent(uid)}/comments`);
-                        if (resp.ok) {
-                            const data = await resp.json();
-                            if (data && Array.isArray(data.comments)) {
-                                commentsArray = data.comments;
-                            }
+        // If not available, try localStorage mirror (already attempted above), then fetch from server using unique_id
+        if (!commentsArray || commentsArray.length === 0) {
+            try {
+                // Derive unique_id from URL or summary
+                const urlParams = new URLSearchParams(window.location.search);
+                let uid = urlParams.get('unique_id');
+                if (!uid && summaryData && summaryData.primaryContact) {
+                    uid = summaryData.primaryContact['unique_id'] || summaryData.primaryContact['Unique Id'];
+                }
+                if (uid) {
+                    const resp = await fetch(`/submission/${encodeURIComponent(uid)}/comments`);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data && Array.isArray(data.comments)) {
+                            commentsArray = data.comments;
                         }
                     }
-                } catch (e) {
-                    // Non-fatal if fetch fails; simply skip rendering
                 }
-            }
-
-            if (commentsArray && commentsArray.length > 0) {
-                let cHtml = '<fieldset><legend>Notes</legend>';
-                cHtml += '<table class="comments-table"><thead><tr><th>Date/Time</th><th>Author</th><th>Note</th></tr></thead><tbody>';
-                commentsArray.forEach(c => {
-                    const ts = formatTimestampSummary(c.created_at || c.timestamp);
-                    const author = escapeHtmlSummary(c.author || c.user || 'User');
-                    const text = escapeHtmlSummary(c.text || c.comment || '');
-                    cHtml += `<tr><td>${ts}</td><td>${author}</td><td>${text}</td></tr>`;
-                });
-                cHtml += '</tbody></table></fieldset>';
-                summaryContainer.insertAdjacentHTML('beforeend', cHtml);
-            }
-
-            // Wire up Back and Next buttons for Preview/Summary navigation
-            const proposedBtn = document.getElementById('proposed-plans-btn');
-
-            if (proposedBtn) {
-                let uniqueId = null;
-
-                if (summaryData.primaryContact) {
-                    uniqueId = summaryData.primaryContact['unique_id'] || summaryData.primaryContact['Unique Id'];
-                }
-
-                if (uniqueId) {
-                    const targetUrl = `Proposed_Plans.html?unique_id=${encodeURIComponent(uniqueId)}`;
-
-                    fetch(targetUrl, { method: 'GET' })
-                        .then(resp => {
-                            if (resp && resp.ok) {
-                                proposedBtn.style.display = 'inline-block';
-                                proposedBtn.disabled = false;
-                                proposedBtn.onclick = () => { window.location.href = targetUrl; };
-                            }
-                        })
-                        .catch(() => { });
-                }
-            }
-
-            const backBtn = document.getElementById('back-btn');
-            const nextBtn = document.getElementById('next-btn');
-            if (nextBtn) {
-                nextBtn.disabled = true;
-                // For Preview.html, Next goes to Proposed_Plans.html with same unique_id (if available)
-                let uniqueId = null;
-                if (summaryData.primaryContact) {
-                    uniqueId = summaryData.primaryContact['unique_id'] || summaryData.primaryContact['Unique Id'];
-                }
-                // Only enable Next if target page responds OK
-                if (uniqueId) {
-                    const targetUrl = `Proposed_Plans.html?unique_id=${encodeURIComponent(uniqueId)}`;
-                    fetch(targetUrl, { method: 'GET' })
-                        .then(resp => {
-                            if (resp && resp.ok) {
-                                nextBtn.disabled = false;
-                                nextBtn.onclick = () => { window.location.href = targetUrl; };
-                            } else {
-                                nextBtn.disabled = true;
-                            }
-                        })
-                        .catch(() => { nextBtn.disabled = true; });
-                } else {
-                    nextBtn.disabled = true;
-                }
-            }
-            if (backBtn) {
-                backBtn.style.display = 'inline-block';
-                backBtn.onclick = () => {
-                    try { sessionStorage.setItem('returningFromSummary', '1'); } catch (e) { }
-                    // Compute unique_id as used elsewhere
-                    const summary = JSON.parse(localStorage.getItem('formSummary'));
-                    let uniqueId = null;
-                    if (summary && summary.primaryContact) {
-                        uniqueId = summary.primaryContact['unique_id'] || summary.primaryContact['Unique Id'];
-                    }
-                    if (uniqueId) {
-                        window.location.href = `Existing_User_Request_Page.html?unique_id=${encodeURIComponent(uniqueId)}`;
-                    } else {
-                        window.location.href = 'Existing_User_Request_Page.html';
-                    }
-                };
+            } catch (e) {
+                // Non-fatal if fetch fails; simply skip rendering
             }
         }
-    });
+
+        if (commentsArray && commentsArray.length > 0) {
+            let cHtml = '<fieldset><legend>Notes</legend>';
+            cHtml += '<table class="comments-table"><thead><tr><th>Date/Time</th><th>Author</th><th>Note</th></tr></thead><tbody>';
+            commentsArray.forEach(c => {
+                const ts = formatTimestampSummary(c.created_at || c.timestamp);
+                const author = escapeHtmlSummary(c.author || c.user || 'User');
+                const text = escapeHtmlSummary(c.text || c.comment || '');
+                cHtml += `<tr><td>${ts}</td><td>${author}</td><td>${text}</td></tr>`;
+            });
+            cHtml += '</tbody></table></fieldset>';
+            summaryContainer.insertAdjacentHTML('beforeend', cHtml);
+        }
+
+        // Wire up Back and Next buttons for Preview/Summary navigation
+        const proposedBtn = document.getElementById('proposed-plans-btn');
+
+        if (proposedBtn) {
+            let uniqueId = null;
+
+            if (summaryData.primaryContact) {
+                uniqueId = summaryData.primaryContact['unique_id'] || summaryData.primaryContact['Unique Id'];
+            }
+
+            if (uniqueId) {
+                const targetUrl = `Proposed_Plans.html?unique_id=${encodeURIComponent(uniqueId)}`;
+
+                fetch(targetUrl, { method: 'GET' })
+                    .then(resp => {
+                        if (resp && resp.ok) {
+                            proposedBtn.style.display = 'inline-block';
+                            proposedBtn.disabled = false;
+                            proposedBtn.onclick = () => { window.location.href = targetUrl; };
+                        }
+                    })
+                    .catch(() => { });
+            }
+        }
+
+        const backBtn = document.getElementById('back-btn');
+        const nextBtn = document.getElementById('next-btn');
+        if (nextBtn) {
+            nextBtn.disabled = true;
+            // For Preview.html, Next goes to Proposed_Plans.html with same unique_id (if available)
+            let uniqueId = null;
+            if (summaryData.primaryContact) {
+                uniqueId = summaryData.primaryContact['unique_id'] || summaryData.primaryContact['Unique Id'];
+            }
+            // Only enable Next if target page responds OK
+            if (uniqueId) {
+                const targetUrl = `Proposed_Plans.html?unique_id=${encodeURIComponent(uniqueId)}`;
+                fetch(targetUrl, { method: 'GET' })
+                    .then(resp => {
+                        if (resp && resp.ok) {
+                            nextBtn.disabled = false;
+                            nextBtn.onclick = () => { window.location.href = targetUrl; };
+                        } else {
+                            nextBtn.disabled = true;
+                        }
+                    })
+                    .catch(() => { nextBtn.disabled = true; });
+            } else {
+                nextBtn.disabled = true;
+            }
+        }
+        if (backBtn) {
+            backBtn.style.display = 'inline-block';
+            backBtn.onclick = () => {
+                try { sessionStorage.setItem('returningFromSummary', '1'); } catch (e) { }
+                // Compute unique_id as used elsewhere
+                const summary = JSON.parse(localStorage.getItem('formSummary'));
+                let uniqueId = null;
+                if (summary && summary.primaryContact) {
+                    uniqueId = summary.primaryContact['unique_id'] || summary.primaryContact['Unique Id'];
+                }
+                if (uniqueId) {
+                    window.location.href = `Existing_User_Request_Page.html?unique_id=${encodeURIComponent(uniqueId)}`;
+                } else {
+                    window.location.href = 'Existing_User_Request_Page.html';
+                }
+            };
+        }
+    }
+});
 
 // Helper functions for Notes in summary
 function escapeHtmlSummary(text) {
