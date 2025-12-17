@@ -42,6 +42,7 @@ const OCCUPATION_DATA = {
     
     // Non-Hazardous Occupations
     nonHazardous: [
+        'Agriculturalist',
         'Software Engineer',
         'Teacher',
         'Professor',
