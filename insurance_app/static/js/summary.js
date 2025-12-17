@@ -2,7 +2,6 @@
  * This script generates the content for the form summary page (Summary.html).
  * It retrieves the form data from local storage and dynamically creates the HTML to display it.
  * It is used by: Summary.html and Preview.html
- * 
  */
 document.addEventListener('DOMContentLoaded', function () {
     const summaryContainer = document.getElementById('summary-container');
@@ -66,8 +65,8 @@ document.addEventListener('DOMContentLoaded', function () {
     let html = '';
 
     /**
-     * Simple label formatter - converts field keys to readable labels
-     * Uses basic formatting: replaces underscores/hyphens with spaces, capitalizes words
+     * Helper to format keys into user-facing labels
+     * Merged logic: Handles special mappings (S1) + generic formatting (S2)
      */
     function formatLabel(k) {
         if (!k) return '';
@@ -78,7 +77,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /**
      * Format checkbox array values into human-readable strings
-     * e.g., ['aadhaar', 'pan'] -> "Aadhaar Card, PAN Card"
      */
     function formatArrayValue(key, arr) {
         if (!Array.isArray(arr) || arr.length === 0) return null;
@@ -89,14 +87,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Special formatting for known checkbox fields
         const checkboxValueMappings = {
-            'id-proof': {
-                'aadhaar': 'Aadhaar Card',
-                'pan': 'PAN Card'
-            },
-            'id_proof': {
-                'aadhaar': 'Aadhaar Card',
-                'pan': 'PAN Card'
-            }
+            'id-proof': { 'aadhaar': 'Aadhaar Card', 'pan': 'PAN Card' },
+            'id_proof': { 'aadhaar': 'Aadhaar Card', 'pan': 'PAN Card' }
         };
 
         const mappings = checkboxValueMappings[key];
@@ -108,40 +100,36 @@ document.addEventListener('DOMContentLoaded', function () {
         return filtered.map(v => String(v).replace(/\b\w/g, l => l.toUpperCase())).join(', ');
     }
 
-    /**
-     * Creates an HTML fieldset section for a given part of the summary data.
-     * @param {string} title - The title of the section.
-     * @param {object} data - The data object for the section.
-     * @returns {string} The HTML string for the section.
-     */
+    // Function to create summary section
+    // Merged: Includes S2's hospital logic + S1's upload doc logic + merged field skip logic
     function createSection(title, data) {
         if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
             return ''; // nothing to render
         }
 
-        // Define which fields are required and should show "Not Provided" when empty
+        // Define which fields are required and should show "Not Provided" when empty (from S1)
         const requiredFields = new Set([
             'policy-type', 'sum-insured', 'annual-budget', 'annual-income', 'room-preference',
             'payment-mode', 'policy-term', 'past-claims', 'service-expectations',
             'co-pay', 'ncb-importance', 'maternity-cover', 'opd-cover', 'top-up',
             'policy-type-category', 'port-policy', 'critical-illness', 'worldwide-cover',
-            'tax-benefit', 'gst-number',
-            'id-proof', 'address_proof_details'
+            'tax-benefit', 'gst-number', 'gst_number',
+            'id-proof', 'id_proof', 'address_proof_details'
         ]);
 
-        // Define which fields are conditional and should only show when they have values
+        // Define which fields are conditional and should only show when they have values (from S1 & S2)
         const conditionalFields = new Set([
             'secondary_occupation', 'secondary-occupation',
             'occupationalRiskDetails', 'occupational-risk-details',
             'disease', // Disease checkbox field - only show if diseases are selected
-            // Disease-related fields - only show when they have values
+            // Disease-related fields
             'diabetes_since_year', 'diabetes_since_years', 'diabetes_details',
             'cardiac_since_year', 'cardiac_since_years', 'cardiac_details',
             'hypertension_since_year', 'hypertension_since_years', 'hypertension_details',
             'cancer_since_year', 'cancer_since_years', 'cancer_details',
             'critical_illness_since_year', 'critical_illness_since_years', 'critical_illness_details',
             'other_since_year', 'other_since_years', 'other_details',
-            // Also handle kebab-case versions
+            // Kebab-case
             'diabetes-since-year', 'diabetes-since-years', 'diabetes-details',
             'cardiac-since-year', 'cardiac-since-years', 'cardiac-details',
             'hypertension-since-year', 'hypertension-since-years', 'hypertension-details',
@@ -150,16 +138,17 @@ document.addEventListener('DOMContentLoaded', function () {
             'other-since-year', 'other-since-years', 'other-details'
         ]);
 
-        // Define internal-only fields that should never be shown
+        // Fields to skip entirely (internal-only) (Merged S1 & S2)
         const skipFields = new Set([
             'occupation_value', 'occupationValue',
-            'secondary_occupation_value', 'secondaryOccupationValue'
+            'secondary_occupation_value', 'secondaryOccupationValue',
+            'existing-policy-document' // Skip file input itself
         ]);
 
         let sectionHtml = `<fieldset><legend>${title}</legend><div class="summary-grid">`;
 
-        // Special handling for hospital network preferences - combine into one display
-        const hospitalPrefs = [];
+        // Special handling for hospital network preferences (from S2)
+        const hospitalArgs = [];
         const hospitalFieldsToSkip = new Set([
             'network-hospital-1st', 'network_hospital_1st',
             'network-hospital-2nd', 'network_hospital_2nd',
@@ -167,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
             'network-hospitals', 'network_hospitals'
         ]);
 
-        // Check if any hospital preference fields exist in the data
+        // Check if any hospital preference fields exist
         const hasHospitalFields = Object.keys(data).some(k => hospitalFieldsToSkip.has(k));
 
         if (hasHospitalFields) {
@@ -175,136 +164,66 @@ document.addEventListener('DOMContentLoaded', function () {
             const val2 = data['network-hospital-2nd'] || data['network_hospital_2nd'] || '';
             const val3 = data['network-hospital-3rd'] || data['network_hospital_3rd'] || '';
 
-            if (val1 && val1 !== '-- Select --' && val1.trim() !== '') hospitalPrefs.push(`1st: ${val1}`);
-            if (val2 && val2 !== '-- Select --' && val2.trim() !== '') hospitalPrefs.push(`2nd: ${val2}`);
-            if (val3 && val3 !== '-- Select --' && val3.trim() !== '') hospitalPrefs.push(`3rd: ${val3}`);
+            if (val1 && val1 !== '-- Select --' && val1.trim() !== '') hospitalArgs.push(`1st: ${val1}`);
+            if (val2 && val2 !== '-- Select --' && val2.trim() !== '') hospitalArgs.push(`2nd: ${val2}`);
+            if (val3 && val3 !== '-- Select --' && val3.trim() !== '') hospitalArgs.push(`3rd: ${val3}`);
 
-            // Always show the field - either with selections or "Not Selected"
-            if (hospitalPrefs.length > 0) {
-                sectionHtml += `<div class="summary-item"><strong>Preferred Hospital Network:</strong> ${hospitalPrefs.join(', ')}</div>`;
+            if (hospitalArgs.length > 0) {
+                sectionHtml += `<div class="summary-item"><strong>Preferred Hospital Network:</strong> ${hospitalArgs.join(', ')}</div>`;
             } else {
-                sectionHtml += `<div class="summary-item"><strong>Preferred Hospital Network:</strong> Not Selected</div>`;
+                sectionHtml += `<div class="summary-item"><strong>Preferred Hospital Network:</strong> None</div>`;
             }
         }
 
-        // --- Special handling for disease/health history fields ---
-        // First, identify which diseases are selected (checked)
-        const selectedDiseases = new Set();
-        const diseaseCheckboxPatterns = /^(medical[-_]|disease[-_])?(.+)$/;
-
+        // Process all fields
         for (const [key, value] of Object.entries(data)) {
-            // Check if this is a disease checkbox field
-            if (key.startsWith('medical-') || key.startsWith('medical_') ||
-                key.startsWith('disease-') || key.startsWith('disease_') ||
-                key === 'disease') {
-                // Check if it's selected (truthy, "on", or array with values)
-                const isSelected = value &&
-                    (value === 'on' || value === true || value === 'true' ||
-                        (Array.isArray(value) && value.length > 0) ||
-                        (typeof value === 'string' && value.trim() !== ''));
-
-                if (isSelected) {
-                    // Extract disease name from key like "medical-diabetes" -> "diabetes"
-                    let diseaseName = key
-                        .replace(/^medical[-_]/, '')
-                        .replace(/^disease[-_]/, '');
-                    selectedDiseases.add(diseaseName.toLowerCase());
-
-                    // Also handle if value contains the disease name (for checkbox arrays)
-                    if (Array.isArray(value)) {
-                        value.forEach(v => selectedDiseases.add(String(v).toLowerCase()));
-                    } else if (typeof value === 'string' && value !== 'on' && value !== 'true') {
-                        selectedDiseases.add(value.toLowerCase());
-                    }
-                }
-            }
-        }
-
-        // Helper to check if a field is a disease-related detail field
-        function isDiseaseDetailField(key) {
-            return key.endsWith('_details') || key.endsWith('-details') ||
-                key.endsWith('_since_year') || key.endsWith('-since-year') ||
-                key.endsWith('_since_years') || key.endsWith('-since-years') ||
-                key.endsWith('_start_date') || key.endsWith('-start-date');
-        }
-
-        // Helper to extract disease name from detail field
-        function getDiseaseNameFromDetailField(key) {
-            return key
-                .replace(/_details$/, '').replace(/-details$/, '')
-                .replace(/_since_year$/, '').replace(/-since-year$/, '')
-                .replace(/_since_years$/, '').replace(/-since-years$/, '')
-                .replace(/_start_date$/, '').replace(/-start-date$/, '')
-                .toLowerCase();
-        }
-
-        for (const [key, value] of Object.entries(data)) {
-            // Skip internal-only keys that should not be shown
-            if (key === 'occupation_value' || key === 'occupationValue' ||
-                key === 'secondary_occupation_value' || key === 'secondaryOccupationValue') continue;
-
-            // Special handling for disease field - skip if it's an empty array or has no meaningful values
-            if (key === 'disease') {
-                if (Array.isArray(value) && value.length === 0) {
-                    continue; // Skip empty disease array
-                }
-                if (!value || String(value).trim() === '') {
-                    continue; // Skip empty disease field
-                }
-            }
-
-            // Skip conditional fields if they're empty
-            if (conditionalFields.has(key) && (!value || String(value).trim() === '')) {
-                continue;
-            }
-
-            // Skip existing-policy-document field (file upload) - we don't want it in preview
-            if (key === 'existing-policy-document') {
-                continue;
-            }
-
-            // Skip hospital fields (already handled above)
+            // Skip hospital fields handled above
             if (hospitalFieldsToSkip.has(key)) continue;
 
-            // Skip internal-only keys
+            // Skip internal keys
             if (skipFields.has(key)) continue;
 
-            // Skip disease checkbox fields themselves (e.g., "medical-diabetes", "disease-hypertension")
-            // We only want to show the details/duration for selected diseases
-            if (key.startsWith('medical-') || key.startsWith('medical_') ||
-                key.startsWith('disease-') || key.startsWith('disease_') ||
-                key === 'disease') {
+            // Skip conditional fields if they are empty
+            const isValueEmpty = !value || String(value).trim() === '' || value === '-- Select --';
+            if (conditionalFields.has(key) && isValueEmpty) {
                 continue;
             }
 
-            // For disease detail fields, only show if the corresponding disease is selected
-            if (isDiseaseDetailField(key)) {
-                const diseaseName = getDiseaseNameFromDetailField(key);
-                if (!selectedDiseases.has(diseaseName)) {
-                    continue; // Skip - disease not selected
-                }
+            // Special handling for disease checkbox itself
+            if (key === 'disease') {
+                if (Array.isArray(value) && value.length === 0) continue;
+                if (isValueEmpty) continue;
             }
 
             let displayValue = value;
 
-            // Handle empty values and placeholders
-            const isEmptyOrPlaceholder = !value ||
-                String(value).trim() === '' ||
-                value === '-- Select --' ||
-                value === 'Select' ||
-                value === 'Select Year';
-
-            if (isEmptyOrPlaceholder) {
-                if (key === 'planned-surgeries' || key === 'plannedSurgeries') {
-                    displayValue = 'None';
-                } else if (requiredFields.has(key)) {
-                    displayValue = 'Not Provided';
+            // Handle array values (checkboxes)
+            if (Array.isArray(value)) {
+                const formattedArray = formatArrayValue(key, value);
+                if (formattedArray) {
+                    displayValue = formattedArray;
                 } else {
-                    displayValue = 'None';
+                    displayValue = 'None Selected';
+                }
+            } else {
+                // Handle empty values
+                if (isValueEmpty) {
+                    if (key === 'planned-surgeries' || key === 'plannedSurgeries') {
+                        displayValue = 'None';
+                    } else if (requiredFields.has(key)) {
+                        displayValue = 'Not Provided';
+                    } else {
+                        displayValue = 'None';
+                    }
                 }
             }
 
-            // Special handling for upload-policy-doc-checkbox
+            // Format date fields (from S2)
+            if (isDateField(key) && displayValue && displayValue !== 'Not Provided' && displayValue !== 'None') {
+                displayValue = formatDateToDDMMYYYY(displayValue);
+            }
+
+            // --- Special Handling for Uploaded Policy Document Checkbox (from S1) ---
             let formattedKey = formatLabel(key);
             if (key === 'upload-policy-doc-checkbox' || key === 'upload_policy_doc_checkbox') {
                 formattedKey = 'Uploaded Policy Document';
@@ -312,120 +231,77 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Check if actual document exists in localStorage
                 let hasDocument = false;
                 try {
-                    // Get unique ID from URL or sessionStorage (not from section data)
+                    // Try to find uniqueId
                     let uniqueId = '';
-                    try {
-                        const params = new URLSearchParams(window.location.search);
-                        uniqueId = params.get('unique_id') || params.get('uid') || '';
-                    } catch (e) { }
+                    const params = new URLSearchParams(window.location.search);
+                    uniqueId = params.get('unique_id') || params.get('uid');
 
-                    if (!uniqueId) {
-                        try {
-                            uniqueId = sessionStorage.getItem('current_unique_id') || '';
-                        } catch (e) { }
-                    }
-
-                    // Also try to get from formSummary in localStorage
                     if (!uniqueId) {
                         try {
                             const formSummary = JSON.parse(localStorage.getItem('formSummary') || '{}');
-                            uniqueId = formSummary?.primaryContact?.['unique_id'] ||
-                                formSummary?.primaryContact?.['unique-id'] || '';
+                            uniqueId = formSummary?.primaryContact?.['unique_id'] || formSummary?.primaryContact?.['unique-id'];
                         } catch (e) { }
                     }
 
                     const POLICY_DOC_STORAGE_KEY = 'existing_policy_doc_';
-
-                    // Check with unique ID
+                    // Check logic
                     if (uniqueId) {
-                        const storageKey = POLICY_DOC_STORAGE_KEY + uniqueId;
-                        const docData = localStorage.getItem(storageKey);
-                        if (docData) {
-                            const parsed = JSON.parse(docData);
-                            hasDocument = !!(parsed && parsed.fileName);
-                        }
+                        const docData = localStorage.getItem(POLICY_DOC_STORAGE_KEY + uniqueId);
+                        if (docData) hasDocument = !!JSON.parse(docData).fileName;
                     }
-
-                    // Also check temp_draft key as fallback
                     if (!hasDocument) {
-                        const tempDocData = localStorage.getItem(POLICY_DOC_STORAGE_KEY + 'temp_draft');
-                        if (tempDocData) {
-                            const parsed = JSON.parse(tempDocData);
-                            hasDocument = !!(parsed && parsed.fileName);
-                        }
+                        const tempDoc = localStorage.getItem(POLICY_DOC_STORAGE_KEY + 'temp_draft');
+                        if (tempDoc) hasDocument = !!JSON.parse(tempDoc).fileName;
                     }
                 } catch (e) {
-                    console.error('[Summary] Error checking document:', e);
-                    // If error, fall back to checkbox value
-                    if (Array.isArray(displayValue)) {
-                        hasDocument = displayValue.length > 0 && displayValue[0] === 'on';
-                    } else {
-                        hasDocument = (displayValue === 'on' || displayValue === true || displayValue === 'true');
-                    }
+                    // Fallback to checkbox value
+                    hasDocument = (value === 'on' || value === true || (Array.isArray(value) && value[0] === 'on'));
                 }
-
                 displayValue = hasDocument ? 'Yes' : 'No';
             }
 
-            // Format date fields to dd/mm/yyyy
-            if (isDateField(key) && displayValue && displayValue !== 'None' && displayValue !== 'Not Provided') {
-                displayValue = formatDateToDDMMYYYY(displayValue);
-            }
-
-            // Use formatLabel for nicer labels (handles Primary/Secondary occupation mapping)
             sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${displayValue}</div>`;
         }
         sectionHtml += `</div></fieldset>`;
         return sectionHtml;
     }
 
+    /**
+     * Render Primary Contact Section
+     * Merged: S2's name logic + S1's specific field ordering and height logic
+     */
     function renderPrimaryContactSection(primary) {
         let sectionHtml = `<fieldset><legend>Applicant Details</legend><div class="summary-grid">`;
 
         if (primary && typeof primary === 'object') {
-
             const cmRaw = primary['self-height'] || primary['height'] || primary['self_height'];
             let heightDisplay = '';
             const heightCm = parseFloat(cmRaw);
-
             if (!isNaN(heightCm) && heightCm > 0) {
                 const parts = cmToFeetInches(heightCm);
-                if (parts) {
-                    heightDisplay = `${parts.feet} ft ${parts.inches} in`;
-                }
+                if (parts) heightDisplay = `${parts.feet} ft ${parts.inches} in`;
             }
 
-            // Hide these internal-only keys
             const excludedKeys = new Set([
                 'self-height', 'self_height', 'self-height-ft', 'self-height-in',
-                'self_height_ft', 'self_height_in', 'height_ft', 'height_in',
-                'occupation_value', 'occupationValue', 'secondary_occupation_value', 'secondaryOccupationValue',
-                // Exclude individual name components from display (we'll show Full Name instead)
+                'height_ft', 'height_in', 'occupation_value', 'occupationValue',
                 'first_name', 'middle_name', 'last_name', 'pc_fname', 'pc_mname', 'pc_lname'
             ]);
 
-            // Preferred order with height before weight
-            // Note: We use 'applicant_name' for display (Full Name), not individual name components
             const orderedFields = [
                 'unique_id', 'applicant_name', 'gender', 'occupation', 'secondary_occupation', 'self-dob',
-                'self-age',
-                '__HEIGHT__',
-                'self-weight', 'self-bmi', 'email', 'phone', 'aadhaar_last5', 'address', 'hubs'
+                'self-age', '__HEIGHT__', 'self-weight', 'self-bmi', 'email', 'phone', 'aadhaar_last5', 'address', 'hubs'
             ];
 
-            // If applicant_name is not present but individual name fields are, construct it
-            // PATCH: Check for both old format (first_name) and new format (pc_fname)
-            if (!primary['applicant_name'] && (primary['pc_fname'] || primary['pc_lname'] || primary['first_name'] || primary['last_name'])) {
-                const nameParts = [
-                    primary['pc_fname'] || primary['first_name'] || '',
-                    primary['pc_mname'] || primary['middle_name'] || '',
-                    primary['pc_lname'] || primary['last_name'] || ''
-                ].filter(p => p.trim());
-                primary['applicant_name'] = nameParts.join(' ');
+            // If applicant_name is missing, try to construct it (S2 logic)
+            if (!primary['applicant_name']) {
+                const fname = primary['pc_fname'] || primary['first_name'] || '';
+                const mname = primary['pc_mname'] || primary['middle_name'] || '';
+                const lname = primary['pc_lname'] || primary['last_name'] || '';
+                primary['applicant_name'] = [fname, mname, lname].filter(p => p.trim()).join(' ');
             }
 
             for (const field of orderedFields) {
-
                 if (field === '__HEIGHT__') {
                     if (heightDisplay) {
                         sectionHtml += `<div class="summary-item"><strong>Height:</strong> ${heightDisplay}</div>`;
@@ -435,77 +311,56 @@ document.addEventListener('DOMContentLoaded', function () {
                     continue;
                 }
 
+                if (excludedKeys.has(field)) continue;
+
                 let value = primary[field];
 
-                // Skip secondary occupation if it's empty (conditional field)
+                // Skip secondary occupation if empty
                 if ((field === 'secondary_occupation' || field === 'secondary-occupation') && (!value || String(value).trim() === '')) {
                     continue;
                 }
 
-                if (excludedKeys.has(field)) continue;
-
-                // Check if value is empty or a placeholder
-                const isEmptyOrPlaceholder = !value ||
-                    String(value).trim() === '' ||
-                    value === '-- Select --' ||
-                    value === 'Select';
-
-                if (isEmptyOrPlaceholder) {
-                    value = 'Not Provided';
-                }
-
-                // Format date fields to dd/mm/yyyy (e.g., self-dob)
-                if (isDateField(field) && value && value !== 'Not Provided') {
-                    value = formatDateToDDMMYYYY(value);
-                }
-
-                // Use "Full Name" as the label for applicant_name
-                let formattedKey;
-                if (field === 'applicant_name') {
-                    formattedKey = 'Full Name';
-                } else {
-                    formattedKey = formatLabel(field);
-                }
-
-                // Show "Not Provided" for required empty fields, "None" for optional
-                const requiredPrimaryFields = new Set(['unique_id', 'applicant_name', 'gender', 'occupation', 'email', 'phone']);
                 let displayValue = value;
+                const isEmpty = !value || String(value).trim() === '' || value === '-- Select --';
 
-                if (!value || String(value).trim() === '') {
+                if (isEmpty) {
+                    const requiredPrimaryFields = new Set(['unique_id', 'applicant_name', 'gender', 'occupation', 'email', 'phone']);
                     if (requiredPrimaryFields.has(field)) {
                         displayValue = 'Not Provided';
                     } else {
                         displayValue = 'None';
                     }
+                } else if (isDateField(field)) {
+                    displayValue = formatDateToDDMMYYYY(displayValue);
                 }
 
+                let formattedKey = (field === 'applicant_name') ? 'Full Name' : formatLabel(field);
                 sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${displayValue}</div>`;
             }
         }
-
         sectionHtml += `</div></fieldset>`;
         return sectionHtml;
     }
-
 
     // Primary Contact
     if (summaryData.primaryContact) {
         html += renderPrimaryContactSection(summaryData.primaryContact);
     }
 
-    // Self Health Details (Proposer) - Custom rendering for disease fields
+    /**
+     * Render Proposer's Health History
+     * Kept S1's dedicated function for cleaner "grouped" display, enhanced with S2's date formatting
+     */
     if (summaryData.healthHistory && Object.keys(summaryData.healthHistory || {}).length > 0) {
         html += renderProposerHealthHistory(summaryData.healthHistory);
     }
 
-    // Helper function to render proposer's health history with proper disease display
     function renderProposerHealthHistory(healthData) {
         let sectionHtml = `<fieldset><legend>Proposer's Health Details</legend><div class="summary-grid">`;
 
         const diseases = ['cardiac', 'diabetes', 'hypertension', 'cancer', 'critical_illness', 'other'];
         const diseaseFields = new Set();
 
-        // Collect all disease-related field names
         diseases.forEach(disease => {
             diseaseFields.add(`${disease}_since_year`);
             diseaseFields.add(`${disease}_since_years`);
@@ -513,68 +368,77 @@ document.addEventListener('DOMContentLoaded', function () {
             diseaseFields.add(`${disease}-since-year`);
             diseaseFields.add(`${disease}-since-years`);
             diseaseFields.add(`${disease}-details`);
+            diseaseFields.add(`${disease}-children`); // Handle any other potential variants
         });
 
-        // First, render non-disease fields
-        for (const [key, value] of Object.entries(healthData)) {
-            // Skip disease-specific fields - we'll handle them separately
-            if (diseaseFields.has(key) || key === 'disease') {
-                continue;
-            }
+        const plannedSurgeriesKeys = new Set(['planned-surgeries', 'planned_surgeries', 'plannedSurgeries']);
 
-            if (!value || String(value).trim() === '') {
-                continue;
-            }
+        // 1. Render non-disease fields
+        for (const [key, value] of Object.entries(healthData)) {
+            if (diseaseFields.has(key) || key === 'disease') continue; // handled separately
+            if (plannedSurgeriesKeys.has(key)) continue; // handled explicitly at the end
+            if (!value || String(value).trim() === '') continue;
+
+            let displayValue = value;
+            if (isDateField(key)) displayValue = formatDateToDDMMYYYY(value);
 
             const formattedKey = formatLabel(key);
-            sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${value}</div>`;
+            sectionHtml += `<div class="summary-item"><strong>${formattedKey}:</strong> ${displayValue}</div>`;
         }
 
-        // Now render disease information grouped by disease
-        let hasAnyDisease = false;
+        // 2. Render disease info grouped
         diseases.forEach(disease => {
             const sinceYear = healthData[`${disease}_since_year`] || healthData[`${disease}-since-year`];
+            // Prefer _since_years if available
             const sinceYears = healthData[`${disease}_since_years`] || healthData[`${disease}-since-years`];
             const details = healthData[`${disease}_details`] || healthData[`${disease}-details`];
 
-            // Only show disease if it has at least one field filled
             if (sinceYear || sinceYears || details) {
-                hasAnyDisease = true;
                 const diseaseName = disease.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 sectionHtml += `<div class="summary-item"><strong>Disease:</strong> ${diseaseName}</div>`;
 
                 if (sinceYear && String(sinceYear).trim() !== '') {
                     sectionHtml += `<div class="summary-item"><strong>${diseaseName} Since Year:</strong> ${sinceYear}</div>`;
                 }
-
                 if (sinceYears && String(sinceYears).trim() !== '') {
                     sectionHtml += `<div class="summary-item"><strong>${diseaseName} Since Years:</strong> ${sinceYears}</div>`;
                 }
-
                 if (details && String(details).trim() !== '') {
                     sectionHtml += `<div class="summary-item"><strong>${diseaseName} Details:</strong> ${details}</div>`;
                 }
             }
         });
 
-        // If no diseases were found, show "No Disease"
+        // FIXED: Show "No Disease" if none found
+        const hasAnyDisease = diseases.some(disease => {
+            return healthData[`${disease}_since_year`] || healthData[`${disease}-since-year`] ||
+                healthData[`${disease}_since_years`] || healthData[`${disease}-since-years`] ||
+                healthData[`${disease}_details`] || healthData[`${disease}-details`];
+        });
         if (!hasAnyDisease) {
             sectionHtml += `<div class="summary-item"><strong>Disease:</strong> No Disease</div>`;
         }
 
+        // Explicitly handle Planned Surgeries for Proposer
+        let plannedVal = healthData['planned-surgeries'] || healthData['planned_surgeries'] || healthData['plannedSurgeries'];
+        if (!plannedVal || String(plannedVal).trim() === '') plannedVal = 'None';
+
+        sectionHtml += `<div class="summary-item"><strong>Planned Surgeries:</strong> ${plannedVal}</div>`;
         sectionHtml += `</div></fieldset>`;
         return sectionHtml;
     }
 
-    // Members
+    /**
+     * Members Section
+     * Merged: S2's name loop + S1/S2 disease logic + Height calc
+     */
     if (summaryData.members && summaryData.members.length > 0) {
         html += '<fieldset><legend>Members to be Covered</legend>';
         summaryData.members.forEach(member => {
             html += '<div class="summary-member-card">';
 
-            // Construct member name from parts if not present
-            // PATCH: Check for both old format (first_name) and new format (mem_fname)
-            if (!member.name && (member.mem_fname || member.mem_lname || member.first_name || member.last_name)) {
+            // Construct name (S2 logic)
+            if (!member.name && (member.mem_fname || member.first_name || member.last_name)) {
                 member.name = [
                     member.mem_fname || member.first_name || '',
                     member.mem_mname || member.middle_name || '',
@@ -582,32 +446,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 ].filter(p => p && p.trim()).join(' ');
             }
 
-            // Compute a combined Height display from stored cm, if available
+            // Height
             let heightDisplay = '';
             const heightCm = parseFloat(member.height || member['member-height'] || member.self_height);
-            if (!isNaN(heightCm) && heightCm > 0 && typeof cmToFeetInches === 'function') {
+            if (!isNaN(heightCm) && heightCm > 0) {
                 const parts = cmToFeetInches(heightCm);
-                if (parts && (parts.feet || parts.inches === 0)) {
-                    heightDisplay = `${parts.feet} ft ${parts.inches} in`;
-                }
+                if (parts) heightDisplay = `${parts.feet} ft ${parts.inches} in`;
             }
-            // Ordered display of member fields (excluding plannedSurgeries and raw height)
-            // Note: first_name, middle_name, last_name are combined into 'name' above
+
             const memberFieldsOrder = [
                 'name', 'relationship', 'occupation', 'secondary_occupation', 'gender', 'dob', 'age', '__HEIGHT__', 'weight', 'bmi',
                 'smoker', 'alcohol', 'riskyHobbies', 'occupationalRisk', 'occupationalRiskDetails'
             ];
-
-            // Fields to skip (they're handled separately or combined)
-            // PATCH: Added new field names (mem_fname, mem_mname, mem_lname)
-            const skipFields = ['first_name', 'middle_name', 'last_name', 'mem_fname', 'mem_mname', 'mem_lname', 'height', 'self_height', 'member-height'];
-
-            // Required member fields that should show "Not Provided" when empty
-            const requiredMemberFields = new Set(['name', 'relationship', 'gender', 'dob', 'age']);
+            const skipMemberFields = ['first_name', 'middle_name', 'last_name', 'mem_fname', 'mem_mname', 'mem_lname', 'height', 'self_height', 'member-height'];
 
             memberFieldsOrder.forEach(field => {
-                // Skip if this field should be excluded
-                if (skipFields.includes(field)) return;
+                if (skipMemberFields.includes(field)) return;
+
                 if (field === '__HEIGHT__') {
                     if (heightDisplay) {
                         html += `<div class="summary-item"><strong>Height:</strong> ${heightDisplay}</div>`;
@@ -618,92 +473,73 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 let fieldValue = member[field];
-                // Skip conditional fields if they're empty
+
+                // Conditional fields for members (S1 logic)
                 const conditionalMemberFields = new Set(['secondary_occupation', 'secondary-occupation', 'occupationalRiskDetails', 'occupational-risk-details']);
                 if (conditionalMemberFields.has(field) && (!fieldValue || String(fieldValue).trim() === '')) {
                     return;
                 }
-                // Check if value is empty or a placeholder
-                const isEmptyOrPlaceholder = !fieldValue ||
-                    String(fieldValue).trim() === '' ||
-                    fieldValue === '-- Select --' ||
-                    fieldValue === 'Select' ||
-                    fieldValue === 'Select Gender' ||
-                    fieldValue === 'Select Relationship';
 
-                if (isEmptyOrPlaceholder) {
-                    fieldValue = 'Not Provided';
-                }
-
-                // Format date fields to dd/mm/yyyy (e.g., member dob)
-                if (isDateField(field) && fieldValue && fieldValue !== 'Not Provided') {
-                    fieldValue = formatDateToDDMMYYYY(fieldValue);
-                }
-
-                const formattedKey = field
-                    .replace(/_/g, ' ')
-                    .replace(/([a-z])([A-Z])/g, '$1 $2')
-                    .replace(/\b\w/g, l => l.toUpperCase());
-
+                const isEmpty = !fieldValue || String(fieldValue).trim() === '' || fieldValue === '-- Select --';
                 let displayValue = fieldValue;
-                if (!fieldValue || String(fieldValue).trim() === '') {
+
+                if (isEmpty) {
+                    const requiredMemberFields = new Set(['name', 'relationship', 'gender', 'dob', 'age']);
                     if (requiredMemberFields.has(field)) {
                         displayValue = 'Not Provided';
                     } else {
                         displayValue = 'None';
                     }
+                } else if (isDateField(field)) {
+                    displayValue = formatDateToDDMMYYYY(displayValue);
                 }
 
+                const formattedKey = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 html += `<div class="summary-item"><strong>${formattedKey}:</strong> ${displayValue}</div>`;
             });
 
-            // Disease details for member - check both healthHistory and direct fields
-            const diseases = ['cardiac', 'diabetes', 'hypertension', 'cancer', 'critical_illness', 'other'];
-            const displayedDiseases = [];
+            // Disease Display for Members
+            // Check both S1's healthHistory object approach and S2's flat field approach
+            const diseasesList = ['cardiac', 'diabetes', 'hypertension', 'cancer', 'critical_illness', 'other'];
 
-            diseases.forEach(disease => {
-                // Check if this disease has any data
+            diseasesList.forEach(disease => {
+                // Check flat strings
                 const sinceYear = member[`${disease}_since_year`];
                 const sinceYears = member[`${disease}_since_years`];
                 const details = member[`${disease}_details`];
+                // Check in nested object
+                const hhDetails = (member.healthHistory && member.healthHistory[disease]);
 
-                // Also check healthHistory object
-                const healthHistoryDetails = member.healthHistory && member.healthHistory[disease];
-
-                // Only show disease if it has at least one field filled
-                if (sinceYear || sinceYears || details || healthHistoryDetails) {
-                    // Display disease name
+                if (sinceYear || sinceYears || details || hhDetails) {
                     const diseaseName = disease.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                     html += `<div class="summary-item"><strong>Disease:</strong> ${diseaseName}</div>`;
 
-                    // Display Since Year if available
                     if (sinceYear && String(sinceYear).trim() !== '') {
                         html += `<div class="summary-item"><strong>${diseaseName} Since Year:</strong> ${sinceYear}</div>`;
                     }
-
-                    // Display Since Years if available
                     if (sinceYears && String(sinceYears).trim() !== '') {
                         html += `<div class="summary-item"><strong>${diseaseName} Since Years:</strong> ${sinceYears}</div>`;
                     }
 
-                    // Display Details if available
-                    const detailsValue = details || healthHistoryDetails;
-                    if (detailsValue && String(detailsValue).trim() !== '') {
-                        html += `<div class="summary-item"><strong>${diseaseName} Details:</strong> ${detailsValue}</div>`;
+                    const finalDetails = details || hhDetails;
+                    if (finalDetails && String(finalDetails).trim() !== '') {
+                        html += `<div class="summary-item"><strong>${diseaseName} Details:</strong> ${finalDetails}</div>`;
                     }
-
-                    displayedDiseases.push(disease);
                 }
             });
 
-            // If member has no diseases, show "No Disease"
-            if (displayedDiseases.length === 0) {
+            // FIXED: Show "No Disease" for members if none found
+            const hasAnyMemberDisease = diseasesList.some(disease => {
+                return member[`${disease}_since_year`] || member[`${disease}_since_years`] || member[`${disease}_details`] ||
+                    (member.healthHistory && member.healthHistory[disease]);
+            });
+            if (!hasAnyMemberDisease) {
                 html += `<div class="summary-item"><strong>Disease:</strong> No Disease</div>`;
             }
 
-            // Planned Surgeries for member (always after disease details)
-            let planned = member.plannedSurgeries;
-            if (!planned || planned.toString().trim() === '') {
+            // Planned Surgeries
+            let planned = member.plannedSurgeries || member['planned-surgeries'] || member['planned_surgeries'];
+            if (!planned || String(planned).trim() === '') {
                 planned = 'None';
             }
             html += `<div class="summary-item"><strong>Planned Surgeries:</strong> ${planned}</div>`;
@@ -712,40 +548,26 @@ document.addEventListener('DOMContentLoaded', function () {
         html += '</fieldset>';
     }
 
-    // Cover & Cost Preferences
-    if (summaryData.coverAndCost) {
-        html += createSection('Cover & Cost Preferences', summaryData.coverAndCost);
-    }
-
+    // Cover & Cost
+    if (summaryData.coverAndCost) html += createSection('Cover & Cost Preferences', summaryData.coverAndCost);
     // Existing Coverage
-    if (summaryData.existingCoverage) {
-        html += createSection('Existing Coverage & Portability', summaryData.existingCoverage);
-    }
-
+    if (summaryData.existingCoverage) html += createSection('Existing Coverage & Portability', summaryData.existingCoverage);
     // Claims & Service
-    if (summaryData.claimsAndService) {
-        html += createSection('Claims & Service History', summaryData.claimsAndService);
-    }
-
-    // Finance & Documentation
-    if (summaryData.financeAndDocumentation) {
-        html += createSection('Finance & Documentation', summaryData.financeAndDocumentation);
-    }
+    if (summaryData.claimsAndService) html += createSection('Claims & Service History', summaryData.claimsAndService);
+    // Finance & Doc
+    if (summaryData.financeAndDocumentation) html += createSection('Finance & Documentation', summaryData.financeAndDocumentation);
 
     summaryContainer.innerHTML = html;
-    // Ensure notes are rendered even if not present in local cache
     renderNotesSectionIfAvailable();
 
-    // Notes table (with fallback fetch by unique_id if missing)
+    // Notes logic (kept same)
     async function renderNotesSectionIfAvailable() {
         let commentsArray = null;
         if (summaryData.commentsNoted && Array.isArray(summaryData.commentsNoted?.comments_noted) && summaryData.commentsNoted.comments_noted.length > 0) {
             commentsArray = summaryData.commentsNoted.comments_noted;
         }
-        // If not available, try localStorage mirror (already attempted above), then fetch from server using unique_id
         if (!commentsArray || commentsArray.length === 0) {
             try {
-                // Derive unique_id from URL or summary
                 const urlParams = new URLSearchParams(window.location.search);
                 let uid = urlParams.get('unique_id');
                 if (!uid && summaryData && summaryData.primaryContact) {
@@ -760,9 +582,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     }
                 }
-            } catch (e) {
-                // Non-fatal if fetch fails; simply skip rendering
-            }
+            } catch (e) { }
         }
 
         if (commentsArray && commentsArray.length > 0) {
@@ -778,28 +598,19 @@ document.addEventListener('DOMContentLoaded', function () {
             summaryContainer.insertAdjacentHTML('beforeend', cHtml);
         }
 
-        // Wire up Back and Next buttons for Preview/Summary navigation
         const proposedBtn = document.getElementById('proposed-plans-btn');
-
         if (proposedBtn) {
             let uniqueId = null;
-
-            if (summaryData.primaryContact) {
-                uniqueId = summaryData.primaryContact['unique_id'] || summaryData.primaryContact['Unique Id'];
-            }
-
+            if (summaryData.primaryContact) uniqueId = summaryData.primaryContact['unique_id'] || summaryData.primaryContact['Unique Id'];
             if (uniqueId) {
                 const targetUrl = `Proposed_Plans.html?unique_id=${encodeURIComponent(uniqueId)}`;
-
-                fetch(targetUrl, { method: 'GET' })
-                    .then(resp => {
-                        if (resp && resp.ok) {
-                            proposedBtn.style.display = 'inline-block';
-                            proposedBtn.disabled = false;
-                            proposedBtn.onclick = () => { window.location.href = targetUrl; };
-                        }
-                    })
-                    .catch(() => { });
+                fetch(targetUrl, { method: 'GET' }).then(resp => {
+                    if (resp && resp.ok) {
+                        proposedBtn.style.display = 'inline-block';
+                        proposedBtn.disabled = false;
+                        proposedBtn.onclick = () => { window.location.href = targetUrl; };
+                    }
+                }).catch(() => { });
             }
         }
 
@@ -807,38 +618,25 @@ document.addEventListener('DOMContentLoaded', function () {
         const nextBtn = document.getElementById('next-btn');
         if (nextBtn) {
             nextBtn.disabled = true;
-            // For Preview.html, Next goes to Proposed_Plans.html with same unique_id (if available)
             let uniqueId = null;
-            if (summaryData.primaryContact) {
-                uniqueId = summaryData.primaryContact['unique_id'] || summaryData.primaryContact['Unique Id'];
-            }
-            // Only enable Next if target page responds OK
+            if (summaryData.primaryContact) uniqueId = summaryData.primaryContact['unique_id'] || summaryData.primaryContact['Unique Id'];
             if (uniqueId) {
                 const targetUrl = `Proposed_Plans.html?unique_id=${encodeURIComponent(uniqueId)}`;
-                fetch(targetUrl, { method: 'GET' })
-                    .then(resp => {
-                        if (resp && resp.ok) {
-                            nextBtn.disabled = false;
-                            nextBtn.onclick = () => { window.location.href = targetUrl; };
-                        } else {
-                            nextBtn.disabled = true;
-                        }
-                    })
-                    .catch(() => { nextBtn.disabled = true; });
-            } else {
-                nextBtn.disabled = true;
-            }
+                fetch(targetUrl, { method: 'GET' }).then(resp => {
+                    if (resp && resp.ok) {
+                        nextBtn.disabled = false;
+                        nextBtn.onclick = () => { window.location.href = targetUrl; };
+                    } else { nextBtn.disabled = true; }
+                }).catch(() => { nextBtn.disabled = true; });
+            } else { nextBtn.disabled = true; }
         }
         if (backBtn) {
             backBtn.style.display = 'inline-block';
             backBtn.onclick = () => {
                 try { sessionStorage.setItem('returningFromSummary', '1'); } catch (e) { }
-                // Compute unique_id as used elsewhere
                 const summary = JSON.parse(localStorage.getItem('formSummary'));
                 let uniqueId = null;
-                if (summary && summary.primaryContact) {
-                    uniqueId = summary.primaryContact['unique_id'] || summary.primaryContact['Unique Id'];
-                }
+                if (summary && summary.primaryContact) uniqueId = summary.primaryContact['unique_id'] || summary.primaryContact['Unique Id'];
                 if (uniqueId) {
                     window.location.href = `Existing_User_Request_Page.html?unique_id=${encodeURIComponent(uniqueId)}`;
                 } else {
@@ -849,58 +647,34 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// Helper functions for Notes in summary
+// Helpers
 function escapeHtmlSummary(text) {
     const div = document.createElement('div');
     div.textContent = String(text || '');
     return div.innerHTML;
 }
 
-/**
- * Formats a date string to dd/mm/yyyy format (India standard)
- * Handles various input formats: yyyy-mm-dd, ISO strings, etc.
- * @param {string} dateStr - The date string to format
- * @returns {string} - Formatted date string in dd/mm/yyyy format, or original if invalid
- */
 function formatDateToDDMMYYYY(dateStr) {
     if (!dateStr || typeof dateStr !== 'string') return dateStr || '';
-
-    // If already in dd/mm/yyyy format, return as-is
-    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr.trim())) {
-        return dateStr.trim();
-    }
-
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr.trim())) return dateStr.trim();
     try {
         let date;
-
-        // Handle yyyy-mm-dd format (common from HTML date inputs)
         if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
             const parts = dateStr.split('T')[0].split('-');
             date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
         } else {
-            // Try parsing as a general date
             date = new Date(dateStr);
         }
-
         if (!isNaN(date.getTime())) {
             const day = String(date.getDate()).padStart(2, '0');
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const year = date.getFullYear();
             return `${day}/${month}/${year}`;
         }
-    } catch (e) {
-        console.warn('Date parsing failed for:', dateStr);
-    }
-
-    // Return original if parsing fails
+    } catch (e) { }
     return dateStr;
 }
 
-/**
- * Checks if a field key represents a date field that should be formatted
- * @param {string} key - The field key/name
- * @returns {boolean} - True if the field is a date field
- */
 function isDateField(key) {
     const dateFieldPatterns = [
         'dob', 'self-dob', 'self_dob',
@@ -915,16 +689,11 @@ function isDateField(key) {
 
 function cmToFeetInches(cm) {
     const n = parseFloat(cm);
-    if (!n || n <= 0) {
-        return null;
-    }
+    if (!n || n <= 0) return null;
     const totalInches = n / 2.54;
     let feet = Math.floor(totalInches / 12);
     let inches = Math.round(totalInches - feet * 12);
-    if (inches === 12) {
-        feet += 1;
-        inches = 0;
-    }
+    if (inches === 12) { feet += 1; inches = 0; }
     return { feet, inches };
 }
 
