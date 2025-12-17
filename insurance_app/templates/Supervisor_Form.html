@@ -1203,6 +1203,16 @@
                 searchBtn.addEventListener('click', async () => {
                     const uniqueId = searchInput.value.trim();
                     if (!uniqueId) return;
+                    try {
+                    localStorage.removeItem('supervisor_matrix_choices');
+                    window._loadedDataSupervisorSel = [];
+                    } catch (e) {}
+
+                    try {
+                    const box = document.getElementById('sup-selected-summary');
+                    if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+                    } catch (e) {}
+
                     const originalLabel = searchBtn.textContent;
                     searchBtn.disabled = true;
                     searchBtn.textContent = 'Fetching...';
