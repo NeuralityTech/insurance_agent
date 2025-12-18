@@ -43,7 +43,8 @@ document.addEventListener('DOMContentLoaded', function () {
         { file: 'Existing_Coverage_&_Portability.html', id: 'existing-coverage', title: 'Existing Coverage', init: ['initializeExistingCoverage'] },
         { file: 'Claims_&_Service.html', id: 'claims-service', title: 'Claims & Service' },
         { file: 'Finance_&_Documentation.html', id: 'finance-documentation', title: 'Finance & Docs' },
-        { file: 'Comments_Noted.html', id: 'comments-noted', title: 'Notes', init: ['initializeCommentsNoted'] }
+        { file: 'Comments_Noted.html', id: 'comments-noted', title: 'Notes', init: ['initializeCommentsNoted'] },
+        { file: 'Preview_Tab.html', id: 'preview', title: 'Preview', init: ['initializePreviewTab'] }
     ];
 
     // Dynamic sections that can be added conditionally

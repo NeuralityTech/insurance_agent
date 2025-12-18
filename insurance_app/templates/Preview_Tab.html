@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview</title>
+    <style>
+        .preview-tab-container {
+            max-width: 100%;
+        }
+
+        .preview-tab-container fieldset {
+            border: none;
+            border-radius: 12px;
+            padding: 0;
+            margin: 0 0 1.5rem;
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+            overflow: hidden;
+        }
+
+        .preview-tab-container legend {
+            width: 100%;
+            margin: 0;
+            padding: 0.75rem 1.25rem;
+            background: #e5f0ff;
+            color: #1d4ed8;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.4);
+        }
+
+        .preview-tab-container .summary-grid,
+        .preview-tab-container .summary-member-card {
+            padding: 1rem 1.25rem;
+        }
+
+        .preview-tab-container .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            column-gap: 2rem;
+            row-gap: 0.4rem;
+        }
+
+        .preview-tab-container .summary-item {
+            font-size: 0.9rem;
+            color: #111827;
+            line-height: 1.5;
+        }
+
+        .preview-tab-container .summary-item strong {
+            font-weight: 600;
+            color: #111827;
+            display: inline-block;
+            margin-right: 0.25rem;
+        }
+
+        .preview-tab-container .summary-member-card {
+            border-top: 1px solid rgba(209, 213, 219, 0.8);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            column-gap: 2rem;
+            row-gap: 0.4rem;
+        }
+
+        .preview-tab-container .comments-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+
+        .preview-tab-container .comments-table th,
+        .preview-tab-container .comments-table td {
+            border: 1px solid #e5e7eb;
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+
+        .preview-tab-container .comments-table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+
+        .preview-empty-message {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .preview-refresh-notice {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            color: #92400e;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .preview-refresh-notice::before {
+            content: '\f05a';
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+        }
+
+        @media (max-width: 768px) {
+            .preview-tab-container .summary-grid,
+            .preview-tab-container .summary-member-card {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <fieldset>
+        <legend>Preview</legend>
+
+        <div class="preview-refresh-notice">
+            This preview updates automatically as you fill the form. Switch between tabs to see your latest entries.
+        </div>
+
+        <div id="preview-tab-content" class="preview-tab-container">
+            <p class="preview-empty-message">Start filling the form to see a preview of your data here.</p>
+        </div>
+    </fieldset>
+</body>
+</html>
