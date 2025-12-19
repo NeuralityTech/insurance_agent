@@ -12,27 +12,54 @@ document.addEventListener('DOMContentLoaded', function () {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Submit';
     }
+    // Helper to check if we're on the New Applicant form
+    function isNewApplicantForm() {
+        return document.body.getAttribute('data-sidebar') === 'new-applicant';
+    }
+
+    // Helper to clear form session data (members, formSummary, etc.)
+    function clearFormSessionData() {
+        localStorage.removeItem('members');
+        localStorage.removeItem('formSummary');
+        localStorage.removeItem('editMemberId');
+        // Refresh the members UI if it exists
+        if (window.loadMembersGlobal) {
+            setTimeout(() => window.loadMembersGlobal(), 100);
+        }
+        // Refresh preview tab if it exists
+        if (window.updatePreviewContent) {
+            setTimeout(() => window.updatePreviewContent(), 150);
+        }
+    }
+
     // Also reset on pageshow (for bfcache/back navigation)
-    window.addEventListener('pageshow', function () {
+    window.addEventListener('pageshow', function (event) {
         const submitBtn = document.getElementById('submit-btn');
         if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Submit';
         }
+
+        // When page is restored from bfcache (back/forward navigation),
+        // clear members on New Applicant form to prevent stale data from showing
+        if (event.persisted && isNewApplicantForm()) {
+            const returning = sessionStorage.getItem('returningFromSummary') === '1';
+            if (!returning) {
+                console.log('Page restored from bfcache on New Applicant form - clearing members');
+                clearFormSessionData();
+            }
+        }
     });
 
-    // Session Management 
+    // Session Management - only clear on New Applicant form
     try {
         const returning = sessionStorage.getItem('returningFromSummary') === '1';
-        if (!returning) {
-            localStorage.removeItem('members');
-            localStorage.removeItem('formSummary');
-            localStorage.removeItem('editMemberId');
-        } else {
+        if (!returning && isNewApplicantForm()) {
+            clearFormSessionData();
+        } else if (returning) {
             sessionStorage.removeItem('returningFromSummary');
         }
     } catch (e) { /* ignore */ }
-    sessionStorage.setItem('formSessionActive', 'true');
 
     // Section Definitions 
     const sections = [
@@ -549,10 +576,18 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Validation passed - proceed with preview
+        // On New Applicant form, get members from UI state to prevent cross-tab contamination
+        let membersForSummary;
+        if (isNewApplicantForm() && typeof window.getMembersFromUI === 'function') {
+            membersForSummary = window.getMembersFromUI();
+        } else {
+            membersForSummary = JSON.parse(localStorage.getItem('members')) || [];
+        }
+
         const summaryData = {
             primaryContact: getSectionData('primary-contact'),
             healthHistory: getSectionData('health-history'),
-            members: JSON.parse(localStorage.getItem('members')) || [],
+            members: membersForSummary,
             coverAndCost: getSectionData('cover-cost'),
             existingCoverage: getSectionData('existing-coverage'),
             claimsAndService: getSectionData('claims-service'),
@@ -667,7 +702,14 @@ document.addEventListener('DOMContentLoaded', function () {
             return age >= 0 ? age : NaN;
         }
 
-        const members = JSON.parse(localStorage.getItem('members')) || [];
+        // On New Applicant form, get members from UI state to prevent cross-tab contamination
+        let members;
+        if (isNewApplicantForm() && typeof window.getMembersFromUI === 'function') {
+            members = window.getMembersFromUI();
+        } else {
+            members = JSON.parse(localStorage.getItem('members')) || [];
+        }
+
         members.forEach(m => {
             // Try to get age from stored value first, otherwise calculate from DOB
             let age = parseInt(m.age, 10);
@@ -867,10 +909,19 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // All validation passed - proceed with preview
+            // On New Applicant form, get members from UI state to prevent cross-tab contamination
+            // (localStorage.members may have been overwritten by another tab)
+            let membersData;
+            if (isNewApplicantForm() && typeof window.getMembersFromUI === 'function') {
+                membersData = window.getMembersFromUI();
+            } else {
+                membersData = JSON.parse(localStorage.getItem('members')) || [];
+            }
+
             const summaryData = {
                 primaryContact: primaryContactData,
                 healthHistory: getSectionData('health-history'),
-                members: JSON.parse(localStorage.getItem('members')) || [],
+                members: membersData,
                 coverAndCost: getSectionData('cover-cost'),
                 existingCoverage: getSectionData('existing-coverage'),
                 claimsAndService: getSectionData('claims-service'),

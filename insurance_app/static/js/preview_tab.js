@@ -34,14 +34,18 @@ function setupFormChangeListeners() {
         form.addEventListener('input', debounce(updatePreviewContent, 500));
     }
 
-    // Listen for member list changes
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'members' || e.key === 'comments_noted') {
-            updatePreviewContent();
-        }
-    });
+    // Listen for cross-tab storage changes ONLY on Existing Applicant form
+    // On New Applicant form, we don't want to pick up members from other tabs
+    const isNewApplicantForm = document.body.getAttribute('data-sidebar') === 'new-applicant';
+    if (!isNewApplicantForm) {
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'members' || e.key === 'comments_noted') {
+                updatePreviewContent();
+            }
+        });
+    }
 
-    // Also listen for custom member update events
+    // Listen for custom member update events (same-tab updates)
     document.addEventListener('membersUpdated', updatePreviewContent);
     document.addEventListener('commentsUpdated', updatePreviewContent);
 }
@@ -101,10 +105,26 @@ function gatherFormData() {
         return data;
     };
 
+    // Get members - on New Applicant form, read from UI state to prevent cross-tab contamination
+    let members = [];
+    const isNewApplicantForm = document.body.getAttribute('data-sidebar') === 'new-applicant';
+
+    if (isNewApplicantForm) {
+        // On New Applicant form, get members from UI state (not localStorage)
+        // This prevents showing members loaded by other tabs
+        if (typeof window.getMembersFromUI === 'function') {
+            members = window.getMembersFromUI();
+        }
+        // If function not available yet, members stays empty (safe default)
+    } else {
+        // On Existing Applicant form, read from localStorage as normal
+        members = JSON.parse(localStorage.getItem('members')) || [];
+    }
+
     return {
         primaryContact: getSectionData('primary-contact') || {},
         healthHistory: getSectionData('health-history') || {},
-        members: JSON.parse(localStorage.getItem('members')) || [],
+        members: members,
         coverAndCost: getSectionData('cover-cost') || {},
         existingCoverage: getSectionData('existing-coverage') || {},
         claimsAndService: getSectionData('claims-service') || {},

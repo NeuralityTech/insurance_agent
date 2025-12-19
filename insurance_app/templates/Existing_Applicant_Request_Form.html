@@ -412,6 +412,12 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
+            // IMPORTANT: Clear any stale member data on page load
+            // This prevents cross-form data contamination (e.g., members from New Applicant form appearing here)
+            localStorage.removeItem('members');
+            localStorage.removeItem('comments_noted');
+            console.log('Existing Applicant form: Cleared stale data on page load');
+
             const statusEl = document.getElementById('load-status');
             const loadBtn = document.getElementById('btn-load');
             const idInput = document.getElementById('load-unique-id');
@@ -782,6 +788,17 @@
                 const uid = (uniqueId || '').trim();
                 statusEl.textContent = '';
                 if (!uid) { statusEl.textContent = 'Please enter Unique ID.'; return; }
+
+                // IMPORTANT: Clear previous applicant's data before loading new one
+                // This prevents cross-applicant data contamination
+                localStorage.removeItem('members');
+                localStorage.removeItem('comments_noted');
+                localStorage.removeItem('formSummary');
+                // Clear UI as well
+                if (window.loadMembersGlobal) {
+                    try { window.loadMembersGlobal(); } catch(e) {}
+                }
+                console.log('Cleared previous applicant data before loading:', uid);
 
                 const allControls = document.querySelectorAll('input, select, textarea');
                 allControls.forEach(el => {

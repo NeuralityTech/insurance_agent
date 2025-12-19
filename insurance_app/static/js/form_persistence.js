@@ -6,19 +6,34 @@
 (function() {
     'use strict';
 
-    const STORAGE_KEY = 'insuranceFormDraft';
+    /**
+     * Get form-specific storage key based on form type
+     * This prevents New Applicant and Existing Applicant forms from overwriting each other's saved data
+     */
+    function getStorageKey() {
+        const isNewApplicant = document.body.getAttribute('data-sidebar') === 'new-applicant';
+        return isNewApplicant ? 'insuranceFormDraft_new' : 'insuranceFormDraft_existing';
+    }
 
     /**
      * Get all form data from all tabs
      */
     function getAllFormData() {
         let members = [];
-        try {
-            const membersStr = localStorage.getItem('members');
-            members = membersStr ? JSON.parse(membersStr) : [];
-        } catch (e) {
-            console.error('Error reading members from localStorage:', e);
-            members = [];
+        const isNewApplicant = document.body.getAttribute('data-sidebar') === 'new-applicant';
+
+        if (isNewApplicant && typeof window.getMembersFromUI === 'function') {
+            // On New Applicant form, get members from UI state to prevent cross-tab contamination
+            members = window.getMembersFromUI();
+        } else {
+            // On Existing Applicant form or if getMembersFromUI not available, use localStorage
+            try {
+                const membersStr = localStorage.getItem('members');
+                members = membersStr ? JSON.parse(membersStr) : [];
+            } catch (e) {
+                console.error('Error reading members from localStorage:', e);
+                members = [];
+            }
         }
 
         const formData = {
@@ -103,7 +118,7 @@
     function saveFormData() {
         try {
             const formData = getAllFormData();
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+            localStorage.setItem(getStorageKey(), JSON.stringify(formData));
             
             // Debug confirmation
             console.log('Form data saved successfully. Members count:', formData.members.length);
@@ -120,7 +135,7 @@
      */
     function loadFormData() {
         try {
-            const savedData = localStorage.getItem(STORAGE_KEY);
+            const savedData = localStorage.getItem(getStorageKey());
             if (!savedData) return null;
 
             const formData = JSON.parse(savedData);
@@ -148,10 +163,10 @@
                     setSectionFormData('finance-documentation-content', formData.financeAndDocumentation);
                 }
 
-                if (formData.members && Array.isArray(formData.members)) {
+                if (formData.members && Array.isArray(formData.members) && formData.members.length > 0) {
                     console.log('Restoring', formData.members.length, 'members to localStorage');
                     localStorage.setItem('members', JSON.stringify(formData.members));
-                    
+
                     // Then trigger UI update
                     if (window.loadMembersGlobal) {
                         setTimeout(() => {
@@ -189,7 +204,7 @@
      */
     function clearSavedFormData() {
         try {
-            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(getStorageKey());
             console.log('Saved form data cleared');
             return true;
         } catch (error) {
@@ -202,7 +217,7 @@
      * Check if there is saved form data
      */
     function hasSavedData() {
-        return localStorage.getItem(STORAGE_KEY) !== null;
+        return localStorage.getItem(getStorageKey()) !== null;
     }
 
     /**
@@ -312,10 +327,14 @@
         }, 1000);
 
         // Auto-load saved data on page load
-        if (hasSavedData()) {
+        // IMPORTANT: Do NOT auto-load for Existing Applicant forms - their data comes from database via Load button
+        const isExistingApplicant = document.body.getAttribute('data-sidebar') === 'existing-applicant';
+        if (!isExistingApplicant && hasSavedData()) {
             console.log('Found saved form data, loading...');
             loadFormData();
             disableSaveButton();
+        } else if (isExistingApplicant) {
+            console.log('Existing Applicant form - skipping auto-load (data comes from database)');
         } else {
             console.log('No saved form data found');
         }

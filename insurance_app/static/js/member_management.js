@@ -1367,7 +1367,19 @@
     // Load all existing members into tabs
     function loadExistingMembers() {
         const members = JSON.parse(localStorage.getItem('members')) || [];
-        
+
+        // IMPORTANT: Clear existing tabs and data before loading new members
+        // This prevents data contamination when switching between applicants
+        const tabsContainer = document.getElementById('member-tabs');
+        const contentsContainer = document.getElementById('member-tab-contents');
+        if (tabsContainer) tabsContainer.innerHTML = '';
+        if (contentsContainer) contentsContainer.innerHTML = '';
+
+        // Clear the originalFormData object
+        for (const key in originalFormData) {
+            delete originalFormData[key];
+        }
+
         // Load all existing members first (this creates their tabs)
         members.forEach(member => {
             const contentDiv = createMemberTab(member.id, member.name, false);
@@ -1400,9 +1412,22 @@
         }
     }
 
+    // Get current members from UI state (not localStorage)
+    // This is used by preview_tab.js to avoid cross-tab data contamination
+    function getMembersFromUI() {
+        const members = [];
+        for (const [memberId, data] of Object.entries(originalFormData)) {
+            if (memberId !== 'new' && data) {
+                members.push(data);
+            }
+        }
+        return members;
+    }
+
     // Make functions globally available
     window.initializeMemberManagement = initializeMemberManagement;
     window.loadMembersGlobal = loadExistingMembers;
+    window.getMembersFromUI = getMembersFromUI;
 
     // Auto-initialize if DOM is ready
     if (document.readyState === 'loading') {
