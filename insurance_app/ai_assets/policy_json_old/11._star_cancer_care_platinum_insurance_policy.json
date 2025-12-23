@@ -1,0 +1,53 @@
+{
+    "policy_name": "Star Cancer Care Platinum Insurance Policy",
+    "uin": "SHAHLIP22031V022122",
+    "about_the_policy": "Persons diagnosed with Cancer",
+    "type_of_cover": "Individual Sum Insured",
+    "entry_age": "5 months to 65 years",
+    "co_payment": "10% of each and every claim amount for fresh as well as renewal policies for insured persons whose age at the time of entry is 61 years and above",
+    "policy_term": "1 year",
+    "premium_payment": "Quarterly / Half-Yearly / Yearly",
+    "pre_policy_medical_screening": "Not Required",
+    "medical_records_for_uw": "Previous medical records including details of treatment to be submitted along with proposal",
+    "sum_insured_options_section_1": [
+        "5 Lakhs",
+        "7.5 Lakhs",
+        "10 Lakhs"
+    ],
+    "lumpsum_cover_section_2": {
+        "optional_cover": "Yes",
+        "lumpsum_amount": "50% of (section:1) sum insured",
+        "variability": "This lumpsum sum insured cannot vary",
+        "payable_when": "Insured person suffers a recurrence, metastasis, and / or a second malignancy unrelated to first cancer",
+        "benefit_addition": "This benefit is addition to the sum insured of Indemnity cover under Section I",
+        "claim_impact": "Claim for lump-sum, the coverage under Section II ceases and the policy will continue with Section I",
+        "waiting_period": "30 months"
+    },
+    "indemnity_cover_section_1": {
+        "hospitalization_room_rent": "Single Standard A/C Room",
+        "road_ambulance_charges": "Covered (Actuals)",
+        "pre_post_hospitalization": "Pre hospitalization 30 days & Post hospitalization 60 days (up to 2% of the basic sum insured per hospitalization)",
+        "day_care_procedures": "All day care procedures are covered (Actuals)",
+        "cataract": {
+            "sum_insured": "5 Lakhs",
+            "per_eye": "30,000",
+            "per_policy_period": "40,000"
+        },
+        "health_check_up": "Upto Rs 2,500 for every claim free year",
+        "medical_second_opinion": "Available mail to e_medicalopinion@starhealth.in or through post/courier",
+        "modern_treatments": "Covered upto the Sub-limits mentioned in the policy clause",
+        "rehabilitation_and_pain_management": "Covered upto the Sub-limits (or) up to 10% of the Sum Insured whichever is less, per policy year. Rehabilitation includes Poly Trauma, Head injury, Disease of spine, Stroke",
+        "wellness_service": [
+            "Diet and Nutrition Program",
+            "Weight Management Program",
+            "Specialist Consultation available through Star Telehealth app"
+        ],
+        "hospice_care": "Payable upto 20% of sum insured at network providers on indemnity basis, payable once in life time. Waiting Period: 12 Months",
+        "no_claim_bonus": "5% of basic sum insured for each claim free year subject to a maximum of 50%",
+        "waiting_period": {
+            "initial_waiting_period": "30 days for all illness (Except for accidents)",
+            "for_specific_diseases": "24 Months",
+            "ped_including_cancer": "30 Months"
+        }
+    }
+}

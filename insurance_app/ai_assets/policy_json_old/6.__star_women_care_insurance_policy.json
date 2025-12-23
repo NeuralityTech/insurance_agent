@@ -1,0 +1,183 @@
+{
+    "policy_name": "Star Women Care Insurance Policy",
+    "uin": "SHAHLIP22217V012122",
+    "about_the_policy": "Exclusive health product designed to meet the needs of today's women and her family, by the way of providing cover for regular hospitalization and comprehensive maternity-related benefits. This product comes with a host of special features such as no pre-acceptance medical screening, entry during pregnancy and instalment option in premium payment.",
+    "type_of_cover": [
+        "Individual (Available only for Females)and Floater",
+        "In floater at least one female (adult) should be there in the family along with the spouse and dependent children"
+    ],
+    "entry_age": {
+        "adults": "18 years \u2013 75 years",
+        "dependent_children": "91 days to 25 years"
+    },
+    "midterm_inclusion": "Available for including Newly Married/ Wedded spouse and/or legally adopted child married spouse on paying additional premium(Intimation within 45 days from the date of marriage or date of adoption). New born baby: Intimation about the newborn baby should be given within 90 days from the date of birth.",
+    "special_benefits": [
+        "Daughter can continue as a dependent child if Unmarried and/or Un-employed beyond 25 years and max up to 30 years, and beyond 30 years she will be treated as an Adult",
+        "Pregnant women can also buy this policy by submitting the scan reports taken at Star Health specified scan centres during their 12th and 20th week of their pregnancy period",
+        "For Females, the continuity benefits accrued under this policy before marriage will also be considered for claims under the Maternity Section."
+    ],
+    "renewal": "Lifelong",
+    "policy_term": "One Year, Two years & Three Years",
+    "pre_policy_medical_checkup": "Not Required",
+    "sum_insured_options_lakhs": [
+        5,
+        10,
+        15,
+        20,
+        25,
+        50,
+        100
+    ],
+    "hospitalization_room_rent_per_day": "1% of sum insured or maximum upto Rs 20,000",
+    "star_mother_cover": {
+        "child_less_than_12": "Company will provide expenses upto Single Private A/c room for stay of the mother in the hospital provided Insured child is under treatment in ICU",
+        "room_not_available": "If the room is not available in the same hospital, the company will reimburse Rs 2500/- per day subject to maximum of 7 days per hospitalization towards stay of mother in the hotel room, if the hotel room is within 2 kms from the hospital"
+    },
+    "road_ambulance_charges": "Covered (Actuals) (i) for transportation to hospital (ii) from one hospital to other hospital (iii) from hospital to residence",
+    "air_ambulance": "Covered for sum insured of Rs 10 Lakhs & above only. Upto 10% of the sum insured per year is payable",
+    "pre_post_hospitalization": "60 days & 90 days (Actuals)",
+    "organ_donor_expenses": "Covered (Actuals) Additional SI upto Basic SI for the Complications (if any) that necessitate a Redo Surgery/ICU admission. This is utilized by the donor and not by the insured",
+    "day_care_procedures": "All day care procedures are covered (Actuals)",
+    "coverage_for_non_medical_items": "If there is an admissible claim then items as per list 1(refer policy wording) will become payable",
+    "ayush_treatment": "Covered (Actuals)",
+    "star_wellness_program": "Available for Insured aged => 18 years. Wellness platform is available both in our mobile app \u201cStar Power\u201d & Customer Portal (Retail). The Insured can earn reward points and avail premium discount up to 10% on the renewal premium by enrolling and achieving the wellness goals. For details please refer the policy wording / prospectus.",
+    "shared_accommodation": "Rs 2000/- per day Maximum of 7 days (per hospitalization)",
+    "bariatric_surgery_lakhs": {
+        "waiting_period_2_years": [
+            2.5,
+            2.5,
+            2.5,
+            5,
+            5,
+            5,
+            5
+        ]
+    },
+    "ncb_lakhs": "20% of the expiring Sum Insured from the second year onwards Upto 100% of the Basic SI",
+    "automatic_restoration_lakhs": {
+        "upto_100_of_basic_si": [
+            5,
+            10,
+            15,
+            20,
+            25,
+            50,
+            100
+        ],
+        "availability": "Available immediately upon partial/full utilization of the limit of coverage"
+    },
+    "rehabilitation_and_pain_management": "Covered upto the sub-limit (or) maximum upto 10% whichever is less per policy year. Treatment taken at authorized centres(www.Starhealth.in)",
+    "modern_treatments": {
+        "upto_50_of_sum_insured": [],
+        "upto_40_of_sum_insured": [],
+        "upto_30_of_sum_insured": []
+    },
+    "assisted_reproduction_treatment_lakhs": {
+        "waiting_period_3_years": [
+            0.5,
+            1,
+            1.5,
+            2,
+            2.5,
+            3
+        ]
+    },
+    "ante_natal_care_pregnancy_care_per_policy_year": {
+        "sum_insured_5_and_10_lakhs": {
+            "waiting_period_2_years": [
+                2500,
+                5000
+            ]
+        },
+        "sum_insured_15_lakhs_and_above": {
+            "waiting_period_1_year": [
+                5000,
+                5000
+            ]
+        }
+    },
+    "utero_fetal_surgery_repair": {
+        "sum_insured_5_and_10_lakhs": {
+            "waiting_period_2_years": "Covered(Actuals)"
+        },
+        "sum_insured_15_lakhs_and_above": {
+            "waiting_period_1_year": "Covered(Actuals)"
+        },
+        "types": [
+            "OpenFetalSurgery",
+            "FetendoFetal Surgery",
+            "Fetal Image-GuidedSurgery(FIGS-IT)",
+            "EXITProcedure"
+        ]
+    },
+    "voluntary_sterilization_expenses": {
+        "waiting_period_2_years": "Covered(Actuals)",
+        "condition": "provided the insured person is married person and his/her age is 22 years and above"
+    },
+    "miscarriage_due_to_accident_once_in_life_time": {
+        "sum_insured_5_and_10_lakhs": {
+            "waiting_period_2_years": [
+                25000,
+                35000
+            ]
+        },
+        "sum_insured_15_lakhs_and_above": {
+            "waiting_period_1_year": [
+                40000,
+                40000
+            ]
+        }
+    },
+    "delivery_expenses_including_c_sec": {
+        "sum_insured_5_and_10_lakhs": {
+            "waiting_period_2_years": [
+                25000,
+                50000
+            ]
+        },
+        "sum_insured_15_lakhs_and_above": {
+            "waiting_period_1_year": [
+                75000,
+                100000
+            ]
+        }
+    },
+    "treatment_for_new_born_baby_expenses_subsequent_year": {
+        "coveredupto_100_of_sum_insured": [],
+        "inpatient_hospitalization_expenses_including_congenital_internal_and_external_defects_anomalies": "are covered from day 1"
+    },
+    "vaccination_expenses": {
+        "payable_upto_12_months_from_the_birth_of_the_newborn": {
+            "rs_5_and_10_lakhs_sum_insured": "RS 2,500",
+            "rs_15_lakhs_and_above": "Rs 3,500"
+        }
+    },
+    "metabolic_screening": "Payable once for each new born subject to a limit of Rs 3,500",
+    "pediatrician_consultation": "Covered upto 4 consultations per year. Payable upto 12 years of age. Limit per consultation is upto Rs 500",
+    "outpatient_available_for_female_insured_person_limit_per_policy_year": [
+        2500,
+        3500,
+        5000
+    ],
+    "preventive_health_checkup": "Inclusive of costs of vaccination. Based on age of the insured person limits differ per policy year",
+    "instalment_options": "Quarterly/ Half-Yearly/ Yearly. Premium can also be paid Annual, Biennial (Once in 2 years) and Triennial (Once in 3 years).",
+    "optional_cover_lump_sum_cover_for_cancer": {
+        "if_insured_person_shall_contract_cancer_as_a_first_incidence_lumpsum_is_payable": [],
+        "sum_insured_of_5_10_15_20_and_25_lakhs": [],
+        "individual_sum_insured_basis_only": [],
+        "available_only_for_female_insured_persons_who_is_aged_between_91_days_to_65_years": [],
+        "waiting_period_180_days": []
+    },
+    "waiting_period": {
+        "initial_waiting_period": "30 days for all illnesses (except accident)",
+        "for_specific_diseases": "2 years",
+        "for_pre_existing_diseases": "2 years",
+        "bariatric_surgery": "2 years",
+        "assisted_reproduction_treatment": "3 years",
+        "voluntary_sterilization": "2 years",
+        "ante_natal_care": "Rs 5 lakhs and Rs 10 lakhs sum insured : 2 years, Rs 15 lakhs and above sum insured: 1 year",
+        "in_utero_fetal_surgery_repair": "Rs 5 lakhs and Rs 10 lakhs sum insured : 2 years, Rs 15 lakhs and above sum insured: 1 year",
+        "delivery_expenses": "Rs 5 lakhs and Rs 10 lakhs sum insured : 2 years, Rs 15 lakhs and above sum insured: 1 year",
+        "miscarriage_due_to_accident": "Rs 5 lakhs and Rs 10 lakhs sum insured : 2 years, Rs 15 lakhs and above sum insured: 1 year"
+    }
+}

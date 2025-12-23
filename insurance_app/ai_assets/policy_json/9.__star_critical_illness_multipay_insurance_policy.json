@@ -1,0 +1,81 @@
+{
+    "plan_id": "SHAHLIP22140V012122",
+    "plan_name": "Star Critical Illness Multipay Insurance Policy",
+    "insurer_name": "Star Health and Allied Insurance",
+    "uin": "SHAHLIP22140V012122",
+    "plan_type": "Critical Illness Insurance",
+    "coverage_area": "India",
+    "policy_term_options": [
+        "1 Year",
+        "2 Years",
+        "3 Years"
+    ],
+    "entry_age": {
+        "individual": "18 years to 65 years"
+    },
+    "sum_insured_options": [
+        "Minimum Rs 5 Lakhs to Maximum Rs 25 Lakhs (In multiples of Rs 1 Lakh)"
+    ],
+    "special_sum_insured_rules": "Sum Insured for Earning Persons: 12 times of yearly income for 18 \u2013 35 years age and 10 times of yearly income for above 35 years age. The maximum sum insured cannot exceed Rs 25 Lakhs. Sum Insured for Non Earning Persons: Maximum up to Rs 15 Lakhs. Non-earning sum insured cannot be more than the sum insured for the primary member.",
+    "room_rent": "Not Specified",
+    "icu_coverage": "Not Specified",
+    "doctor_tests_medicines": "Not Specified",
+    "pre_hospitalization_days": "Not Specified",
+    "post_hospitalization_days": "Not Specified",
+    "day_care": "Not Specified",
+    "modern_treatments": "Not Specified",
+    "ayush_treatment": "Not Specified",
+    "ambulance": {
+        "road": "Not Specified",
+        "air": "Not Specified"
+    },
+    "restoration_benefit": "Not Specified",
+    "no_claim_bonus": "Not Specified",
+    "loyalty_benefits": "Not Specified",
+    "premium_protection_features": "Not Specified",
+    "teleconsultation": "Not Specified",
+    "wellness_program": "Available. Insured can earn reward points and avail premium discount up to 10% on renewal premium.",
+    "preventive_health_checkup": "Not Specified",
+    "fitness_benefits": "Not Specified",
+    "women_wellness": "Not Specified",
+    "senior_wellness": "Not Specified",
+    "cashless_claims": "Not Specified",
+    "reimbursement_supported": "Not Specified",
+    "grace_period_cover": "Not Specified",
+    "early_ped_relief": "Not Specified",
+    "waiting_period_continuity": "Not Specified",
+    "waiting_periods": {
+        "initial": "90 days",
+        "specific_diseases": "Not Specified",
+        "pre_existing": "Not Specified",
+        "between_conditions": "12 months"
+    },
+    "optional_covers": [
+        "Lumpsum cover for cancer (Optional cover)"
+    ],
+    "voluntary_copay_options": "Not Specified",
+    "best_suited_for": [
+        "Individuals seeking a lump sum on diagnosis of critical illness",
+        "Individuals who want coverage for multiple critical illnesses"
+    ],
+    "critical_illness_covered": [
+        "Cancer",
+        "Heart Related Conditions",
+        "Brain & Nervous System related Conditions",
+        "Major Organ & Other conditions"
+    ],
+    "claim_details": {
+        "max_lumpsum_per_group": "Up to 100% of the Sum Insured",
+        "max_lifetime_payout": "400% of Sum Insured",
+        "claims_per_policy_year": "Maximum One Claim only is payable in a Policy Year",
+        "survival_period": "15 days"
+    },
+    "premium_payment_options": [
+        "Quarterly",
+        "Half-yearly",
+        "Annually",
+        "Biennial (Once in 2 years)",
+        "Triennial (Once in 3 years)"
+    ],
+    "pre_policy_medical_screening": "Required for persons aged above 50 years and for those who declare adverse medical history."
+}

@@ -1,0 +1,44 @@
+{
+    "plan_id": "ACCIDENT_CARE_INDIVIDUAL",
+    "plan_name": "Accident Care Individual Insurance Policy",
+    "insurer_name": "STAR Health",
+    "uin": "IRDAI/HLT/SHAI/P-P/V.III/134/2017-18",
+    "plan_type": "Accident Insurance",
+    "coverage_area": "India",
+    "policy_term_options": [
+        "1 Year",
+        "2 Years",
+        "3 Years"
+    ],
+    "entry_age": {
+        "adults": "18 years to 70 years",
+        "children": "5 months to 25 years"
+    },
+    "sum_insured_options": "Minimum Rs 1 Lakh to Maximum Rs 7 Crore",
+    "risk_covered": [
+        "Accidental Death",
+        "Permanent Total Disablement",
+        "Permanent Partial Disablement",
+        "Temporary Total Disablement"
+    ],
+    "no_claim_bonus": "5% for claim free year, max accumulation 50%",
+    "additional_benefits": [
+        "Educational grant for children (1 child: Rs.10,000/-, 2 or more children: Rs. 20,000/-)",
+        "Ambulance Charges / Transportation expenses of mortal remains: Rs 5000",
+        "Travel expenses of one relative: Upto 1% of Total sum insured or maximum Rs 50,000",
+        "Vehicle and/or Residence Modification: Upto 10% of sum of Table B and Table C, maximum of Rs. 50,000/-",
+        "Purchase of Blood: Upto 5% of the sum insured under relevant table, maximum of Rs. 10,000/-",
+        "Transportation of Imported medicines: Upto 5% of Total sum insured, maximum of Rs 20,000/-"
+    ],
+    "optional_covers": [
+        "Medical Expenses Extension (25% of the valid claim or 10% of the sum insured or actuals, whichever is less, subject to a overall limit of Rs.5,00,000/- per policy period)",
+        "Coverage for winter sports",
+        "Hospital Cash (Rs 1000/- for each completed day, hospitalization within 30 days from the date of accident, 15 days per hospitalization & 60 days per policy period)",
+        "Home Convalescence (Rs 500/- for each completed day, maximum of 15 days per occurrence and 60 days per policy period towards the cost of engaging one attendant at residence immediately after discharge from the hospital & recommended by the attending physician)"
+    ],
+    "family_discount": "10% discount on total premium if family is covered.",
+    "differentiators": [
+        "Permanent Total Disablement compensation is 150% of the sum insured",
+        "Enhanced weekly compensation up to Rs.15000/- per week (maximum 100 weeks)"
+    ]
+}

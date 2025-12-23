@@ -1,0 +1,55 @@
+{
+    "plan_id": "SHAHLIP21579V052021",
+    "plan_name": "Star Super Surplus (Floater) Insurance Policy (Gold Plan)",
+    "insurer_name": "Star Health and Allied Insurance",
+    "plan_type": "Top-up Health Insurance",
+    "coverage_area": "India",
+    "policy_term_options": [
+        "1 Year",
+        "2 Years"
+    ],
+    "entry_age": {
+        "adults": "18 years \u2013 65 years",
+        "children": "91 days - 25 years",
+        "max_family_size": "2 Adults + 3 Children"
+    },
+    "sum_insured_options": [
+        "5L",
+        "10L",
+        "15L",
+        "20L",
+        "25L",
+        "50L",
+        "75L",
+        "100L"
+    ],
+    "defined_limits": [
+        "3L",
+        "5L",
+        "10L",
+        "15L",
+        "20L",
+        "25L"
+    ],
+    "room_rent": "Single Private AC Room",
+    "icu_coverage": "Covered up to Sum Insured",
+    "doctor_tests_medicines": "Covered up to Sum Insured",
+    "pre_hospitalization_days": "60",
+    "post_hospitalization_days": "90",
+    "day_care": "All day care procedures are covered up to the sum insured",
+    "ambulance": {
+        "road": "Up to Rs.3,000/- Per hospitalization",
+        "air": "Covered up to 10% of Sum Insured (available for SI of Rs.10 Lac and above)"
+    },
+    "organ_donor_expenses": "Covered up to Sum Insured",
+    "modern_treatments": "Covered (with sub-limits)",
+    "recharge_benefit": "50,000/- (for 3L defined limit), 75,000/- (for 5L defined limit), 1,00,000/- (for 10L defined limit), 2,50,000/- (for 15 Lac & above defined limit)",
+    "delivery_expenses": "Covered up to Rs.50,000/- per policy year (waiting period 1 year)",
+    "wellness_program": "Available via Mobile App \u2018Star Power\u2019 & Customer Portal",
+    "waiting_periods": {
+        "initial": "30 days",
+        "specific_diseases": "12 months",
+        "pre_existing": "12 months"
+    },
+    "migration_option": "Available after 5 policy yrs with continuity benefits (subject to Underwriting approval). Conditions apply: Insured before 50 yrs, continuous renewal, no claims in preceding 5 years, exercise for all insured persons, policy not renewed further if option exercised."
+}

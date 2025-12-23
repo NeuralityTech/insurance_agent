@@ -1,0 +1,66 @@
+{
+    "plan_id": "Senior Citizens Red Carpet",
+    "plan_name": "Senior Citizens Red Carpet",
+    "insurer_name": "Star Health and Allied Insurance",
+    "uin": "SHAHLIP22199V062122",
+    "plan_type": "Health Insurance",
+    "coverage_area": "India",
+    "policy_term_options": [
+        "1 Year",
+        "2 Years",
+        "3 Years"
+    ],
+    "entry_age": {
+        "individual": "60 Years to 75 years"
+    },
+    "sum_insured_options": [
+        "1 Lakh",
+        "2 Lakhs",
+        "3 Lakhs",
+        "4 Lakhs",
+        "5 Lakhs",
+        "7.5 Lakhs",
+        "10 Lakhs",
+        "15 Lakhs",
+        "20 Lakhs",
+        "25 Lakhs"
+    ],
+    "room_rent": "Subject to sub-limits based on Sum Insured",
+    "icu_coverage": "Subject to sub-limits based on Sum Insured",
+    "doctor_tests_medicines": "Subject to sub-limits based on Sum Insured",
+    "pre_hospitalization_days": "30",
+    "post_hospitalization_days": "7% of hospitalization Expenses",
+    "day_care": "All daycare procedures are covered",
+    "ambulance": {
+        "road": "Subject to sub-limits based on Sum Insured"
+    },
+    "restoration_benefit": "Not Specified",
+    "no_claim_bonus": "Not Specified",
+    "loyalty_benefits": [],
+    "premium_protection_features": [],
+    "teleconsultation": "Not Specified",
+    "wellness_program": "Not Specified",
+    "preventive_health_checkup": {
+        "individual": "Subject to sub-limits based on Sum Insured"
+    },
+    "fitness_benefits": "Not Specified",
+    "women_wellness": "Not Specified",
+    "senior_wellness": "Not Specified",
+    "cashless_claims": "Not Specified",
+    "reimbursement_supported": "Not Specified",
+    "grace_period_cover": "Not Specified",
+    "early_ped_relief": "Not Specified",
+    "waiting_period_continuity": "Not Specified",
+    "waiting_periods": {
+        "initial": "30 days",
+        "specific_diseases": "24 months",
+        "pre_existing": "12 months"
+    },
+    "optional_covers": [],
+    "voluntary_copay_options": [
+        "30%"
+    ],
+    "best_suited_for": [
+        "Senior Citizens"
+    ]
+}

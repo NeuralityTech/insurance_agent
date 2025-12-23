@@ -1,0 +1,73 @@
+{
+    "plan_id": "Star Women Care Insurance Policy",
+    "plan_name": "Star Women Care Insurance Policy",
+    "insurer_name": "Star Health and Allied Insurance",
+    "uin": "SHAHLIP22217V012122",
+    "plan_type": "Health Insurance",
+    "coverage_area": "India",
+    "policy_term_options": [
+        "One Year",
+        "Two Years",
+        "Three Years"
+    ],
+    "entry_age": {
+        "adults": "18 years \u2013 75 years",
+        "children": "91 days to 25 years"
+    },
+    "sum_insured_options": [
+        "5 Lac",
+        "10 Lac",
+        "15 Lac",
+        "20 Lac",
+        "25 Lac",
+        "50 Lac",
+        "100 Lac"
+    ],
+    "room_rent": "1% of sum insured or maximum up to Rs. 20,000 /- per day",
+    "icu_coverage": "Not Specified",
+    "doctor_tests_medicines": "Not Specified",
+    "pre_hospitalization_days": "60",
+    "post_hospitalization_days": "90",
+    "day_care": "All day care procedures covered",
+    "modern_treatments": "Up to 50% of sum insured (5 & 10 Lacs SI), Up to 40% of sum insured (15 & 20 Lacs SI), Up to 30% of sum insured (25 Lacs+ SI)",
+    "ayush_treatment": "Covered (Actuals)",
+    "ambulance": {
+        "road": "Covered (Actuals)",
+        "air": "Covered for sum insured of Rs 10 Lakhs & above only. Up to 10% of the sum insured per year."
+    },
+    "restoration_benefit": "Up to 100% of the Basic SI, available immediately upon partial/full utilization of the limit of coverage",
+    "no_claim_bonus": "20% of the expiring Sum Insured from the second year onwards, up to 100% of the Basic SI",
+    "loyalty_benefits": [],
+    "premium_protection_features": [],
+    "teleconsultation": "Available through Star Telehealth app",
+    "wellness_program": "Available for Insured aged => 18 years. Earn reward points and avail premium discount up to 10% on renewal premium.",
+    "preventive_health_checkup": "Covered (limits vary by SI and age, inclusive of costs of vaccination)",
+    "fitness_benefits": "Not Specified",
+    "women_wellness": "Special benefits: Daughter can continue as a dependent child if unmarried and/or unemployed beyond 25 years and max up to 30 years; Pregnant women can buy this policy by submitting scan reports during 12th and 20th week of pregnancy; Continuity benefits accrued before marriage considered for Maternity Section.",
+    "senior_wellness": "Not Specified",
+    "cashless_claims": "Not Specified",
+    "reimbursement_supported": "Not Specified",
+    "grace_period_cover": "Not Specified",
+    "early_ped_relief": "Not Specified",
+    "waiting_period_continuity": "Not Specified",
+    "waiting_periods": {
+        "initial": "30 days for all illnesses (except accident)",
+        "specific_diseases": "2 years",
+        "pre_existing": "2 years",
+        "bariatric_surgery": "2 years",
+        "assisted_reproduction_treatment": "3 years",
+        "ante_natal_care": "2 years (for 5 & 10 Lacs SI), 1 year (for 15 Lacs+ SI)",
+        "in_utero_fetal_surgery_repair": "2 years (for 5 & 10 Lacs SI), 1 year (for 15 Lacs+ SI)",
+        "delivery_expenses": "2 years (for 5 & 10 Lacs SI), 1 year (for 15 Lacs+ SI)",
+        "miscarriage_due_to_accident": "2 years (for 5 & 10 Lacs SI), 1 year (for 15 Lacs+ SI)"
+    },
+    "optional_covers": [
+        "Lump sum cover for cancer"
+    ],
+    "volunatary_copay_options": [],
+    "best_suited_for": [
+        "Women and their families",
+        "Pregnant women",
+        "New mothers"
+    ]
+}

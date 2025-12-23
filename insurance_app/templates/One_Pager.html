@@ -3,10 +3,11 @@
         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
         <h2 style="margin: 0; color: #334155;">Insurance Plan Summary</h2>
         <div class="print-actions">
+            <!-- Existing Print Button remains -->
             <button type="button" id="btn-print-one-pager" class="btn btn-primary"
                 onclick="if(window.printOnePager) window.printOnePager();"
                 style="opacity: 1 !important; visibility: visible !important; display: inline-flex !important; align-items: center; gap: 5px; cursor: pointer !important; background-color: #0d6efd !important; color: white !important; border: 1px solid #0d6efd !important;">
-                <i class="fas fa-print"></i> Download / Print
+                <i class="fas fa-print"></i> Print View
             </button>
         </div>
     </div>
@@ -75,7 +76,8 @@
 
                 <div class="highlights-section"
                     style="margin-top: 15px; border-top: 1px dashed #bfdbfe; padding-top: 10px;">
-                    <h5 style="font-size: 1.05rem; color: #1e40af; margin-bottom: 8px; font-weight: 700;">Highlights</h5>
+                    <h5 style="font-size: 1.05rem; color: #1e40af; margin-bottom: 8px; font-weight: 700;">Highlights
+                    </h5>
                     <div style="width: 100%; box-sizing: border-box;">
                         <div style="font-size: 0.85rem; color: #1e40af; padding-bottom: 5px; font-weight: 500;">
                             Benefits and Features</div>
@@ -86,97 +88,24 @@
                 </div>
             </div>
 
-            <!-- Box 2: Comparison Plan 1 -->
-            <div class="plan-box comparison"
-                style="flex: 1 1 0 !important; min-width: 0 !important; max-width: 31% !important; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px !important; background: #fff; box-sizing: border-box !important;">
-                <h4 style="text-align: center; color: #64748b; margin-bottom: 15px;">Comparison Plan 1</h4>
+            <!-- Box 2: Comparison Plans Unit (Empty Box) -->
+            <div class="plan-box comparison-unit"
+                style="flex: 2 1 0 !important; min-width: 0 !important; max-width: 66% !important; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px !important; background: #f8fafc; box-sizing: border-box !important; display: flex; flex-direction: column;">
+                <h4 style="text-align: center; color: #475569; margin-bottom: 15px; font-weight: 700;">One pager for
+                    selected plan</h4>
 
-                <div class="form-group">
-                    <label>Plan Name</label>
-                    <select id="op-plan2-select" class="form-control" style="width: 100%;">
-                        <option value="">-- Select Plan --</option>
-                        <!-- Populated with all active plans -->
-                    </select>
+                <div class="form-group" style="flex: 1; display: flex; flex-direction: column;">
+                    <textarea id="op-comparison-notes" class="form-control"
+                        style="width: 100%; flex: 1; min-height: 400px; resize: none; border: 1px solid #cbd5e1; border-radius: 6px; padding: 15px; background: #fff; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);"
+                        placeholder="Enter alternative plan comparisons or manual notes here..."></textarea>
                 </div>
 
-                <div class="form-group">
-                    <label>Sum Insured</label>
-                    <input type="text" id="op-plan2-si" class="form-control" placeholder="Enter Sum Insured">
-                </div>
-
-                <div class="form-group">
-                    <label>Premium</label>
-                    <input type="text" id="op-plan2-premium" class="form-control" placeholder="Enter Premium">
-                </div>
-
-                <div class="form-group">
-                    <label>Policy Term</label>
-                    <select id="op-plan2-term" class="form-control">
-                        <option value="1 Year">1 Year</option>
-                        <option value="2 Years">2 Years</option>
-                        <option value="3 Years">3 Years</option>
-                        <option value="4 Years">4 Years</option>
-                        <option value="5 Years">5 Years</option>
-                    </select>
-                </div>
-
-                <div class="highlights-section"
-                    style="margin-top: 15px; border-top: 1px dashed #e2e8f0; padding-top: 10px;">
-                    <h5 style="font-size: 1.05rem; color: #64748b; margin-bottom: 8px; font-weight: 700;">Highlights</h5>
-                    <div style="width: 100%; box-sizing: border-box;">
-                        <div style="font-size: 0.85rem; color: #64748b; padding-bottom: 5px; font-weight: 500;">
-                            Benefits and Features</div>
-                        <textarea id="op-plan2-benefits" class="form-control form-control-sm"
-                            style="width: 100%; height: 125px; resize: none; overflow-y: scroll; overflow-x: hidden; word-wrap: break-word; white-space: pre-wrap; box-sizing: border-box;"
-                            placeholder="Shows Benefits and Features"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Box 3: Comparison Plan 2 -->
-            <div class="plan-box comparison"
-                style="flex: 1 1 0 !important; min-width: 0 !important; max-width: 31% !important; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px !important; background: #fff; box-sizing: border-box !important;">
-                <h4 style="text-align: center; color: #64748b; margin-bottom: 15px;">Comparison Plan 2</h4>
-
-                <div class="form-group">
-                    <label>Plan Name</label>
-                    <select id="op-plan3-select" class="form-control" style="width: 100%;">
-                        <option value="">-- Select Plan --</option>
-                        <!-- Populated with all active plans -->
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Sum Insured</label>
-                    <input type="text" id="op-plan3-si" class="form-control" placeholder="Enter Sum Insured">
-                </div>
-
-                <div class="form-group">
-                    <label>Premium</label>
-                    <input type="text" id="op-plan3-premium" class="form-control" placeholder="Enter Premium">
-                </div>
-
-                <div class="form-group">
-                    <label>Policy Term</label>
-                    <select id="op-plan3-term" class="form-control">
-                        <option value="1 Year">1 Year</option>
-                        <option value="2 Years">2 Years</option>
-                        <option value="3 Years">3 Years</option>
-                        <option value="4 Years">4 Years</option>
-                        <option value="5 Years">5 Years</option>
-                    </select>
-                </div>
-
-                <div class="highlights-section"
-                    style="margin-top: 15px; border-top: 1px dashed #e2e8f0; padding-top: 10px;">
-                    <h5 style="font-size: 1.05rem; color: #64748b; margin-bottom: 8px; font-weight: 700;">Highlights</h5>
-                    <div style="width: 100%; box-sizing: border-box;">
-                        <div style="font-size: 0.85rem; color: #64748b; padding-bottom: 5px; font-weight: 500;">
-                            Benefits and Features</div>
-                        <textarea id="op-plan3-benefits" class="form-control form-control-sm"
-                            style="width: 100%; height: 125px; resize: none; overflow-y: scroll; overflow-x: hidden; word-wrap: break-word; white-space: pre-wrap; box-sizing: border-box;"
-                            placeholder="Shows Benefits and Features"></textarea>
-                    </div>
+                <div style="margin-top: 10px; text-align: right;">
+                    <button type="button" id="btn-download-pdf" class="btn btn-success"
+                        onclick="if(window.downloadOnePagerPDF) window.downloadOnePagerPDF();"
+                        style="opacity: 1 !important; visibility: visible !important; display: inline-flex !important; align-items: center; gap: 5px; cursor: pointer !important; background-color: #198754 !important; color: white !important; border: 1px solid #198754 !important; padding: 6px 12px !important;">
+                        <i class="fas fa-file-pdf"></i> Download PDF
+                    </button>
                 </div>
             </div>
         </div>

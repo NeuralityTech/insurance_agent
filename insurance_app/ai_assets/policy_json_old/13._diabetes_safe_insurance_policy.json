@@ -1,0 +1,45 @@
+{
+    "Policy Name": "Diabetes Safe Insurance Policy",
+    "Unique Identification No": "SHAHLIP21266V062021",
+    "About the policy": "An innovation policy by Star health dedicated to diabetic persons that covers diabetic, regular hospitalization & out patient expenses",
+    "Age at entry": "18 years to 65 years",
+    "Eligibility": "Person with Type 1 or Type 2 diabetes. Only 2A avialable for husband and wife - any one must be diabetic",
+    "Renewal": "Life long",
+    "Policy Term": "1 ,2 & 3 years",
+    "Policy Type": "Individual & Floater",
+    "Plan Options": [
+        "Plan A",
+        "Plan B"
+    ],
+    "Medical screening": "Plan A is must. Plan B - No Medical screening",
+    "Cover from Day 1 - for diabetic complications": "Plan A: All diabetic complications covered from Day 1. Plan B: Cover from Day - 31st - for diabetic complications(except for cardio vascular, Renal/ Eye/ Foot ulcer)",
+    "Sublimit for cardio - vascular complications": "Plan A: No sublimit. Plan B: Sublimit for cardio - vascular complications",
+    "Premium": "Plan A: Premium is lower. Plan B: Premium is higher",
+    "Medical screening for every entry": "Plan A: Medical screening for every entry. Plan B: No medical screening even for fresh entry aged >50",
+    "Outpatient benefits": "Plan A: Higher outpatient benefits. Plan B: Slightly less outpatient benefits",
+    "Room rent (Per day)": "Single Standard A/C room",
+    "Ambulance charges": "Rs 2000 per hospitalization",
+    "Pre hospitalization": "30 days prior to date of hospitalization",
+    "Post hospitalization": "60 days from date of discharge (7% of hospitalization expenses max Rs 5000)",
+    "Daycare procedures": "All daycare procedures are covered",
+    "Donor Expenses coverage": "Kidney Transplantation donor Screening and Post Donation Complications of the donor not covered",
+    "Dialysis Expenses coverage": "@ Rs 1000 per sitting upto 24 months from the month of dialysis recommendation",
+    "Cost of Artifical Limbs": "On Amputation \u2013 upto 10% of Sum Insured \u2013 if Amputation surgery claim is admitted",
+    "Sum insured (Rs)": "3 Lac, 4 Lac, 5 Lac, 10 Lac",
+    "Sub limit of Cardio vascular": "Plan A: No sublimit. Plan B: 3 Lac, 4 Lac, 5 Lac, 10 Lac",
+    "Cataract limits": "Per Eye - Rs 20,000; Per policy period Rs 30,000 (for 3/4 Lac SI). Per Eye - Rs 30,000; Per policy period - Rs 40,000 (for 5/10 Lac SI)",
+    "Personal Accidental Cover": "Death sum insured equal to health sum insured & covers accidental death",
+    "Outpatient": "Rs 750 per hospitalization and Rs 1500 per policy year, Blood test cost is reimbursed",
+    "Automatic restoration": "100 % Sum insured when basic sum insured is exhausted. Can be used for non-diabetic related hospitalization only, Available in individual policies.",
+    "Modern Treatments": "Based on the sum insured chosen limits vary",
+    "Waiting period - Hospitalization Diabetes Related": {
+        "For hospitalization not related to Cardio Vascular System, Renal System, Diseases of Eye, Diabetic Peripheral Vascular": "Plan A: 30 days. Plan B: No waiting period",
+        "For hospitalization related to Cardio Vascular System, Renal System, Diseases of Eye, Diabetic Peripheral Vascular Diseases and Food Ulcer": "Plan A: 12 months. Plan B: No waiting period",
+        "Any Transplant related Surgery": "Plan A: 24 months. Plan B: No waiting period"
+    },
+    "Waiting period - Hospitalization - other than Diabetes Related": {
+        "Initial waiting period": "30 days for illness/diseases/treatments (Other than accidents)",
+        "Specific diseases": "24 months",
+        "Pre Existing Diseases": "48 months"
+    }
+}

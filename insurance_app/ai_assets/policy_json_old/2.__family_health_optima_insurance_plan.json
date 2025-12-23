@@ -1,0 +1,66 @@
+{
+    "About the policy": "Covers for regular hospitalization benefits on floater basis",
+    "Type of Cover": "Floater Sum Insured (Family Size - 6 Adults + 3 Dependent Children)",
+    "Entry Age": {
+        "For Adults": "18 years \u2013 65 years (Dependent Parents & Dependent Parent-in-laws can also be added)",
+        "For Dependent Children": "16 days to 25 years"
+    },
+    "Continuity": "Life time renewal",
+    "Co-payment": "20 % Co-payment is applicable if the Insured age at entry is above 61 years & above",
+    "Renewal": "Lifelong",
+    "Policy Term": "One Year",
+    "Pre Policy Medical Screening": "All persons above 50 years of age whose Sum insured Rs 3 Lac are required to undergo pre-acceptance medical screening at the Company designated Centers.",
+    "Sum Insured Options (Rs. in Lacs)": [
+        3,
+        4,
+        5,
+        10,
+        15,
+        20,
+        25
+    ],
+    "Pricing": "Zone based pricing",
+    "Zone - 1": "Delhi including Faridabad, Gurgaon, Ghaziabad and Noida, Mumbai including Thane, Ahmedabad, Surat and Baroda",
+    "Zone - 1 a": "Pune including Nashik, Trivandrum, Ernakulam, Chennai, Bengaluru and Rest of Gujarat",
+    "Zone - 2": "Coimbatore, Indore, Hyderabad, Secunderabad, Vijaywada, Vishakhapatnam and Rest of Kerala",
+    "Zone - 3": "Rest of India not covered under Zone \u2013 1 , Zone \u2013 1a and Zone - 2",
+    "Hospitalization - Room Rent (Per Day)": "3 Lac & 4 Lac - Rs.5000; 5 Lac & above SI - Single Standard A/C Room",
+    "Treatment @ Valuable Service Providers": "1% of Sum Insured (With max limit of Rs. 5000) per policy year Applicable for Rs 3 lac & above SI. (For the full list visit: www.starhealth.in)",
+    "Shared Accommodation (Per Day)": "Rs 3 Lac to 15 Lac - Rs. 800; Rs 20 Lac & 25 Lac - Rs. 1000 - Applicable for Rs 3 lac & above SI",
+    "Emergency Road Ambulance": "Rs. 750 per hospitalization ; Rs. 1500 per policy period",
+    "Air Ambulance": "10 % of Sum Insured, Available for Rs 5 Lac and above SI",
+    "Relevant Pre & Post Hospitalization": "60 Days & 90 Days",
+    "Organ Donor Expenses": "10 % of Sum insured or Rs 1 Lac whichever is less payable provided Insured person is the recipient. Donor screening expenses and post-donation complications of the donor are not payable.",
+    "Day Care Procedures": "All day care procedures are covered (Actuals)",
+    "Cataract": {
+        "Limit Per Eye (Rs)": "Rs 25,000 Rs 30,000 Rs 40,000 Rs 50,000",
+        "Limit Per Policy Period (Rs)": "Rs 35,000 Rs 45,000 Rs 60,000 Rs 75,000"
+    },
+    "Domiciliary hospitalization": "Covered (Actuals) - Covered for the period exceeding three days",
+    "AYUSH treatment": "Up to Rs 4 Lac SI - Rs. 10,000; Rs 5 Lac to 15 Lac SI - Rs. 15,000; Rs 20 Lac & Rs 25 Lac SI - Rs. 20,000",
+    "New Born Baby cover": "10 % of Sum Insured (Maximum Rs. 50,000) provided Mother is covered under the policy for at least 1 year & Coverage starts from 16 th day after its birth till policy expiry (Subject to limit and SI availability)",
+    "Emergency Domestic Medical Evacuation (Limit per hospitalization)": "Expenses incurred towards transportation of the insured person from the hospital where the insured person is currently undergoing treatment to another hospital for further treatment. Up to 4 Lac SI : Rs .5,000; Rs 5 Lac SI to Rs 15 Lac SI : Rs 7500; Rs 20 Lac SI & Rs 25 Lac SI : Rs 10,000",
+    "Assisted Reproduction Treatment": "5 Lac SI - Rs. 1,00,000; 10 Lac to 25 Lac SI - Rs. 2,00,000",
+    "Waiting period of 36 months from policy inception. Available on every block of 3 years and payable on renewal": "36 months",
+    "No Claim Bonus (Claim Free Year)": "25% of the expiring Sum Insured in the second year Additional 10% of the expiring sum Insured for the subsequent years. Maximum Accumulation 100%",
+    "Road Traf\ufb01c Accident": "25% of Sum Insured Maximum of Rs 5 Lac (Additional sum insured shall be available after exhaustion of the limit of coverage)",
+    "Health Check up (SI)": {
+        "3 Lac": "750",
+        "4 Lac": ". 1000",
+        "5 Lac": "1500",
+        "10 Lac": "2000",
+        "15 Lac": "2500",
+        "20 Lac": "3000",
+        "25 Lac": "3500"
+    },
+    "Free Second Medical Opinion": "Medical opinion will be made available directly to the insured; Provided on speci\ufb01c request made by the insured",
+    "Compassionate Travel": "Air Travel Expenses of one immediate family member reimbursed up to Rs. 5000, Available for Rs 10 Lac SI & above only.",
+    "Modern treatments": "Based on the Sum insured chosen limits differ, refer policy wording for further details",
+    "Instalment Options": "Quarterly/ Half-Yearly",
+    "Repatriation of Mortal Remains": "Up to Rs. 5000 reimbursed for repatriation of mortal remains to the residence (Per Policy Period)",
+    "Waiting Period": {
+        "Initial waiting period": "30 days for all illnesses (Except accident)",
+        "For Speci\ufb01c diseases": "2 years",
+        "For Pre-existing diseases": "4 years"
+    }
+}

@@ -1,0 +1,76 @@
+{
+    "policy_name": "Super Surplus Insurance Policy (Gold Plan)",
+    "uin": "SHAHLIP21580V052021",
+    "about_the_policy": "This is a top-up policy with Individual sum insured",
+    "for_whom": "For Individuals & Family (with Individual SI) (Family means - 2A + 3C)",
+    "entry_age": {
+        "for_adults": "18years \u2013 65 years",
+        "for_children": "91days - 25 years"
+    },
+    "co_payment": "Not Applicable",
+    "renewal": "Lifelong renewal",
+    "policy_term": "One Year/ Two Year",
+    "installment_facility": "Available (Monthly, Qtrly, Half-Yearly)",
+    "pre_policy_medical_check_up": "Not required",
+    "sum_insured_options_lacs": [
+        "5L",
+        "7L",
+        "10L",
+        "15L",
+        "20L",
+        "25L",
+        "50L",
+        "75L",
+        "100L"
+    ],
+    "defined_limits_lacs": [
+        "3L",
+        "5L",
+        "10L",
+        "15L",
+        "20L",
+        "25L"
+    ],
+    "what_is_defined_limit": "Defined Limit means the limit of covered medical expenses up to which the company will not be liable during the policy period",
+    "payment_of_claim": "Under this policy claim gets paid only when the aggregate of covered medical expenses exceed the defined limit in a policy year",
+    "coverage": {
+        "basic_covers": {
+            "in_patient_hospitalization": "Room - Single Private AC Room",
+            "icu_doctor_fees_diagnostic_tests_drugs_medicines": "Covered up to Sum Insured",
+            "day_care_procedures": "All day care procedures are covered up to the sum insured",
+            "pre_hospitalization": "60 Days",
+            "post_hospitalization": "90 Days",
+            "road_ambulance": "Up to Rs.3,000/- Per hospitalization",
+            "air_ambulance": "Covered up to 10% of SI (available for SI of Rs.7 Lac and above)",
+            "organ_donor_expenses": "Covered up to Sum Insured",
+            "modern_treatments": "Covered (with sub-limits)"
+        },
+        "additional_covers": {
+            "recharge": {
+                "defined_limit": {
+                    "3_lac": "50,000/-",
+                    "5_lac": "75,000/-",
+                    "10_lac": "1,00,000/-",
+                    "15_lac_above": "2,50,000/-"
+                }
+            }
+        }
+    },
+    "option_for_migration": {
+        "available_after": "5 policy yrs with continuity benefits (subject to Underwriting approval)",
+        "conditions": [
+            "If the Person insured with the Company under this policy before 50 yrs and have been continuously renewed without any break",
+            "No claim has been made during the immediately preceding 5 years",
+            "The proposer should exercise this option for all the insured persons",
+            "This policy shall not be further renewed if the option is exercised"
+        ]
+    },
+    "medical_second_opinion": "Available: e_medicalopinion@starhealth.in",
+    "delivery_expenses": "Covered up to Rs.50,000/- per policy year (waiting period 1 year)",
+    "wellness_services": "Can be availed from our Mobile App \u2018Star Power\u2019 & Customer Portal",
+    "waiting_periods": {
+        "initial": "30 days",
+        "specific_diseases": "12 months",
+        "peds": "12 months"
+    }
+}

@@ -1,0 +1,68 @@
+{
+    "plan_id": "STAR_PREMIER",
+    "plan_name": "Star Health Premier Insurance Policy",
+    "insurer_name": "Star Health and Allied Insurance",
+    "uin": "SHAHLIP22226V012122",
+    "plan_type": "Health Insurance",
+    "coverage_area": "India",
+    "policy_term_options": [
+        "One Year",
+        "Two Years",
+        "Three Years"
+    ],
+    "entry_age": {
+        "individual": "Minimum 50 years (Primary member) and any age",
+        "children": "91 days to 25 years",
+        "max_family_size": "2 adults + 3 children"
+    },
+    "sum_insured_options": [
+        "10L",
+        "20L",
+        "30L",
+        "50L",
+        "75L",
+        "100L"
+    ],
+    "room_rent": "1% of sum insured or maximum up to Rs. 20,000 per day",
+    "icu_coverage": "Not Specified",
+    "doctor_tests_medicines": "Not Specified",
+    "pre_hospitalization_days": "60",
+    "post_hospitalization_days": "90",
+    "day_care": "All day care procedures covered",
+    "modern_treatments": "Up to 50% of sum insured",
+    "ayush_treatment": "Covered up to sum insured",
+    "ambulance": {
+        "road": "Covered (Actuals)",
+        "air": "Rs. 2.50 Lakhs per hospitalisation and maximum Rs. 5 Lakhs per policy year"
+    },
+    "restoration_benefit": "Up to 100% of the Basic SI, unlimited times",
+    "no_claim_bonus": "20% of sum insured for each claim-free year, maximum 100% sum insured",
+    "loyalty_benefits": [],
+    "premium_protection_features": [],
+    "teleconsultation": "Not Specified",
+    "wellness_program": "Earn reward points and avail premium discount up to 10% on renewal premium",
+    "preventive_health_checkup": "Payable on renewal after every claim-free year",
+    "fitness_benefits": "Not Specified",
+    "women_wellness": "Not Specified",
+    "senior_wellness": "Not Specified",
+    "cashless_claims": "Not Specified",
+    "reimbursement_supported": "Not Specified",
+    "grace_period_cover": "Not Specified",
+    "early_ped_relief": "Not Specified",
+    "waiting_period_continuity": "Not Specified",
+    "waiting_periods": {
+        "initial": "30 days for all illnesses (except accident)",
+        "specific_diseases": "2 years",
+        "pre_existing": "2 years"
+    },
+    "optional_covers": [
+        "Hospice Care",
+        "Homecare Treatment",
+        "Deductible option"
+    ],
+    "voluntary_copay_options": [],
+    "best_suited_for": [
+        "Senior citizens seeking high sum insured",
+        "Individuals looking for long-term health security"
+    ]
+}

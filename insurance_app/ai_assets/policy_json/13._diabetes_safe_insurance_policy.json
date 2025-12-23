@@ -1,0 +1,80 @@
+{
+    "plan_id": "SHAHLIP21266V062021",
+    "plan_name": "Diabetes Safe Insurance Policy",
+    "insurer_name": "Star Health and Allied Insurance",
+    "uin": "SHAHLIP21266V062021",
+    "plan_type": "Health Insurance",
+    "coverage_area": "India",
+    "policy_term_options": [
+        "1 Year",
+        "2 Years",
+        "3 Years"
+    ],
+    "entry_age": {
+        "individual": "18 years to 65 years",
+        "floater_adults": "18 years to 65 years",
+        "children": "31st Day to 25 years"
+    },
+    "eligibility": "Person with Type 1 or Type 2 diabetes. Only 2A available for husband and wife, where one must be diabetic.",
+    "sum_insured_options": [
+        "3 Lac",
+        "4 Lac",
+        "5 Lac",
+        "10 Lac"
+    ],
+    "plan_options": [
+        "Plan A",
+        "Plan B"
+    ],
+    "plan_a_details": "Medical screening is a must. Covers diabetic complications from Day 1. No sublimit restrictions. Premium is lower. Higher outpatient benefits.",
+    "plan_b_details": "No medical screening required, even for fresh entry aged >50. Covers diabetic complications from Day 31 (except cardiovascular, renal/ eye/ foot ulcer complications, which are covered from 13th month). Sublimit for cardio-vascular complications. Premium is higher. Slightly less outpatient benefits.",
+    "room_rent": "Single Standard A/C room",
+    "icu_coverage": "Not Specified",
+    "doctor_tests_medicines": "Not Specified",
+    "pre_hospitalization_days": "30",
+    "post_hospitalization_days": "60",
+    "day_care": "All day care procedures are covered",
+    "modern_treatments": "Based on the sum insured chosen limits vary",
+    "ayush_treatment": "Not Specified",
+    "ambulance": {
+        "road": "Rs 2000 per hospitalization",
+        "air": "Not Specified"
+    },
+    "restoration_benefit": "100% Sum insured when basic sum insured is exhausted. Can be used for non-diabetic related hospitalization only. Available in individual policies.",
+    "no_claim_bonus": "Not Specified",
+    "loyalty_benefits": "Not Specified",
+    "premium_protection_features": "Not Specified",
+    "teleconsultation": "Unlimited Tele Consultation (Wellness Services)",
+    "wellness_program": "Wellness Services can be availed from our Mobile App \u2018Star Power\u2019 & Customer Portal.",
+    "preventive_health_checkup": "Not Specified",
+    "fitness_benefits": "Not Specified",
+    "women_wellness": "Not Specified",
+    "senior_wellness": "Not Specified",
+    "cashless_claims": "Not Specified",
+    "reimbursement_supported": "Not Specified",
+    "grace_period_cover": "Not Specified",
+    "early_ped_relief": "Not Specified",
+    "waiting_period_continuity": "Not Specified",
+    "waiting_periods": {
+        "initial": "30 days for illness/diseases/treatments (Other than accidents)",
+        "specific_diseases": "24 months",
+        "pre_existing": "48 months",
+        "diabetes_related_hospitalization_non_cv_renal_eye_foot_ulcer": "30 days",
+        "diabetes_related_hospitalization_cv_renal_eye_foot_ulcer": "12 months",
+        "any_transplant_related_surgery": "24 months"
+    },
+    "optional_covers": [],
+    "co_payment": "5% of Co-pay for all claims",
+    "voluntary_copay_options": "Not Specified",
+    "best_suited_for": [
+        "Diabetic individuals"
+    ],
+    "cost_of_artificial_limbs": "On Amputation \u2013 upto 10% of Sum Insured \u2013 if Amputation surgery claim is admitted",
+    "dialysis_expenses": "Rs 1000 per sitting upto 24 months from the month of dialysis recommendation",
+    "outpatient_benefits": "Rs 750 per hospitalization and Rs 1500 per policy year, Blood test cost is reimbursed",
+    "personal_accidental_cover": "Death sum insured equal to health sum insured & covers accidental death",
+    "cardiovascular_sublimit": {
+        "plan_a": "No sublimit",
+        "plan_b": "3 Lac / 4 Lac / 5 Lac / 10 Lac"
+    }
+}

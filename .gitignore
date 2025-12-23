@@ -18,3 +18,4 @@ __pycache__/
 # Generated reports and summaries
 justification_reports/
 insurance_app/plan_summaries/
+node_modules/

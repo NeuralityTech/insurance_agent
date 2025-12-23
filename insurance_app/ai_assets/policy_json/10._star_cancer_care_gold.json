@@ -1,0 +1,69 @@
+{
+    "plan_id": "STAR_CANCER_CARE_GOLD",
+    "plan_name": "Star Cancer Care Gold",
+    "insurer_name": "Star Health and Allied Insurance",
+    "uin": "SHAHLIP21216V022021",
+    "plan_type": "Cancer Insurance Policy",
+    "coverage_area": "India",
+    "policy_term_options": [
+        "1 Year"
+    ],
+    "entry_age": {
+        "individual": "05 months to 65 years"
+    },
+    "sum_insured_options": {
+        "Section 1 (Cancer Lump-sum benefit)": [
+            "3 Lac",
+            "5 Lac"
+        ],
+        "Section 2 - Surgical management*": [
+            "1 Lac",
+            "1.5 Lac"
+        ],
+        "Section 3 - Medical management*": [
+            "0.5 Lac",
+            "1 Lac"
+        ]
+    },
+    "room_rent": "Single standard AC room",
+    "icu_coverage": "Actuals",
+    "doctor_tests_medicines": "Actuals",
+    "pre_hospitalization_days": "30",
+    "post_hospitalization_days": "60",
+    "day_care": "All day care procedures are covered",
+    "ambulance": {
+        "road": "Rs. 1500/- per hospitalization and Rs. 2000/- per policy period"
+    },
+    "modern_treatments": "Based on the Sum insured chosen limits differ, for full particulars refer policy wording",
+    "ayush_treatment": "Not Specified",
+    "restoration_benefit": "Not Specified",
+    "no_claim_bonus": "5% of basic sum insured for each claim free year subject to a maximum of 50%",
+    "loyalty_benefits": "Not Specified",
+    "premium_protection_features": "Not Specified",
+    "teleconsultation": "Not Specified",
+    "wellness_program": "Not Specified",
+    "preventive_health_checkup": "Upto Rs 2,500 for every claim free year",
+    "fitness_benefits": "Not Specified",
+    "women_wellness": "Not Specified",
+    "senior_wellness": "Not Specified",
+    "cashless_claims": "Not Specified",
+    "reimbursement_supported": "Not Specified",
+    "grace_period_cover": "Not Specified",
+    "early_ped_relief": "Not Specified",
+    "waiting_period_continuity": "Not Specified",
+    "waiting_periods": {
+        "initial": "30 days (Not applicable for accidents)",
+        "specific_diseases": "24 months",
+        "pre_existing": "48 months"
+    },
+    "optional_covers": [
+        "Lump sum cover for cancer (Section 2)",
+        "Surgical treatment* (Section 2)",
+        "Medical management treatment* (Section 3)"
+    ],
+    "co_payment": "10% for indemnity claims (Section II and III) - 60 years and above age at entry",
+    "best_suited_for": [
+        "Persons diagnosed or treated of Cancer",
+        "Individuals seeking cancer-specific coverage"
+    ]
+}

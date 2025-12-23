@@ -1,0 +1,73 @@
+{
+    "plan_id": "STAR_ASSURE",
+    "plan_name": "Star Health Assure Insurance Policy",
+    "insurer_name": "Star Health and Allied Insurance",
+    "uin": "SHAHLIP23017V012223",
+    "plan_type": "Health Insurance",
+    "coverage_area": "India",
+    "policy_term_options": [
+        "1 Year",
+        "2 Years",
+        "3 Years"
+    ],
+    "entry_age": {
+        "individual": "18 years to 75 years",
+        "dependent_children": "91 days to 18 years",
+        "adults_floater": "18 years to 75 years",
+        "children_floater": "16 days to 18 years",
+        "max_family_size": "2 Adults + 3 Children + 4 Parents/Parents-in-law OR 6 Adults + 3 Children"
+    },
+    "sum_insured_options": [
+        "5L",
+        "10L",
+        "15L",
+        "20L",
+        "25L",
+        "50L",
+        "75L",
+        "100L",
+        "200L"
+    ],
+    "special_sum_insured_rules": "75L, 100L and 200L available only up to 65 years entry age at inception.",
+    "room_rent": "Up to 1% of Sum Insured or up to Rs. 20,000/- per day whichever is less (No limit, Any room)",
+    "icu_coverage": "Covered up to Sum Insured",
+    "doctor_tests_medicines": "Covered up to Sum Insured",
+    "pre_hospitalization_days": "60",
+    "post_hospitalization_days": "180",
+    "day_care": "All day care treatments covered",
+    "ambulance": {
+        "road": "Covered up to Sum Insured",
+        "air": "Covered up to 10% of Sum Insured per policy year"
+    },
+    "restoration_benefit": "Unlimited number of times, up to 100% of Sum Insured each time, for subsequent hospitalizations. Restores immediately upon partial/full utilization. Maximum payable in a single claim is up to the Sum Insured.",
+    "no_claim_bonus": "25% of Sum Insured for each claim-free year, maximum up to 100% of Sum Insured.",
+    "loyalty_benefits": "Not Specified",
+    "premium_protection_features": "Not Specified",
+    "teleconsultation": "Available for Second Medical Opinion",
+    "wellness_program": "Earn reward points and avail premium discount up to 20% on renewal premium.",
+    "preventive_health_checkup": "Annual health check-up (Individual: Rs 1500-8000; Floater: Rs 2500-15000, based on SI).",
+    "fitness_benefits": "Not Specified",
+    "women_wellness": "Not Specified",
+    "senior_wellness": "Not Specified",
+    "cashless_claims": "Yes",
+    "reimbursement_supported": "Yes",
+    "grace_period_cover": "Not Specified",
+    "early_ped_relief": "Not Specified",
+    "waiting_period_continuity": "Not Specified",
+    "waiting_periods": {
+        "initial": "30 days for all illnesses (except accident)",
+        "specific_diseases": "2 years",
+        "pre_existing": "2.5 years for 3-year policy term, 3 years for 1-year and 2-year policy terms"
+    },
+    "optional_covers": [
+        "Deductible Option"
+    ],
+    "voluntary_copay_options": [
+        "Not Specified"
+    ],
+    "best_suited_for": [
+        "Families seeking high sum insured including parents/parents-in-law",
+        "Individuals looking for comprehensive coverage with high sum insured options",
+        "Customers who prefer lifetime renewal and long-term policy discounts"
+    ]
+}

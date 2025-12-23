@@ -41,9 +41,74 @@
                 }
             });
 
+            // Setup PDF Download Button
+            const downloadPdfBtn = document.getElementById('btn-download-pdf');
+            if (downloadPdfBtn) {
+                downloadPdfBtn.onclick = function () {
+                    downloadOnePagerPDF();
+                };
+            }
+
             // Initialize dropdowns HERE so that 'disabled' property applied by it is not removed by the loop above
             initializePlanDropdowns();
         }, 800); // Increased delay slightly to be safe
+    }
+
+    // Function to download PDF
+    function downloadOnePagerPDF() {
+        const { jsPDF } = window.jspdf;
+        if (!jsPDF) {
+            alert('PDF Generator library not loaded. Please refresh the page.');
+            return;
+        }
+
+        const notesContent = document.getElementById('op-comparison-notes')?.value || 'No content to download.';
+        const planName = document.getElementById('op-plan1-select')?.value || 'Plan';
+
+        const doc = new jsPDF();
+
+        // Header
+        doc.setFontSize(16);
+        doc.setTextColor(40, 40, 40);
+        doc.text("Insurance Plan Recommendation", 20, 20);
+
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Selected Plan: ${planName}`, 20, 30);
+        doc.line(20, 35, 190, 35); // Horizontal line
+
+        // Content
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+
+        // Split text to fit page width
+        const splitText = doc.splitTextToSize(notesContent, 170); // 170mm width
+
+        let cursorY = 45;
+        const pageHeight = doc.internal.pageSize.height;
+        const margin = 20;
+
+        splitText.forEach(line => {
+            if (cursorY + 10 > pageHeight - margin) {
+                doc.addPage();
+                cursorY = margin;
+            }
+            doc.text(line, margin, cursorY);
+            cursorY += 7; // Line spacing
+        });
+
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(10);
+            doc.setTextColor(150);
+            doc.text(`Page ${i} of ${pageCount}`, 105, pageHeight - 10, null, null, "center");
+        }
+
+        // Save
+        const fileName = `Recommendation_${planName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+        doc.save(fileName);
     }
 
     // Helper: Generate Proposer HTML
@@ -187,9 +252,144 @@
                 triggerPlanSelection(clientAgreedSelect.value);
             }
 
-            clientAgreedSelect.addEventListener('change', function () {
-                triggerPlanSelection(this.value);
+            clientAgreedSelect.addEventListener('change', async function () {
+                const planName = this.value;
+                triggerPlanSelection(planName);
+
+                if (planName) {
+                    await fetchAIJustification(planName);
+                }
             });
+        }
+
+        async function fetchAIJustification(planName) {
+            const notesBox = document.getElementById('op-comparison-notes');
+            if (!notesBox) return;
+
+            notesBox.value = "Generating AI justification based on health history and plan details...";
+            notesBox.style.color = "#666";
+
+            try {
+                // 1. Collect Proposer Data
+                let proposerData = {};
+                if (typeof window.getSectionData === 'function') {
+                    proposerData = window.getSectionData('primary-contact') || {};
+                }
+                let healthData = {};
+                if (typeof window.getSectionData === 'function') {
+                    healthData = window.getSectionData('health-history') || {};
+                }
+
+                // 2. Collect Member Data
+                let members = [];
+                try {
+                    const storedMembers = localStorage.getItem('members');
+                    if (storedMembers) {
+                        members = JSON.parse(storedMembers);
+                    }
+                } catch (e) {
+                    console.error("Error parsing members from localStorage:", e);
+                }
+
+                // 3. Collect Plan Form Details
+                const si = document.getElementById('op-plan1-si')?.value || 'Not specified';
+                const premium = document.getElementById('op-plan1-premium')?.value || 'Not specified';
+                const term = document.getElementById('op-plan1-term')?.value || 'Not specified';
+
+                // 4. Construct Prompt Content
+                let promptContent = `Primary Applicant: ${proposerData.applicant_name || proposerData['pc_fname'] || 'N/A'} ${proposerData['pc_lname'] || ''}\n`;
+                promptContent += `Age: ${proposerData['self-dob'] ? getAgeFromDate(proposerData['self-dob']) : 'N/A'}\n`;
+
+                // Parse Primary Diseases
+                let diseases = [];
+                if (healthData['disease']) {
+                    if (Array.isArray(healthData['disease'])) {
+                        diseases = healthData['disease'];
+                    } else {
+                        diseases = [healthData['disease']];
+                    }
+                }
+
+                if (diseases.length > 0) {
+                    promptContent += `Primary Diseases:\n`;
+                    diseases.forEach(d => {
+                        const since = healthData[`${d}_since_years`] ? `${healthData[`${d}_since_years`]} years` : (healthData[`${d}_since_year`] || 'Unknown duration');
+                        const details = healthData[`${d}_details`] ? `(${healthData[`${d}_details`]})` : '';
+                        promptContent += `- ${d.charAt(0).toUpperCase() + d.slice(1)} (Since: ${since}) ${details}\n`;
+                    });
+                } else {
+                    promptContent += `Primary Disease: None\n`;
+                }
+
+                promptContent += `Planned Surgeries: ${healthData['planned-surgeries'] || 'None'}\n\n`;
+
+                // Calculate Age Helper
+                function getAgeFromDate(dobString) {
+                    if (!dobString) return 'N/A';
+                    const dob = new Date(dobString);
+                    const diff = Date.now() - dob.getTime();
+                    const ageDt = new Date(diff);
+                    return Math.abs(ageDt.getUTCFullYear() - 1970);
+                }
+
+                if (members && members.length > 0) {
+                    promptContent += `Family Members Covered:\n`;
+                    members.forEach((m, i) => {
+                        // Parse member diseases
+                        // Members in localStorage usually have a 'diseases' array or property
+                        let mDiseases = [];
+                        if (m.diseases && Array.isArray(m.diseases)) {
+                            mDiseases = m.diseases.map(d => typeof d === 'string' ? d : d.name);
+                        } else if (m.diseases) {
+                            // Sometimes it might be a single string or object
+                            mDiseases = [typeof m.diseases === 'string' ? m.diseases : m.diseases.name];
+                        } else if (m.disease) {
+                            // Fallback to singular 'disease'
+                            mDiseases = Array.isArray(m.disease) ? m.disease : [m.disease];
+                        }
+
+                        let diseaseStr = 'None';
+                        if (mDiseases.length > 0) {
+                            diseaseStr = mDiseases.join(', ');
+                        }
+
+                        promptContent += `- ${m.name} (${m.relationship}, Age: ${m.age}): Disease: ${diseaseStr}\n`;
+                    });
+                    promptContent += `\n`;
+                }
+
+                promptContent += `Selected Plan Details:\n`;
+                promptContent += `- Plan: ${planName}\n`;
+                promptContent += `- Sum Insured: ${si}\n`;
+                promptContent += `- Premium: ${premium}\n`;
+                promptContent += `- Term: ${term}\n`;
+
+                // 5. API Call
+                const response = await fetch('/ai/get-justification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plan_name: planName,
+                        prompt_content: promptContent
+                    })
+                });
+
+                if (!response.ok) throw new Error('AI Service unavailable');
+
+                const result = await response.json();
+                if (result.justification) {
+                    notesBox.value = result.justification;
+                    notesBox.style.color = "#334155";
+                    // Auto-adjust height if possible or trigger reflow
+                } else {
+                    notesBox.value = "AI could not generate a justification for this plan.";
+                }
+
+            } catch (err) {
+                console.error("AI Error:", err);
+                notesBox.value = "Error generating AI justification. Please fill manually.";
+                notesBox.style.color = "#dc2626";
+            }
         }
 
         function triggerPlanSelection(planName) {
@@ -243,7 +443,8 @@
             if (box2Select) box2Select.innerHTML = optionsHtml;
             if (box3Select) box3Select.innerHTML = optionsHtml;
 
-            // Sync and Lock logic
+            // Sync and Lock logic - Removed to allow independent selection for comparison
+            /*
             if (clientAgreedSelect) {
                 const sync = () => {
                     const val = clientAgreedSelect.value;
@@ -255,6 +456,7 @@
                 // Add listener to Box 1
                 clientAgreedSelect.addEventListener('change', sync);
             }
+            */
         }
     }
 

@@ -1,0 +1,67 @@
+{
+    "plan_id": "MEDICLASSIC_GOLD",
+    "plan_name": "Mediclassic Insurance Policy (Individual) - Gold Plan",
+    "insurer_name": "Star Health and Allied Insurance",
+    "uin": "SHAHLIP21215V052021",
+    "plan_type": "Health Insurance",
+    "coverage_area": "India",
+    "policy_term_options": [
+        "One Year",
+        "Two Years",
+        "Three Years"
+    ],
+    "entry_age": {
+        "individual": "18 years to 65 years",
+        "children": "16 days to 25 years"
+    },
+    "sum_insured_options": [
+        "3,00,000",
+        "4,00,000",
+        "5,00,000",
+        "10,00,000",
+        "15,00,000",
+        "20,00,000",
+        "25,00,000"
+    ],
+    "room_rent": "Private Single AC Room",
+    "icu_coverage": "Covered (Actuals)",
+    "doctor_tests_medicines": "Covered (Actuals)",
+    "pre_hospitalization_days": "30",
+    "post_hospitalization_days": "60",
+    "day_care": "All day care procedures are covered (Except for Cataract)",
+    "ambulance": {
+        "road": "Rs.2,000/- per hospitalization"
+    },
+    "restoration_benefit": [
+        "Auto Restoration of Sum Insured up to 200% once in a year (Cannot be utilized for illness/s for which claim/s was/were made)",
+        "Super Restoration up to 100% once in a year (Can be utilized for illness/s for which claim/s was/were made)"
+    ],
+    "no_claim_bonus": "25% after first claim-free year & 20% for each subsequent claim-free year, max up to 100%",
+    "waiting_periods": {
+        "initial": "30 days (not applicable for Accidents)",
+        "specific_diseases": "2 years",
+        "pre_existing": "4 years"
+    },
+    "optional_covers": [
+        "Hospital Cash",
+        "Patient Care"
+    ],
+    "co_payment": "10% co-payment is applicable if the Insured age at entry is above 60 years",
+    "discounts": [
+        "5% if 2 or more family members are covered",
+        "25% for major organ donor during renewal"
+    ],
+    "wellness_program": "Not Specified",
+    "teleconsultation": "Not Specified",
+    "preventive_health_checkup": "Benefit available for every claim-free year",
+    "cashless_claims": "Not Specified",
+    "reimbursement_supported": "Not Specified",
+    "grace_period_cover": "Not Specified",
+    "early_ped_relief": "Not Specified",
+    "waiting_period_continuity": "Not Specified",
+    "modern_treatments": "Based on the Sum insured chosen limits differ, refer policy wording for further details",
+    "ayush_treatment": "Upto 25% of the Basic Sum Insured subject to a maximum of Rs.25000/- per policy year",
+    "maternity_expenses": "Not Specified",
+    "new_born_baby_cover": "Cover starts from 16th day - upto 10% of the Sum Insured or maximum upto Rs.50,000/- (available if the mother is covered under this policy for a continuous period of 12 months)",
+    "best_suited_for": "Not Specified"
+}

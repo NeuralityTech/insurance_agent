@@ -46,7 +46,7 @@ def create_app():
         app.logger.info("Database initialized.")
 
     # --- Register Blueprints ---
-    from .blueprints import auth, submission, analysis, dashboard, actions, superadmin, approvals
+    from .blueprints import auth, submission, analysis, dashboard, actions, superadmin, approvals, ai_assistant
     app.register_blueprint(auth.auth_bp)
     app.register_blueprint(submission.submission_bp)
     app.register_blueprint(analysis.analysis_bp)
@@ -54,6 +54,7 @@ def create_app():
     app.register_blueprint(actions.actions_bp)
     app.register_blueprint(superadmin.superadmin_bp)
     app.register_blueprint(approvals.approvals_bp)
+    app.register_blueprint(ai_assistant.ai_assistant_bp)
     app.logger.info("All blueprints registered.")
 
     # --- Static File and Root Routes ---

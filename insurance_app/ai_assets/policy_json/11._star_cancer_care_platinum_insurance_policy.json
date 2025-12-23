@@ -1,0 +1,59 @@
+{
+    "plan_id": "STAR_CANCER_CARE_PLATINUM",
+    "plan_name": "Star Cancer Care Platinum Insurance Policy",
+    "insurer_name": "Star Health and Allied Insurance",
+    "uin": "SHAHLIP22031V022122",
+    "plan_type": "Health Insurance",
+    "coverage_area": "India",
+    "policy_term_options": [
+        "1 year"
+    ],
+    "entry_age": {
+        "individual": "5 months to 65 years"
+    },
+    "sum_insured_options": [
+        "5 Lakhs",
+        "7.5 Lakhs",
+        "10 Lakhs"
+    ],
+    "special_sum_insured_rules": "Not Specified",
+    "room_rent": "Single Standard AC Room",
+    "icu_coverage": "Actuals",
+    "doctor_tests_medicines": "Actuals",
+    "pre_hospitalization_days": "30 days",
+    "post_hospitalization_days": "60 days (up to 2% of the basic sum insured per hospitalization)",
+    "day_care": "All day care procedures are covered (Actuals)",
+    "modern_treatments": "Covered up to the Sub-limits mentioned in the policy clause",
+    "ayush_treatment": "Not Specified",
+    "ambulance": {
+        "road": "Covered (Actuals)",
+        "air": "Not Specified"
+    },
+    "restoration_benefit": "Not Specified",
+    "no_claim_bonus": "5% of basic sum insured for each claim free year subject to a maximum of 50%",
+    "loyalty_benefits": [],
+    "premium_protection_features": [],
+    "teleconsultation": "Not Specified",
+    "wellness_program": "Diet and Nutrition Program, Weight Management Program, Specialist Consultation available through Star Telehealth app",
+    "preventive_health_checkup": "Up to Rs 2,500 for every claim free year",
+    "fitness_benefits": "Not Specified",
+    "women_wellness": "Not Specified",
+    "senior_wellness": "Not Specified",
+    "cashless_claims": "Not Specified",
+    "reimbursement_supported": "Not Specified",
+    "grace_period_cover": "Not Specified",
+    "early_ped_relief": "Not Specified",
+    "waiting_period_continuity": "Not Specified",
+    "waiting_periods": {
+        "initial": "30 days for all illness (Except for accidents)",
+        "specific_diseases": "24 Months",
+        "pre_existing": "30 Months (Including Cancer)"
+    },
+    "optional_covers": [
+        "Lump sum cover for Cancer (50% of Section 1 sum insured, payable on recurrence, metastasis, and/or a second malignancy unrelated to first cancer, waiting period: 30 months)"
+    ],
+    "voluntary_copay_options": [],
+    "best_suited_for": [
+        "Persons diagnosed with Cancer"
+    ]
+}

@@ -1,0 +1,75 @@
+{
+    "plan_id": "STAR_OUT_PATIENT_CARE_INSURANCE_POLICY",
+    "plan_name": "Star Outpatient Care Insurance Policy",
+    "insurer_name": "Star Health and Allied Insurance",
+    "uin": "SHAHLIP22231V012122",
+    "plan_type": "Health Insurance",
+    "coverage_area": "India",
+    "policy_term_options": [
+        "One Year"
+    ],
+    "entry_age": {
+        "individual": "18 years \u2013 50 years",
+        "children": "31st Day - 25 years"
+    },
+    "max_family_size": "6 Persons",
+    "sum_insured_options": {
+        "Silver Plan": [
+            "25,000",
+            "50,000",
+            "75,000",
+            "1,00,000"
+        ],
+        "Gold Plan": [
+            "25,000",
+            "50,000",
+            "75,000",
+            "1,00,000"
+        ],
+        "Platinum Plan": [
+            "25,000",
+            "50,000",
+            "75,000",
+            "1,00,000"
+        ]
+    },
+    "room_rent": "Not Specified",
+    "icu_coverage": "Not Specified",
+    "doctor_tests_medicines": "Not Specified",
+    "pre_hospitalization_days": "Not Specified",
+    "post_hospitalization_days": "Not Specified",
+    "day_care": "Not Specified",
+    "modern_treatments": "Not Specified",
+    "ayush_treatment": "Outpatient medical consultation and treatment expenses incurred under Ayurveda, Yoga and Naturopathy, Unani, Siddha and Homeopathy systems of medicines",
+    "ambulance": {
+        "road": "Not Specified",
+        "air": "Not Specified"
+    },
+    "restoration_benefit": "Not Specified",
+    "no_claim_bonus": "25% of the premium after every block of two continuous claim free years",
+    "loyalty_benefits": "Not Specified",
+    "premium_protection_features": "Not Specified",
+    "teleconsultation": "Unlimited Tele-Consultation via Star Tele health app",
+    "wellness_program": "Can be availed from our Mobile App \u2018Star Power\u2019 & Customer Portal",
+    "preventive_health_checkup": "Not Specified",
+    "fitness_benefits": "Not Specified",
+    "women_wellness": "Not Specified",
+    "senior_wellness": "Not Specified",
+    "cashless_claims": "Not Specified",
+    "reimbursement_supported": "Not Specified",
+    "grace_period_cover": "Not Specified",
+    "early_ped_relief": "Not Specified",
+    "waiting_period_continuity": "Not Specified",
+    "waiting_periods": {
+        "initial": "30 days for all illnesses (except accident)",
+        "specific_diseases": "12 months",
+        "pre_existing": "Silver plan - 4 Years, Gold plan - 2 Years, Platinum plan - 1 Year"
+    },
+    "optional_covers": [
+        "Diagnostics, Physiotherapy & Pharmacy",
+        "Dental treatment expenses",
+        "Ophthalmic treatment expenses"
+    ],
+    "voluntary_copay_options": "Not Applicable",
+    "best_suited_for": "Not Specified"
+}

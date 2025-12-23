@@ -1,0 +1,53 @@
+{
+    "plan_id": "FHO",
+    "plan_name": "Family Health Optima Insurance Plan",
+    "insurer_name": "Star Health and Allied Insurance",
+    "uin": "SHAHLIP21011V052122",
+    "plan_type": "Health Insurance",
+    "coverage_area": "India",
+    "policy_term_options": [
+        "One Year"
+    ],
+    "entry_age": {
+        "adults": "18 years \u2013 65 years",
+        "dependent_children": "16 days to 25 years",
+        "family_size": "6 Adults + 3 Dependent Children"
+    },
+    "midterm_inclusion": "Available for newly married spouse and/or legally adopted child and new born baby",
+    "renewal": "Lifelong",
+    "sum_insured_options": [
+        "3 Lac",
+        "4 Lac",
+        "5 Lac",
+        "10 Lac",
+        "15 Lac",
+        "20 Lac",
+        "25 Lac"
+    ],
+    "room_rent": "Single Standard A/C Room for SI Rs 5 Lac and above; Rs.5000 per day for 3 Lac & 4 Lac SI",
+    "icu_coverage": "Covered (Actuals)",
+    "doctor_tests_medicines": "Covered (Actuals)",
+    "pre_hospitalization_days": "60",
+    "post_hospitalization_days": "90",
+    "day_care": "All day care procedures covered",
+    "ayush_treatment": "Up to Rs 4 Lac SI - Rs. 10,000; Rs 5 Lac to 15 Lac SI - Rs. 15,000; Rs 20 Lac & Rs 25 Lac SI - Rs. 20,000",
+    "ambulance": {
+        "road": "Rs. 750 per hospitalization; Rs. 1500 per policy period",
+        "air": "10% of Sum Insured (Available for Rs 5 Lac and above SI)"
+    },
+    "no_claim_bonus": "25% of expiring Sum Insured in the second year, additional 10% for subsequent years, maximum accumulation 100%",
+    "restoration_benefit": "Available 3 times at 100% each time, during the policy period. Available immediately upon exhaustion of the limit of coverage. Can be utilized only for illness/disease unrelated to the illness/diseases for which claim/s was/were made.",
+    "waiting_periods": {
+        "initial": "30 days (not applicable for accidents)",
+        "specific_diseases": "24 months",
+        "pre_existing": "48 months"
+    },
+    "optional_covers": [],
+    "co_payment": "20% co-payment if entry age is above 61 years",
+    "delivery_expenses": "Covered up to Rs.30,000/- per delivery (Waiting period: 36 months for 1st delivery & 24 months for 2nd delivery)",
+    "hospital_cash_benefit": "Rs.1,000/- per day, Maximum 7 days per admission, 14 days per policy period",
+    "new_born_baby_cover": "10% of Sum Insured (Maximum Rs. 50,000), provided Mother is covered for at least 1 year. Coverage starts from 16th day after birth till policy expiry.",
+    "organ_donor_expenses": "10% of Sum insured or Rs 1 Lac whichever is less, provided Insured person is the recipient. Donor screening expenses and post-donation complications of the donor are not payable.",
+    "assisted_reproduction_treatment": "5 Lac SI - Rs. 1,00,000; 10 Lac to 25 Lac SI - Rs. 2,00,000. Waiting period of 36 months from policy inception. Available on every block of 3 years and payable on renewal.",
+    "modern_treatments": "Based on the Sum insured chosen limits differ, refer policy wording for further details."
+}

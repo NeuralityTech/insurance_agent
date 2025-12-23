@@ -1,0 +1,125 @@
+{
+    "plan_id": "STAR_COMP",
+    "plan_name": "Star Comprehensive Insurance Policy",
+    "insurer_name": "Star Health and Allied Insurance",
+    "uin": "SHAHLIP21263V062021",
+    "plan_type": "Health Insurance",
+    "coverage_area": "India",
+    "policy_term_options": [
+        "1 Year",
+        "2 Years",
+        "3 Years"
+    ],
+    "entry_age": {
+        "individual": "18 years to 65 years",
+        "floater_adults": "18 years to 65 years",
+        "children": "91 days to 25 years"
+    },
+    "max_family_size": "2 adults + 3 children",
+    "sum_insured_options": [
+        "5L",
+        "7.5L",
+        "10L",
+        "15L",
+        "20L",
+        "25L",
+        "50L",
+        "75L",
+        "100L"
+    ],
+    "room_rent": "Private Single AC Room",
+    "icu_coverage": "Covered (Actuals)",
+    "doctor_tests_medicines": "Covered (Actuals)",
+    "pre_hospitalization_days": "60",
+    "post_hospitalization_days": "90",
+    "day_care": "All day care procedures covered (Actuals)",
+    "modern_treatments": "Covered (limits vary based on SI)",
+    "ayush_treatment": {
+        "limit": "15,000 to 30,000 based on SI"
+    },
+    "ambulance": {
+        "road": "Covered (Actuals)",
+        "air": "Up to Rs. 2,50,000 per hospitalization and maximum up to Rs. 5,00,000 per policy year"
+    },
+    "restoration_benefit": "Up to 100% of Basic SI, once in every policy year. Can be utilized for any claim including modern treatments for subsequent hospitalizations.",
+    "no_claim_bonus": "50% + 50% increase, max 100% of Basic SI",
+    "loyalty_benefits": "Not Specified",
+    "premium_protection_features": "Not Specified",
+    "teleconsultation": "Not Specified",
+    "wellness_program": "Earn reward points and avail premium discount up to 10% on renewal premium.",
+    "preventive_health_checkup": {
+        "benefit": "Rs. 2,000 to Rs. 5,000 for every claim free year, based on SI"
+    },
+    "fitness_benefits": "Not Specified",
+    "women_wellness": "Not Specified",
+    "senior_wellness": "Not Specified",
+    "cashless_claims": "Not Specified",
+    "reimbursement_supported": "Not Specified",
+    "grace_period_cover": "Not Specified",
+    "early_ped_relief": "Not Specified",
+    "waiting_periods": {
+        "initial": "30 days (except accident)",
+        "specific_diseases": "2 years",
+        "pre_existing": "3 years"
+    },
+    "optional_covers": [
+        "Optional Cover to choose deductible"
+    ],
+    "voluntary_copay_options": "Not Specified",
+    "best_suited_for": [
+        "Families seeking comprehensive coverage",
+        "Individuals looking for high sum insured options"
+    ],
+    "other_benefits": {
+        "organ_donor_expenses": "Covered (Actuals)",
+        "domiciliary_hospitalization": "Covered (Actuals)",
+        "psychiatric_and_psychosomatic": "Covered (Actuals)",
+        "accidental_death_and_ptd": {
+            "coverage": "Sum Insured amount matches basic SI, up to 100L",
+            "notes": "For children and persons above 70, coverage is up to 10 Lacs only."
+        },
+        "bariatric_surgery": {
+            "coverage": "Rs. 2.5 Lacs to Rs. 5 Lacs based on SI",
+            "waiting_period": "36 months"
+        },
+        "delivery_expenses": {
+            "normal": "Rs. 15,000 to Rs. 50,000 based on SI",
+            "cesarean": "Rs. 20,000 to Rs. 1,00,000 based on SI",
+            "waiting_period": "24 months"
+        },
+        "new_born_cover": {
+            "coverage": "Up to Rs. 1 Lac to Rs. 2 Lacs based on SI",
+            "notes": "10% of Sum Insured (Maximum Rs. 50,000) provided Mother is covered for at least 1 year."
+        },
+        "vaccination_expenses": {
+            "coverage": "Rs. 5,000 to Rs. 10,000 based on SI"
+        },
+        "op_dental_ophthalmic_treatment": {
+            "benefit": "Rs. 5,000 to Rs. 15,000 after every block of 3 policy years",
+            "notes": "based on SI"
+        },
+        "outpatient_consultation": {
+            "benefit": "Rs. 1,200 to Rs. 5,000 per policy year",
+            "notes": "Limit per consultation - Rs. 300/-"
+        },
+        "hospital_cash_benefit": {
+            "benefit": "Rs. 500 to Rs. 2,500 per day",
+            "notes": "7 days per admission, 120 days in policy year"
+        },
+        "air_ambulance": "Covered up to Rs. 2,50,000 per hospitalization and maximum up to Rs. 5,00,000 per policy year"
+    },
+    "midterm_inclusion": [
+        "Available for including Newly married spouse and New Born on paying additional premium",
+        "Intimation about the marriage/ newborn should be given within 60 days from the date of marriage/ new born"
+    ],
+    "co_payment": "10% applicable if Insured age at entry is above 60 years",
+    "moratorium_period": "Available after completion of 8 years",
+    "premium_payment_options": [
+        "Monthly",
+        "Quarterly",
+        "Half-Yearly",
+        "Yearly",
+        "Biennial (Once in 2 years)",
+        "Triennial (Once in 3 years)"
+    ]
+}

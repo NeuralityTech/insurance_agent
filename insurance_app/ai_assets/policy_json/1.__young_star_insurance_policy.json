@@ -1,0 +1,70 @@
+{
+    "plan_id": "YOUNG_STAR",
+    "plan_name": "Young Star Insurance Policy",
+    "insurer_name": "Star Health and Allied Insurance",
+    "uin": "SHAHLIP21217V032021",
+    "plan_type": "Health Insurance",
+    "coverage_area": "India",
+    "policy_term_options": [
+        "One Year",
+        "Two Years",
+        "Three Years"
+    ],
+    "entry_age": {
+        "individual": "18 years to 40 years",
+        "floater_adults": "18 years to 40 years",
+        "children": "91 days to 25 years",
+        "max_family_size": "2 adults + 3 dependent children"
+    },
+    "sum_insured_options": [
+        "3L",
+        "5L",
+        "10L",
+        "15L",
+        "20L",
+        "25L",
+        "50L",
+        "75L",
+        "100L"
+    ],
+    "special_sum_insured_rules": "3L not available for Floater",
+    "room_rent": "Single Private AC Room",
+    "icu_coverage": "Covered (Actuals)",
+    "doctor_tests_medicines": "Covered (Actuals)",
+    "pre_hospitalization_days": "60",
+    "post_hospitalization_days": "90",
+    "day_care": "All day care procedures covered",
+    "modern_treatments": "Covered (Limits differ based on Sum Insured, refer policy wording)",
+    "ayush_treatment": "Covered (Actuals)",
+    "ambulance": {
+        "road": "Covered (Actuals)"
+    },
+    "restoration_benefit": "Up to 100% of Basic SI + NCB, once in every policy year",
+    "no_claim_bonus": "20% for each claim-free year, max up to 100% of Basic SI",
+    "loyalty_benefits": [],
+    "premium_protection_features": [],
+    "teleconsultation": "Not Specified",
+    "wellness_program": "Earn reward points and avail premium discount up to 10% on renewal premium",
+    "preventive_health_checkup": "Annual health check-up (amounts vary based on Sum Insured)",
+    "fitness_benefits": "Not Specified",
+    "women_wellness": "Not Specified",
+    "senior_wellness": "Not Specified",
+    "cashless_claims": "Yes",
+    "reimbursement_supported": "Yes",
+    "grace_period_cover": "Not Specified",
+    "early_ped_relief": "Not Specified",
+    "waiting_periods": {
+        "initial": "30 days (not applicable for accidents)",
+        "specific_diseases": "12 months",
+        "pre_existing": "12 months"
+    },
+    "optional_covers": [
+        "Gold Plan (includes Delivery Expenses, Hospital Cash Benefit)"
+    ],
+    "voluntary_copay_options": [],
+    "best_suited_for": [
+        "Young individuals and families",
+        "Those seeking lifetime renewal",
+        "Individuals looking for accident coverage"
+    ]
+}
