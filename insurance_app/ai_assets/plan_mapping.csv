@@ -4,8 +4,8 @@ Diabetes Safe B,13._diabetes_safe_insurance_policy.json
 Star Cardiac Care Gold,12._star_cardiac_care_insurance_policy_-_platinum.json
 Star Cardiac Care Silver,12._star_cardiac_care_insurance_policy_-_platinum.json
 Platinum Sec 2 (Cardiac Ailments),na
-Cancer Platinum Sec I (Base Cover),na
-Cancer Platinum Sec II (Lump-sum Cover),na
+Cancer Platinum Sec I (Base Cover),10._star_cancer_care_gold.json
+Cancer Platinum Sec II (Lump-sum Cover),11._star_cancer_care_platinum_insurance_policy.json
 Star Critical Illness Multipay,9.__star_critical_illness_multipay_insurance_policy.json
 Star Women Care,6.__star_women_care_insurance_policy.json
 Star Comprehensive,3.__star_comprehensive_insurance_policy.json

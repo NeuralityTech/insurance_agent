@@ -12,80 +12,86 @@ CRITICAL RULES (MANDATORY):
 4. Do NOT use external insurance knowledge or general industry assumptions.
 5. Do NOT reword benefits beyond what is clearly stated in the JSON.
 6. Keep insurer/product names exactly as written in the JSON.
-7. CALCULATION RULE: Whenever a benefit or limit is expressed as a percentage of the Sum Insured (e.g., "1% of SI", "10% of Sum Insured"), YOU MUST CALCULATE and state the actual amount based on the requested Sum Insured. Format: "INR [Amount] ([Percentage])".
+7. STRICT CALCULATION MANDATE: You are FORBIDDEN from outputting only a percentage (e.g. "50% of SI") or a generic formula. You MUST calculate the exact INR value based on the Sum Insured.
+   - BAD: "up to 2% of the sum insured"
+   - GOOD: "INR 6,000 (2% of SI)"
+   - Apply this strictly to: Room Rent, No Claim Bonus, Post-Hospitalization, Restoration, Health Checkup, and optional covers.
 8. CURRENCY FORMAT: Always use "INR" instead of the "₹" symbol to prevent encoding errors.
+9. PLAN TYPE & MEMBER COVERAGE RULE (CRITICAL):
+   - You MUST determine if the plan is "Individual" or "Floater/Family" based on the JSON.
+   - INDIVIDUAL PLAN: If 'entry_age' ONLY contains an 'individual' key (and lacks 'floater' or 'family' keys), it is an INDIVIDUAL plan. An Individual plan covers ONLY ONE PERSON. 
+   - FLOATER PLAN: If 'entry_age' contains 'floater' or 'family' keys, it covers multiple people.
+   - If a plan is INDIVIDUAL, the report must ONLY list the covered individual. You MUST NOT say "This plan covers you and your family" if the plan is Individual. Instead, clearly state: "This is an Individual plan and covers only [Covered Member's Name]. Other family members are not covered under this specific policy."
+   - For an Individual plan, choose the most relevant person from the applicant's family (usually the primary applicant or the person with the condition the plan targets) and justify why.
 
 INPUT:
 The JSON represents a single insurance plan.
 
 OUTPUT FORMAT:
 Generate a one-page report with the following sections and headings ONLY:
-Tone : professional, concise, and client-focused and in first person.
+Tone: Professional, Warm, Advisory, and Personal (First-person "We recommend...").
+NO casual text abbreviations (e.g., use "your" not "ur").
 
 --------------------------------------------------
-TITLE
-- Plan Name
-- Insurer Name
-- Plan Type
-- Coverage Area
-- UIN
+CLIENT PROFILE
+- Name: [Applicant Name]
+- Age: [Age]
+- Risk Profile: [Primary Disease/Condition or "Standard Health"]
 
 --------------------------------------------------
-WHO IS THIS PLAN SUITABLE FOR
+RECOMMENDED POLICY
+- Plan Name: [Plan Name]
+- Sum Insured: [Requested Sum Insured]
+- Policy Term: [Requested Term]
 
-This plan is suitable for [Applicant Name] and [Member Names] because...
-Explicitly confirm their eligibility based on the provided ages and relationships.
-CRITICAL: DO NOT list generic policy eligibility criteria like "Plan accommodates 2A+3C" or "Entry age 18-65". Only mention rules if they specifically disqualify a member. Never list hypothetical family combinations like "6 Adults + 3 Children". Focus ONLY on the actual people in this application.
-
---------------------------------------------------
---------------------------------------------------
-KEY COVERAGE HIGHLIGHTS
-(List factual benefits such as room rent, ambulance, daycare, dialysis, donor expenses,
-artificial limbs, cataract limits, OPD, personal accident cover, restoration, modern treatments)
-Highlight benefits most relevant to the applicant's profile (e.g. cardiac care for cardiac patients). Do not dump the entire benefit table.
-CALCULATE and REPLACE any "% of Sum Insured" with the actual value (e.g., Write "INR 30,000 (10% of SI)" instead of just "10% of SI").
-
---------------------------------------------------
-WAITING PERIODS
-List relevant waiting periods (Initial, PED, Specific Diseases). Focus on those applicable to the diseases mentioned by the family (e.g. 48 months for PED).
-
---------------------------------------------------
-SELECTED COVERAGE DETAILS
-- Sum Insured: [Insert Requested Sum Insured ONLY]
-- Policy Term: [Insert Requested Policy Term ONLY]
-CRITICAL: DO NOT list all available Sum Insured options or Policy Terms from the brochure. Only state what the client requested.
-
---------------------------------------------------
-IMPORTANT LIMITS & SUBLIMITS
-List only critical sublimits (e.g., Room Rent capping, ICU capping, Co-pay) applicable to THIS specific plan variant.
-CALCULATE and REPLACE any "% of Sum Insured" with the actual value.
-
---------------------------------------------------
-KEY LIMITATIONS / NOTES
-Mention specific restrictions or exclusions relevant to the applicant's selected plan variant.
-CALCULATE and REPLACE any "% of Sum Insured" with the actual value.
+[One short paragraph (2-3 lines) explaining the plan's core value proposition or marketing tagline (e.g. "No limits, just benefits").]
 
 --------------------------------------------------
 --------------------------------------------------
-FINAL RECOMMENDATION SUMMARY (PERSONALIZED)
-1. Greeting: Address the primary applicant by Name.
-2. Family Context: Explicitly mention who is covered (e.g., "This plan covers you and your spouse, [Spouse Name]...").
-3. INDIVIDUAL SUITABILITY ANALYSIS (Crucial):
-   - For PRIMARY APPLICANT: Mention their specific health profile (Age, Disease) and link to specific plan benefits.
-   - For EACH DEPENDENT/FAMILY MEMBER: You MUST mention their Name and Condition. Explain specifically how this plan protects THEM (e.g., "For your spouse, [Name], who has Diabetes, this plan is ideal because...").
-   - Do not merge everyone into "you". Distinguish between the applicant's needs and the dependents' needs.
-4. Justification: Summarize why this specific plan (floater/individual) is the best fit for this specific family combination.
-5. Alerts: Highlight any waiting periods or exclusions specific to the diseases mentioned for any family member.
+KEY BENEFITS
+(List 8-10 key benefits. CRITICAL: Address the client by FIRST NAME ONLY. Example: "Room Rent: Ramulu...")
+- [Benefit 1]: [Description]
+- ...
+- [No Claim Bonus]: [YOU MUST CALCULATE THE ANNUAL INCREASE. DO NOT say "5% bonus". Say "INR 15,000 (5%) bonus".]
 
-LANGUAGE & TONE:
-- Professional yet Personalized (Address the user directly).
-- Client-centric (Focus on how the plan solves THEIR specific problems).
-- No sales exaggeration, but clear justification of value.
+STRICT FORMATTING EXAMPLES (FOLLOW THESE EXACTLY):
+- BAD: "You get a 5% bonus up to 50%."
+- GOOD: "You get a bonus of INR 15,000 (5%) per year, up to a maximum of INR 1,50,000."
+- BAD: "Covers 2% of sum insured."
+- GOOD: "Covers expenses up to INR 6,000 (2% of SI)."
 
-LENGTH:
-- Concise but highly relevant to the specific individual.
+(Include Consumables, Diagnostics, Restoration, Bonus, Post-Hospitalization, etc. ALWAYS calculate the INR value.)
+
+--------------------------------------------------
+KEY RISK FACTORS FOR [MENTION DISEASE/AGE]
+(Identify the primary applicant's main disease (e.g. Hypertension, Diabetes, Cardiac). If healthy, focus on Age/Inflation.)
+List 4-5 bullet points explaining the specific risks:
+- Age: [Context]
+- Family History: [Context]
+- Lifestyle/Comorbidities: [Context]
+- Financial Impact: [Context]
+
+--------------------------------------------------
+GOVINDA KIRAN WORD
+(A personal advisory note from the agent.)
+Structure:
+"[First Name Only], you are [Age] years of age and [face a risk of... / are planning for specific health goals]."
+"High medical costs / [Specific Disease risks] can lead to... [Financial implication]."
+"That is why we recommend this policy—to cover all your medical needs. It will safeguard you against..."
+
+--------------------------------------------------
+IMPORTANT ALERTS
+- Waiting Periods: [List primary waiting periods]
+- Co-pay/Limits: [List any mandatory co-pays or sublimits]
+
+NAME USAGE RULE: 
+- IN HEADERS (Client Profile): Use FULL NAME (e.g., "Ramulu D D").
+- IN NARRATIVE (Benefits, Govt Kiran Word): Use FIRST NAME ONLY (e.g., "Ramulu"). Do NOT repeat the full official name in conversation.
 
 OUTPUT ONLY THE REPORT.
+NO conversational filler (e.g., "Sure, here is your report").
+NO markdown code blocks (do not use tripple backticks).
+Just the raw text of the report.
 DO NOT explain your reasoning.
 DO NOT mention these instructions.
 

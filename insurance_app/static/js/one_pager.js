@@ -297,7 +297,16 @@
                 const term = document.getElementById('op-plan1-term')?.value || 'Not specified';
 
                 // 4. Construct Prompt Content
-                let promptContent = `Primary Applicant: ${proposerData.applicant_name || proposerData['pc_fname'] || 'N/A'} ${proposerData['pc_lname'] || ''}\n`;
+                let fname = (proposerData['pc_fname'] || '').trim();
+                let lname = (proposerData['pc_lname'] || '').trim();
+
+                // Fix duplication (e.g., "Ramulu D" + "D" -> "Ramulu D D")
+                if (lname && fname.toLowerCase().endsWith(lname.toLowerCase())) {
+                    lname = ''; // Already in first name
+                }
+
+                const fullname = proposerData.applicant_name || `${fname} ${lname}`.trim() || 'N/A';
+                let promptContent = `Primary Applicant: ${fullname}\n`;
                 promptContent += `Age: ${proposerData['self-dob'] ? getAgeFromDate(proposerData['self-dob']) : 'N/A'}\n`;
 
                 // Parse Primary Diseases
